@@ -1,0 +1,1879 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MyBee Legal/Tax Agent 상세 설계서 v1.4</title>
+<style>
+:root{
+  --bg:#f6f8fb; --paper:#fff; --ink:#152033; --muted:#607086;
+  --line:#dbe3ef; --blue:#1f5fbf; --blue2:#eaf2ff; --navy:#0d2b52;
+  --green:#127a5a; --green2:#e9f8f3; --amber:#a86100; --amber2:#fff5df;
+  --red:#b63a3a; --red2:#fff0f0; --purple:#6950a1; --purple2:#f3efff;
+  --shadow:0 10px 28px rgba(29,54,86,.08);
+}
+*{box-sizing:border-box}
+html{color-scheme:light}
+body{margin:0;background:var(--bg);font-family:"Pretendard","Noto Sans KR","Malgun Gothic",Arial,sans-serif;color:var(--ink);line-height:1.67}
+header{background:linear-gradient(135deg,#0b2548,#173f73 56%,#1f5fbf);color:#fff;padding:64px 7vw 50px}
+header .eyebrow{font-weight:800;letter-spacing:.08em;font-size:13px;opacity:.82}
+header h1{font-size:42px;line-height:1.18;margin:10px 0 16px}
+header h1 .ver{font-size:22px;vertical-align:middle;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.35);padding:2px 10px;border-radius:8px}
+header p{max-width:1050px;font-size:18px;opacity:.92;margin:0}
+.badges{display:flex;gap:10px;flex-wrap:wrap;margin-top:24px}
+.badge{border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.1);padding:7px 11px;border-radius:999px;font-size:13px;font-weight:700}
+.docmeta{margin-top:18px;font-size:13px;opacity:.85}
+main{max-width:1280px;margin:28px auto 80px;padding:0 22px}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:26px;margin:18px 0;box-shadow:var(--shadow)}
+h2{font-size:30px;color:var(--navy);margin:4px 0 12px;padding-top:3px}
+h3{font-size:21px;color:#173f73;margin:26px 0 10px}
+h4{font-size:17px;margin:18px 0 8px}
+p{margin:8px 0 12px}
+small,.muted{color:var(--muted)}
+.note{font-size:14px;color:#44566c;background:#f7f9fc;border:1px dashed #cbd6e4;border-radius:10px;padding:10px 14px}
+.toc{columns:2;column-gap:36px}
+.toc a{display:block;text-decoration:none;color:#21496f;padding:4px 0;font-weight:650}
+.legend{margin-top:14px;font-size:13px}
+.kicker{font-weight:800;color:var(--blue);text-transform:uppercase;letter-spacing:.06em;font-size:12px}
+.callout{border-left:5px solid var(--blue);background:var(--blue2);padding:15px 18px;border-radius:10px;margin:16px 0}
+.callout.green{border-color:var(--green);background:var(--green2)}
+.callout.amber{border-color:var(--amber);background:var(--amber2)}
+.callout.red{border-color:var(--red);background:var(--red2)}
+.callout ul{margin:6px 0 0}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.metric{border:1px solid var(--line);border-radius:14px;padding:18px;background:#fbfdff}
+.metric b{display:block;font-size:23px;color:var(--navy)}
+.metric.red{border-color:#e4b5b5;background:var(--red2)}
+.metric.red b{font-size:18px;color:var(--red);margin-bottom:4px}
+.metric .num{font-size:25px;white-space:nowrap;font-weight:800;color:var(--navy);display:block;font-variant-numeric:tabular-nums}
+.diagram{margin:16px 0 24px;border:1px solid #cfdbea;border-radius:16px;background:linear-gradient(180deg,#fbfdff,#f5f8fc);padding:18px;overflow:auto}
+.diagram-title{font-weight:800;color:#173f73;margin-bottom:12px}
+.flow{display:flex;align-items:stretch;gap:10px;flex-wrap:wrap}
+.gap{height:12px}
+.down{text-align:center;font-size:28px;color:#7b8ea5;line-height:1.3}
+.node{min-width:120px;flex:1;border:1px solid #b9cbe1;background:white;border-radius:12px;padding:12px;text-align:center;font-weight:750;box-shadow:0 4px 12px rgba(38,75,120,.06)}
+.node small{font-weight:500;color:#50657d}
+.node.blue{background:var(--blue2);border-color:#a9c7ef}
+.node.green{background:var(--green2);border-color:#a8dccc}
+.node.amber{background:var(--amber2);border-color:#ebcb8b}
+.node.red{background:var(--red2);border-color:#e4b5b5}
+.node.purple{background:var(--purple2);border-color:#c9bdea}
+.arrow{align-self:center;font-size:25px;color:#7b8ea5;font-weight:900}
+pre{white-space:pre-wrap;background:#0e1b2a;color:#dce8f6;border-radius:12px;padding:18px;overflow:auto;font:13px/1.55 Consolas,"D2Coding","Malgun Gothic",monospace}
+code{font-family:Consolas,"D2Coding",monospace;font-size:.92em;background:#eef2f7;border-radius:4px;padding:0 4px}
+pre code{background:none;padding:0}
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse;margin:12px 0 22px;font-size:14px}
+th{background:#eef4fb;color:#173f73;text-align:left;padding:9px 10px;border:1px solid #d5e0ed}
+td{padding:9px 10px;vertical-align:top;border:1px solid #dbe3ef}
+tr.new td{background:#f6fcf9}
+ul,ol{padding-left:23px}
+li{margin:5px 0}
+.pill{display:inline-block;padding:3px 9px;border-radius:999px;background:#edf2f7;font-size:12px;font-weight:750;color:#39536e;margin:2px}
+.arch{display:grid;grid-template-columns:1fr;gap:8px}
+.layer{border:1px solid #c8d7e9;border-radius:12px;padding:12px 16px;background:#fff}
+.layer strong{color:#0d3b70}
+.svgwrap svg{width:100%;height:auto;min-width:820px;display:block}
+.chg{display:inline-block;font-size:11px;line-height:1.5;padding:1px 7px;border-radius:6px;font-weight:800;vertical-align:middle;margin-left:4px;letter-spacing:0;white-space:nowrap}
+.chg.add{background:#dff5ea;color:#0d6146;border:1px solid #9fd8bf}
+.chg.mod{background:#fff0d6;color:#8a5000;border:1px solid #edc57c}
+.chg.del{background:#fde3e3;color:#9b2c2c;border:1px solid #e7abab}
+h2 .chg,h3 .chg{font-size:12px}
+.sev{font-weight:800;white-space:nowrap}
+.sev.c{color:var(--red)}.sev.m{color:var(--amber)}.sev.l{color:#58708a}
+table.chgtab td:nth-child(1){white-space:nowrap;font-weight:700}
+table.chgtab{font-size:13px}
+table.cols td:nth-child(1){font-family:Consolas,"D2Coding",monospace;font-size:13px;white-space:nowrap}
+table.cols td:nth-child(2){font-family:Consolas,monospace;font-size:12.5px;white-space:nowrap;color:#3d4f66}
+table.cols td:nth-child(3),table.cols td:nth-child(4){text-align:center;white-space:nowrap}
+table.cols td:nth-child(5){font-family:Consolas,monospace;font-size:12.5px;white-space:nowrap}
+table.cols{font-size:13.5px;margin-bottom:8px}
+.tblhead{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:22px 0 4px}
+.tblhead h4{margin:0;font-family:Consolas,"D2Coding",monospace;font-size:16px;color:#0d3b70}
+.tblhead .t{font-weight:700}
+.cons{font-size:12.5px;color:#44566c;margin:0 0 6px;padding-left:18px}
+.cons li{margin:2px 0}
+.cons code{font-size:12px}
+.ok{color:var(--green);font-weight:800}.ng{color:var(--red);font-weight:800}
+.footer{color:#68788c;text-align:center;font-size:12px;padding:28px}
+@media screen and (max-width:780px){header h1{font-size:30px}.grid2,.grid3,.grid4{grid-template-columns:1fr}.toc{columns:1}.arrow{transform:rotate(90deg)}}
+@page{size:A4;margin:13mm 11mm}
+@media print{
+  body{background:#fff;font-size:12.5px;line-height:1.55}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  header{padding:34px 28px;border-radius:0}
+  header h1{font-size:30px}
+  main{max-width:none;margin:0;padding:0}
+  .card{box-shadow:none;break-inside:auto;border-radius:10px;padding:16px 18px;margin:10px 0}
+  #review,#s2,#mybee,#schema,#sources{break-before:page}
+  h2{font-size:23px;break-after:avoid}
+  h3{font-size:17px;break-after:avoid}
+  .tblhead{break-after:avoid}
+  .diagram{break-inside:avoid;padding:12px}
+  .svgwrap svg{min-width:0}
+  pre{font-size:11px;break-inside:avoid}
+  table{font-size:11.5px}
+  thead{display:table-header-group}
+  tr{break-inside:avoid}
+  .node{min-width:0;flex:1 1 92px;padding:8px;font-size:11.5px;overflow-wrap:anywhere}
+  .diagram{overflow:visible}
+  .metric .num{font-size:21px}
+  .flow{gap:6px}
+  a{color:inherit;text-decoration:none}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="eyebrow">MYBEE PLATFORM · LEGAL INTELLIGENCE ARCHITECTURE · 검증 개정판</div>
+  <h1>MyBee Legal/Tax Agent 상세 설계서 <span class="ver">v1.4</span></h1>
+  <p>상법·세법 등 기업 법률 업무를 자격자 수준의 품질로 <b>지원</b>하는 <b>Model-independent Legal Intelligence Layer</b> 설계. 법률지식은 외부 DB에, 판단절차는 Skill/Workflow에, Local LLM은 교체 가능한 Reasoning Engine으로 둔다. 의견의 발행 책임은 자격자에게, 착수 판정·지시 자격·외부 실행은 MyBee 공통 통제(Trust Agent·VA·TA)에 둔다.</p>
+  <div class="badges">
+    <span class="badge">Temporal + 부칙 적용규칙</span><span class="badge">Hybrid / Graph RAG</span>
+    <span class="badge">Agentic Research</span><span class="badge">Evidence Auditor</span>
+    <span class="badge">Opponent Agent</span><span class="badge">Legal Trust Gate</span>
+    <span class="badge">Model Hot-Swap</span><span class="badge">Selective Post-training</span>
+    <span class="badge">1,000 테넌트 격리</span>
+  </div>
+  <div class="docmeta">v1.0(원본) → v1.1 검증 개정 · 2026-09-13 · 변경 43건(추가 19 · 수정 20 · 삭제 4) · v1.2 플랫폼 정합 개정 · 2026-09-15 · 설계지시문 v3.9 재대조 7건(A.5) · v1.3 정합 개정 · 2026-09-15 · 설계지시문 v4.0 기준 17건 + 자체 발견 4건(A.6) · <b>v1.4 정합 개정 · 2026-09-16 · 설계지시문 v4.6 · DB 테이블설계서 v3.2 기준 근거 판 갱신(A.7)</b></div>
+</header>
+
+<main>
+
+<section class="card">
+<h2>목차</h2>
+<div class="toc">
+<a href="#review">A. 검증 결과와 개정 내역</a>
+<a href="#s1">1. 설계 결론</a>
+<a href="#s2">2. 서비스 포지셔닝과 법적 경계</a>
+<a href="#maturity">3. 7단계 성숙도 모델</a>
+<a href="#principle">4. 설계 철학</a>
+<a href="#architecture">5. 전체 아키텍처(7층)</a>
+<a href="#mybee">6. MyBee 에이전트 체계와의 정합</a>
+<a href="#agents">7. Agent 구성 및 책임 분리</a>
+<a href="#data">8. Legal/Tax DB 구축</a>
+<a href="#temporal">9. Temporal Legal DB</a>
+<a href="#graph">10. Legal Knowledge Graph</a>
+<a href="#retrieval">11. 검색·RAG 파이프라인</a>
+<a href="#workflow">12. 질의 처리 Workflow·상태기계</a>
+<a href="#audit">13. Evidence Auditor / Legal Trust Gate</a>
+<a href="#opponent">14. Opponent Agent</a>
+<a href="#tax">15. Tax Agent 특화 설계</a>
+<a href="#model">16. Local LLM 교체 구조</a>
+<a href="#training">17. Post-training 전략</a>
+<a href="#dataset">18. Model-independent Dataset</a>
+<a href="#benchmark">19. Benchmark / Golden Set</a>
+<a href="#output">20. 의견 출력 스키마</a>
+<a href="#schema">21. DB Table / Column 설계</a>
+<a href="#api">22. Agent/API 인터페이스</a>
+<a href="#security">23. 보안·권한·감사</a>
+<a href="#ops">24. 운영·버전관리</a>
+<a href="#roadmap">25. 구축 로드맵</a>
+<a href="#kpi">26. 품질 KPI</a>
+<a href="#open">27. 미결 사항·리스크</a>
+<a href="#sources">28. 참고 근거</a>
+<a href="#final">29. 최종 권고 아키텍처</a>
+</div>
+<p class="muted legend">본문 표식: <span class="chg add">추가</span> 새로 넣은 내용 · <span class="chg mod">수정</span> 고친 내용 · <span class="chg del">삭제</span> 뺀 내용(대체 내용 설명) — 번호(V-nn)는 A장 개정 내역표와 대응한다.</p>
+</section>
+
+<!-- ───────────────────────── A. 검증 결과 ───────────────────────── -->
+<section class="card" id="review">
+<div class="kicker">Review Result</div>
+<h2>A. 검증 결과와 개정 내역</h2>
+
+<h3>A.1 검증 범위와 방법</h3>
+<table>
+<tr><th style="width:22%">관점</th><th>방법</th><th style="width:28%">대조 기준</th></tr>
+<tr><td>문서 내부 정합성</td><td>장·절 번호, 그림↔본문↔표, 원칙↔로드맵, 명세 간 명칭·컬럼 대조</td><td>v1.0 전문</td></tr>
+<tr><td>법리·도메인 정확성</td><td>적용법 결정 논리, 판례·해석 권위 체계, 세법 쟁송·해석 체계, 용어</td><td>국세기본법·상법 개정 해설, 국세법령정보시스템 구성</td></tr>
+<tr><td>법적·규제 경계</td><td>SaaS로 타사에 의견을 제공하는 구조의 자격 규제, AI 규제</td><td>변호사법, 세무사법, AI 기본법, 2025 리걸테크 판결 보도</td></tr>
+<tr><td>MyBee 플랫폼 정합</td><td>에이전트 약어·책임, 권한 모델, 승인·도구·평가 원칙</td><td>v1.1 당시: MyBee 설계지시문 v3.2(제6.5~6.7·8.4·8.6·15.1조) · v1.2: 설계지시문 v3.9 재대조(A.5) · v1.3: 설계지시문 v4.0 · DB 테이블설계서 v2.8(A.6) · <b>v1.4(현행): 설계지시문 v4.6</b>(제4.7.1·6.1.1·6.1.5·6.5~6.7·6.9.12·6.11·8.1.1·8.4·8.6·8.7·10.1.1·15.1·15.3.6조 — 인용한 번호는 모두 v4.6 에 있다. v4.3 에서 6.9.11 · 6.9.12 가 신설되고 6.11.1 이 개정되었으므로 조항 집합은 v4.0 과 같지 않다) · DB 테이블설계서 v3.2 · 코드체계 설계서 v3.2(A.7) <span class="chg mod">v1.4</span></td></tr>
+<tr><td>DB 명세</td><td>정적 정합성 검사 10항목(21.4장). 검사기가 오류를 실제로 잡는지 결함 5건을 주입해 확인</td><td>설계 인벤토리</td></tr>
+<tr><td>참고 근거</td><td>인용 논문의 서지·핵심 주장 실재 여부 웹 확인</td><td>ACL Anthology, arXiv, IEEE Access 서지</td></tr>
+</table>
+<div class="callout amber"><b>검증하지 않은 것.</b> ① PostgreSQL 실행 검증(DDL 적재·규칙 시나리오)은 하지 않았다. 21장 명세는 정적 검사만 통과한 상태다. ② 법령 조문 번호와 시행일은 이 문서의 <b>예시 설명용</b>으로만 확인했으며, 시스템 적재 데이터의 정확성을 보증하지 않는다. ③ 2장의 법적 경계는 설계 전제 수립용 검토다. 서비스 출시 전 외부 법률의견으로 확정해야 한다(27장 O-01).</div>
+
+<h3>A.2 결과 요약(v1.1 검증) <span class="chg mod">v1.3</span></h3>
+<div class="grid4">
+<div class="metric"><span class="num">43</span>변경 항목 전체</div>
+<div class="metric"><span class="num">19 · 20 · 4</span>추가 · 수정 · 삭제</div>
+<div class="metric"><span class="num">3 · 29 · 11</span>치명 · 중요 · 경미</div>
+<div class="metric"><span class="num">23</span>명세 테이블(v1.0 예시 3) · 컬럼 310</div>
+</div>
+<div class="tw"><table><tr><th>분류</th><th style="width:12%">건수</th><th>핵심</th></tr>
+<tr><td>법적 경계</td><td>5</td><td>SaaS로 타사에 의견을 제공하는 구조의 자격 규제·AI 고지·출처 이용조건</td></tr>
+<tr><td>법리 정확성</td><td>8</td><td>부칙 적용규칙·이중시간·권위와 구속력 분리·국내 판결문 체계·지방세</td></tr>
+<tr><td>MyBee 정합</td><td>7</td><td>TA 약어 충돌 해소, EA 원칙, 권한 3분할, 멀티테넌트 격리, 해시 승인</td></tr>
+<tr><td>구조 정합</td><td>20</td><td>그림·표·명세·로드맵 간 모순, 보류 경로·출력 스키마·평가 오염 관리</td></tr>
+<tr><td>참고 근거</td><td>3</td><td>확인되지 않은 수치 삭제, 서지 보강, 법령·내부 기준 추가</td></tr>
+</table></div>
+<div class="grid3" style="margin-top:12px">
+<div class="metric"><span class="num">7</span>v1.2 플랫폼 정합 개정(설계지시문 v3.9 재대조, A.5)</div>
+<div class="metric"><span class="num">17 + 4</span>v1.3 정합 개정(설계지시문 v4.0 기준, A.6) — 발견사항 17건(높음 1 · 중간 8 · 낮음 8) · 자체 발견 4건</div>
+<div class="metric"><span class="num">10 / 10</span>v1.3 명세 정적 검사 재실행 통과 — 23표 · 명세 컬럼 310(공통 15개 전부 포함 시 599) · FK 32</div>
+</div>
+<p class="muted">위 네 칸과 분류표는 v1.1 검증(v1.0 → v1.1, 43건)의 결과다. v1.2 · v1.3 의 정정은 A.5 · A.6 에 따로 적었다.</p>
+
+<h3>A.3 치명 결함 3건 — 먼저 읽을 것 <small>(v1.1 당시 기록 · 설계지시문 v3.2 기준)</small></h3>
+<div class="grid3">
+ <div class="metric red"><b>V-01 법적 경계 부재</b>1,000개 테넌트에 법률·세무 '자문의견'을 제공하는 구조인데 변호사법 제109조·세무사법 검토가 없었다. 발행 주체를 자격자로 두는 포지셔닝을 신설했다(2장).</div>
+ <div class="metric red"><b>V-06 적용법 결정 불완전</b>시행일만으로 적용 조문을 고르면 부칙의 적용례·경과조치를 놓친다. 세법은 특히 '사업연도 개시일' 같은 기준일이 결론을 바꾼다(9장).</div>
+ <div class="metric red"><b>V-14 약어 TA 충돌</b>v1.0의 TA(Trust Agent)는 설계지시문의 TA(외부실행)·Trust Agent(당시 「인증」 — 현행 v4.6 은 TR, ⓐ 세션 판정 · ⓑ 착수 판정)·VA(당시 「권한」 — 현행 지시 자격 판정)와 이름과 책임이 겹친다. 그대로 구현하면 권한 판정에 LLM이 들어간다(6장).</div>
+</div>
+
+<h3>A.4 개정 내역 전체</h3>
+<div class="tw"><table class="chgtab"><thead><tr><th>ID</th><th>구분</th><th>심각도</th><th style="width:10%">v1.0 위치</th><th style="width:12%">v1.1 반영</th><th>내용</th><th style="width:19%">근거</th></tr></thead><tbody>
+<tr><td>V-01</td><td><span class="chg add">추가</span></td><td><span class="sev c">치명</span></td><td>없음</td><td>2장</td><td>1,000개 테넌트에 법률·세무 &#x27;자문의견&#x27;을 제공하는 구조에 변호사법 제109조(비변호사 법률사무 취급)·세무사법(세무대리) 저촉 위험이 검토되지 않았다. 서비스 포지셔닝 장을 신설했다. 사용자는 테넌트의 법무·세무 조직과 그들이 선임한 자격자로 두고, 의견 발행 주체는 자격자, 플랫폼은 발행 주체가 아니며 외부 자격자 알선·연계는 금지한다.</td><td>변호사법 제109조·제34조, 로폼 사건(2025 대법원 심리불속행 확정) 보도 — 양식 제공은 법률사무 아님, 개별 사안에 법률판단을 가미하는 AI는 위반 소지 언급</td></tr>
+<tr><td>V-02</td><td><span class="chg add">추가</span></td><td><span class="sev m">중요</span></td><td>21장</td><td>2.3·23장, legal_opinion.ai_generated_notice</td><td>AI 기본법(2026-01-22 시행)의 생성형 AI 사전고지·결과물 표시 의무와 고영향 AI 해당성 검토가 없었다.</td><td>인공지능 발전과 신뢰 기반 조성 등에 관한 기본법</td></tr>
+<tr><td>V-03</td><td><span class="chg mod">수정</span></td><td><span class="sev m">중요</span></td><td>21장</td><td>23장</td><td>&#x27;Attorney-client privilege&#x27; 표현을 국내 기준으로 바꿨다. 명문 ACP가 아니라 변호사법 제26조 비밀유지의무 대상(LAWYER_SECRET)으로 분류한다.</td><td>변호사법 제26조</td></tr>
+<tr><td>V-04</td><td><span class="chg add">추가</span></td><td><span class="sev m">중요</span></td><td>7장</td><td>8.4장, source_registry</td><td>출처별 이용조건이 없었다. 검색·인용 허용, 학습 사용 허용, 재배포 허용을 분리하고 판결서 비실명 여부를 기록한다.</td><td>공공데이터·판결서 공개 제도, 이용약관</td></tr>
+<tr><td>V-05</td><td><span class="chg mod">수정</span></td><td><span class="sev m">중요</span></td><td>2장 L7</td><td>3장</td><td>L7 승인 주체 &#x27;인간 변호사&#x27;를 사안 영역별 자격자(변호사·세무사·공인회계사)로 바꿨다. 저위험 사안은 권한 있는 담당자도 승인할 수 있다.</td><td>세무 의견은 세무대리 자격 영역</td></tr>
+<tr><td>V-06</td><td><span class="chg add">추가</span></td><td><span class="sev c">치명</span></td><td>8장</td><td>9장, applicability_rule</td><td>적용법을 시행일(effective_from/to)만으로 결정하게 되어 있었다. 부칙 적용례·경과조치(예: &#x27;시행 후 개시하는 사업연도분부터&#x27;), 다중 기준일(행위일·계약일·납세의무 성립일·사업연도 개시일·처분일·결의일), 위헌·헌법불합치 결정을 반영했다.</td><td>국세기본법 제21조(납세의무 성립시기), 법령 부칙 체계</td></tr>
+<tr><td>V-07</td><td><span class="chg add">추가</span></td><td><span class="sev m">중요</span></td><td>8장</td><td>9.3장</td><td>이중시간(유효시간 + 인지시간)을 도입해 &#x27;의견 발행 당시 시스템이 알던 원문&#x27;을 재현할 수 있게 했다. 원문 정정·소급 정비가 있어도 감사 재현성이 유지된다.</td><td>감사 재현성 요구</td></tr>
+<tr><td>V-08</td><td><span class="chg mod">수정</span></td><td><span class="sev m">중요</span></td><td>7장 6.2</td><td>8.3장</td><td>A1 &#x27;현행 법령 원문&#x27;을 &#x27;기준일에 유효한 법령 원문&#x27;으로 고쳤다. 권위 등급과 구속력(binding)을 분리했고, 헌재 결정을 A2에 명시했다. 사전답변(신청인 한정), 질의회신, 기본통칙·집행기준(행정규칙)을 구분했다.</td><td>행정규칙의 대외적 구속력 법리</td></tr>
+<tr><td>V-09</td><td><span class="chg mod">수정</span></td><td><span class="sev m">중요</span></td><td>7장 6.1</td><td>8.2장, case_law</td><td>판례 구조를 영미식 Facts/Issue/Holding/Reasoning에서 국내 판결문 체계(판시사항·판결요지·참조조문·참조판례·주문·이유)로 바꿨다.</td><td>대법원 종합법률정보 판례 표기 체계</td></tr>
+<tr><td>V-10</td><td><span class="chg add">추가</span></td><td><span class="sev m">중요</span></td><td>9장</td><td>10장, kg_edge</td><td>그래프 관계에 전원합의체 판례변경(OVERRULES), 파기환송 심급계보, 위헌결정에 따른 효력상실(INVALIDATES), 위임(DELEGATES_TO), 관계 유효기간을 추가했다.</td><td>판례 변경·심급 구조</td></tr>
+<tr><td>V-11</td><td><span class="chg add">추가</span></td><td><span class="sev m">중요</span></td><td>14장</td><td>15장</td><td>Tax 범위에 지방세(지방세기본법·지방세법·지방세특례제한법, 행정안전부 해석)를 추가했다. 취득세·지방소득세 등 기업 세무의 필수 영역이다.</td><td>지방세 법체계</td></tr>
+<tr><td>V-12</td><td><span class="chg mod">수정</span></td><td><span class="sev l">경미</span></td><td>14장</td><td>15장</td><td>용어를 정정했다. &#x27;과세적부&#x27;→&#x27;과세전적부심사&#x27;, &#x27;국제조세조정법&#x27;→「국제조세조정에 관한 법률」. 쟁송에 감사원 심사청구를, 해석 주체에 기획재정부(국세예규심사위원회)를 추가했다.</td><td>국세기본법 제18조의2 등</td></tr>
+<tr><td>V-13</td><td><span class="chg add">추가</span></td><td><span class="sev l">경미</span></td><td>9장</td><td>9.4장</td><td>시점 예시를 실제 개정 사례로 보강했다. 상법 제382조의3(이사의 주주 충실의무)이 2025-07-22 시행되어 사건일에 따라 적용 조문이 달라진다.</td><td>김·장, 법률신문 개정 상법 해설</td></tr>
+<tr><td>V-14</td><td><span class="chg mod">수정</span></td><td><span class="sev c">치명</span></td><td>5·6·12장 전반</td><td>6장</td><td>약어가 충돌한다. v1.0은 &#x27;TA=Trust Agent(정책·권한·공개 결정)&#x27;인데, 설계지시문 v3.2는 TA=외부실행 에이전트(제6.7조), Trust Agent=인증(제8.4조), 권한 판정=VA(제6.6조, LLM 금지)로 정한다. 증거충족도 판정은 &#x27;Legal Trust Gate(LTG)&#x27;로 개명하고 권한=VA, 발행·전송=TA, 인증=Trust Agent로 분리했다.</td><td>MyBee 설계지시문 v3.2 제6.6·6.7·8.4조</td></tr>
+<tr><td>V-15</td><td><span class="chg mod">수정</span></td><td><span class="sev m">중요</span></td><td>6장</td><td>6.2장</td><td>Legal/Tax 계열을 EA로 정의했다. EA는 근거 조문 인용(6.5.2), 의견만 제공(6.5.3), 최소 확신도 미달 시 상향(6.5.4), 고위험 판정 시 서로 다른 기반 모델로 교차검증(6.5.5)을 따른다. EA 필수 영역(근로기준법·중대재해처벌법)에 맞춰 도메인을 확장했다.</td><td>MyBee 설계지시문 v3.2 제6.5조</td></tr>
+<tr><td>V-16</td><td><span class="chg del">삭제</span></td><td><span class="sev m">중요</span></td><td>21장</td><td>23장</td><td>ABAC 기준의 &#x27;직급&#x27;을 삭제하고 권한 3분할(동사×범위×대상) + 업무코드로 대체했다.</td><td>MyBee 확정 전제(직책은 권한에서 배제)</td></tr>
+<tr><td>V-17</td><td><span class="chg add">추가</span></td><td><span class="sev m">중요</span></td><td>없음</td><td>23.2장, lgmat 스키마</td><td>멀티테넌트 격리를 추가했다. 공용 코퍼스와 테넌트 사안 스키마 분리, RLS·복합 FK, 검색 사전필터, &#x27;파생 데이터 권한=원본 중 가장 좁은 것&#x27;, 캐시 키에 권한 범위 해시, 풀 체크인 DISCARD ALL, 테넌트 자료 학습 사용 원칙 금지(v1.3: 불가피 시 해당 테넌트 · 원본 최소 권한 범위 전용, 제8.6.10조 — 17장 ③).</td><td>설계지시문 v3.2 제8.6조, Platform 통합 검증의 커넥션 컨텍스트 누수 재현</td></tr>
+<tr><td>V-18</td><td><span class="chg add">추가</span></td><td><span class="sev m">중요</span></td><td>2장 L7</td><td>12.3장, opinion_approval</td><td>승인은 의견 레코드가 아니라 의견 내용 해시에 성립한다. 승인 후 내용이 바뀌면 재승인한다.</td><td>설계지시문 v3.2 승인 스냅샷 원칙</td></tr>
+<tr><td>V-19</td><td><span class="chg add">추가</span></td><td><span class="sev m">중요</span></td><td>14장</td><td>15.2·15.3장</td><td>세액 계산은 mbtool 도구 층(결정론적)에서 하고 시험 사례는 사람이 먼저 확정한다. 전표·세무조정 원천은 원장 소유 영역의 읽기 전용 참조다(v1.1 표기는 구 시스템 약어 — v1.3 에서 D04 회계업무 · mbacct 로 정정).</td><td>설계지시문 v3.2 제4.9조 3층 구조, 원장 소유권(현행 제10.1.1조)</td></tr>
+<tr><td>V-20</td><td><span class="chg mod">수정</span></td><td><span class="sev m">중요</span></td><td>2장 L5</td><td>3장</td><td>L5 필수 구성에서 Post-training을 빼고 조건부로 바꿨다. 16장 &#x27;기본값은 하지 않는다&#x27;와 모순이었다.</td><td>문서 내부 모순</td></tr>
+<tr><td>V-21</td><td><span class="chg mod">수정</span></td><td><span class="sev m">중요</span></td><td>23장</td><td>25장</td><td>Golden Set이 Phase 5에 있어 15·18장 &#x27;모델 교체 시 동일 Benchmark부터&#x27; 원칙을 초기에 적용할 수 없었다. Phase 0에 seed를 구축하고 Citation/Temporal Validator 기본형을 Phase 2로 당겼다.</td><td>문서 내부 모순(2.3장 &#x27;검증체계 조기 설계&#x27;)</td></tr>
+<tr><td>V-22</td><td><span class="chg mod">수정</span></td><td><span class="sev m">중요</span></td><td>5장</td><td>5장</td><td>&#x27;7-Layer&#x27; 제목인데 실제 층은 6개(1~5, 6A/6B)였다. 7층 Governance &amp; Control(VA·TA·Trust Agent·감사·배포 게이트)을 추가했다.</td><td>그림-제목 불일치</td></tr>
+<tr><td>V-23</td><td><span class="chg mod">수정</span></td><td><span class="sev m">중요</span></td><td>10장</td><td>11장</td><td>Temporal이 병렬 검색기이자 후단 Date Filter로 이중 표기되어 본문의 &#x27;시점 필터 선행&#x27; 원칙과 모순이었다. 권한·테넌트·기준일·권위 필터를 검색 전 단계로 옮겼다.</td><td>그림-본문 불일치</td></tr>
+<tr><td>V-24</td><td><span class="chg mod">수정</span></td><td><span class="sev m">중요</span></td><td>8장·19장</td><td>9.2·21장</td><td>8장 LAW_VERSION과 19장 statute_version의 명칭·컬럼이 달랐다(revision_reason, previous/next 누락). 단일 명세로 통일했다.</td><td>명세 불일치</td></tr>
+<tr><td>V-25</td><td><span class="chg del">삭제</span></td><td><span class="sev l">경미</span></td><td>8장</td><td>9.2장</td><td>next_version_id를 삭제했다. previous와 이중 포인터로 관리하면 불일치가 생기므로 역방향은 조회로 도출한다.</td><td>정규화</td></tr>
+<tr><td>V-26</td><td><span class="chg add">추가</span></td><td><span class="sev m">중요</span></td><td>6장</td><td>7장</td><td>책임표에 협업도의 Statute·Contract Agent와 Temporal/Citation Validator·Legal Writer, 아키텍처의 Labor·Safety·Compliance를 추가했다.</td><td>그림-표 불일치</td></tr>
+<tr><td>V-27</td><td><span class="chg add">추가</span></td><td><span class="sev m">중요</span></td><td>11장</td><td>12장</td><td>보류(ABSTAIN)·사실 보완 질의·자격자 에스컬레이션 경로와 사안 상태기계를 추가했다. v1.0은 실패 시 &#x27;재작성&#x27; 경로만 있었다.</td><td>운영 결손</td></tr>
+<tr><td>V-28</td><td><span class="chg mod">수정</span></td><td><span class="sev l">경미</span></td><td>11장 SVG</td><td>12장 SVG</td><td>정의되지 않은 marker(url(#a)) 참조로 화살표가 표시되지 않았다. marker를 정의하고 레인을 재구성했다.</td><td>렌더링 결함</td></tr>
+<tr><td>V-29</td><td><span class="chg mod">수정</span></td><td><span class="sev l">경미</span></td><td>전반</td><td>전반</td><td>소절 번호 불일치(7개 장 10곳 — 7장 안의 6.1·6.2, 19장 안의 18.1~18.3 등)를 고쳤다. 목차를 3장에서 문서 앞으로 옮기고 누락된 1·26장을 넣었다.</td><td>편집 결함</td></tr>
+<tr><td>V-30</td><td><span class="chg add">추가</span></td><td><span class="sev m">중요</span></td><td>17장</td><td>20장</td><td>&#x27;LegalOpinionV2&#x27;는 참조만 있고 정의가 없어 출력 스키마를 정의했다.</td><td>미정의 참조</td></tr>
+<tr><td>V-31</td><td><span class="chg mod">수정</span></td><td><span class="sev m">중요</span></td><td>12장 11.1</td><td>13.3장</td><td>Confidence 벡터의 방향이 섞여 있었다(contrary_authority_risk만 역방향). 모든 항목을 &#x27;높을수록 좋음&#x27;으로 통일했다. 게이트 판정은 수치 가중합이 아니라 규칙 기반으로 하고, 보정 오차(ECE)를 측정한다.</td><td>해석 오류 위험</td></tr>
+<tr><td>V-32</td><td><span class="chg add">추가</span></td><td><span class="sev m">중요</span></td><td>13장</td><td>14장</td><td>Opponent의 독립성을 보강했다. 초기 결론을 보지 않고 먼저 독립 검색하고, 고위험 사안은 다른 기반 모델을 쓴다.</td><td>동조 편향, 설계지시문 제6.5.5조</td></tr>
+<tr><td>V-33</td><td><span class="chg add">추가</span></td><td><span class="sev m">중요</span></td><td>15·22장</td><td>16·24장</td><td>모델 교체 시 Embedding·Reranker·Index 버전을 독립 관리한다(임베딩 교체 = 전면 재색인, 이중 색인 전환). 호출마다 모델 식별자를 대조한다.</td><td>운영 결손</td></tr>
+<tr><td>V-34</td><td><span class="chg add">추가</span></td><td><span class="sev m">중요</span></td><td>18장</td><td>19장</td><td>Golden Set 오염·만료를 관리한다. DEV/HOLDOUT 분리(HOLDOUT 학습 금지), 정답 기준일·만료일, 이중 검토 일치도, 보류 기대 사례를 둔다.</td><td>평가 신뢰성, 설계지시문 제15.1조</td></tr>
+<tr><td>V-35</td><td><span class="chg mod">수정</span></td><td><span class="sev l">경미</span></td><td>18장</td><td>19장</td><td>Tax Calculation Accuracy &#x27;≥ 99.9%&#x27;를 &#x27;확정 시험사례 100% 일치&#x27;로 바꿨다. 결정론적 도구에 오차 허용은 맞지 않는다.</td><td>결정론적 도구 원칙</td></tr>
+<tr><td>V-36</td><td><span class="chg add">추가</span></td><td><span class="sev m">중요</span></td><td>22장</td><td>24.3장, opinion_impact_alert</td><td>법령·판례·해석이 바뀌면 기발행 의견의 영향을 탐지해 재검토 경보를 낸다.</td><td>운영 결손</td></tr>
+<tr><td>V-37</td><td><span class="chg mod">수정</span></td><td><span class="sev l">경미</span></td><td>1장</td><td>1장</td><td>근거 없는 &#x27;80~90% / 10~20%&#x27;를 &#x27;설계 지향치(측정값 아님)&#x27;로 표기하고 측정 방법을 붙였다.</td><td>근거 없는 정량</td></tr>
+<tr><td>V-38</td><td><span class="chg mod">수정</span></td><td><span class="sev l">경미</span></td><td>16장</td><td>17장</td><td>&#x27;판례 사실비교 → SFT 효과 큼&#x27; 단정을 &#x27;효과 기대, Benchmark로 확인&#x27;으로 완화했다.</td><td>근거 없는 단정</td></tr>
+<tr><td>V-39</td><td><span class="chg mod">수정</span></td><td><span class="sev l">경미</span></td><td>style</td><td>style</td><td>인쇄 시 .card break-inside:avoid로 긴 장이 통째로 밀리고, SVG min-width 820px가 A4에서 잘렸다. 인쇄 CSS를 수정했다.</td><td>출력 결함</td></tr>
+<tr><td>V-40</td><td><span class="chg del">삭제</span></td><td><span class="sev m">중요</span></td><td>25장 2번</td><td>28장</td><td>IEEE Access 논문의 &#x27;300문항, GPT-5.1 High/Medium 95.33%&#x27; 수치는 공개 서지·요약에서 확인되지 않아 삭제하고 서지(vol.14, pp.124441–124458, DOI)를 보강했다. 원문 확인 후 다시 기재한다.</td><td>IEEE Access 서지 정보</td></tr>
+<tr><td>V-41</td><td><span class="chg mod">수정</span></td><td><span class="sev l">경미</span></td><td>25장 1번</td><td>28장</td><td>LegalGraphRAG 서지를 보강했다. ACL 2026 Main(Long), pp.37455–37484, arXiv:2605.28120이며 Researcher–Auditor–Adjudicator 구조를 확인했다.</td><td>ACL Anthology</td></tr>
+<tr><td>V-42</td><td><span class="chg add">추가</span></td><td><span class="sev l">경미</span></td><td>25장</td><td>28장</td><td>변호사법·세무사법·AI 기본법·국세기본법·MyBee 설계지시문 v3.2 조항을 추가했다.</td><td>—</td></tr>
+<tr><td>V-43</td><td><span class="chg del">삭제</span></td><td><span class="sev m">중요</span></td><td>21장</td><td>23장</td><td>&#x27;외부 LLM 사용 시 Trust Agent가 반출정책 확인&#x27;을 삭제했다. 외부 모델 호출은 외부 시스템 호출이므로 VA 반출 규칙 판정 + TA 경유로 대체한다(Local 원칙 유지).</td><td>설계지시문 v3.2 제6.6·6.7조</td></tr>
+</tbody></table></div>
+<h3>A.5 v1.2 플랫폼 정합 개정(설계지시문 v3.9 재대조)</h3>
+<p>v1.1 은 설계지시문 v3.2 에 맞추어 검증했다. 그 뒤 v3.8 이 Trust Agent 를 에이전트 종류(TR)로 명시하고 판정 순서(사람·IA → Trust Agent → VA → PA)와 판정 기준 보호(8.7)를 정했으므로,
+MyBee 전체 문서 정합성 검증에서 이 문서를 v3.9 에 다시 대조해 아래 7건을 고쳤다. A.4 의 V-nn 개정 내역은 v1.1 당시의 기록이라 근거 판(v3.2)을 그대로 둔다.</p>
+<table>
+<tr><th style="width:4%">No</th><th style="width:15%">위치</th><th>불일치</th><th>정정</th><th style="width:17%">근거</th></tr>
+<tr><td>1</td><td>머리말 · 5장 7층 · 29장</td><td>공통 통제를 「VA·TA·Trust Agent」 순으로, Trust Agent 를 &lt;인증&gt;으로만 적었다</td><td>판정 순서대로 Trust Agent(TR, 착수 판정) → VA(지시 자격) → TA(외부실행)로 적음</td><td>설계지시문 v3.9 제6.1.1 · 6.11조</td></tr><tr><td>2</td><td>6.1 책임 재배치 — VA 행</td><td>VA 가 &lt;신원&gt;까지 본다고 적었다(v3.2 제6.6조 문언). v3.8 부터 신원은 Trust Agent 가 판정하고 VA 는 다시 판정하지 않는다</td><td>VA 검사 항목에서 신원을 빼고 &lt;토큰의 서명 · 기한 · 사용 횟수만 확인&gt;으로 고침</td><td>제6.6.3 · 6.11.4조, 통합 쟁점 I-9</td></tr><tr><td>3</td><td>6.1 책임 재배치 — Trust Agent 행</td><td>&lt;약어 없이 Trust Agent 로만 표기&gt;라고 적었다. v3.8 은 종류 약어 TR 을 두었다</td><td>신원 · 인증 강도 · 세션 위험 · 권한 조각 판정과 능력 토큰 발급, 약어 TR(TA 로 줄여 쓰지 않음)</td><td>제6.1.5 · 6.11.3조</td></tr><tr><td>4</td><td>7장 Agent 협업도</td><td>PA → VA → Legal Orchestrator 로 그려 착수 판정이 빠져 있었다</td><td>PA → Trust Agent(착수 판정) → VA(지시 자격) → Legal Orchestrator</td><td>제6.11.1조</td></tr><tr><td>5</td><td>23장 접근 흐름</td><td>Trust Agent 를 &lt;업무 착수 인증&gt;으로 적었다</td><td>&lt;신원 · 착수 판정&gt;으로 고침</td><td>제6.11조</td></tr><tr><td>6</td><td>6.2 · 28장 참고 근거</td><td>근거 조항을 설계지시문 v3.2 로 인용했다</td><td>v3.9 로 다시 대조해 인용(조항 번호 6.5 · 6.6 · 6.7 · 8.4 · 8.6 · 15.1 · 4.9 는 그대로 유효) · 6.11 · 8.7 추가</td><td>설계지시문 v3.9</td></tr><tr><td>7</td><td>A.5(신설)</td><td>Legal Trust Gate 의 판정 규칙 · EA 최소 확신도가 판정 기준 보호(8.7) 대상인지 적혀 있지 않았다</td><td>LTG 는 EA 내부 게이트이며 판정기(Trust Agent · VA)가 아니므로 8.7.1 목록 대상이 아니다. 다만 규칙 · 기준치는 데이터로 버전을 두고 배포 게이트를 거친다고 명시</td><td>제8.7.1 · 6.5.4 · 15.1조</td></tr>
+</table>
+<div class="callout amber"><b>바뀌지 않은 것.</b> Legal/Tax 에이전트는 EA 이고(6.2), 의견 확정은 자격자 승인(내용 해시), 발행은 TA 로만 나간다. 21장 테이블 명세 · 13장 LTG 규칙 · 20장 출력 스키마는 바꾸지 않았다.
+PostgreSQL 실행 검증은 하지 않았다.</div>
+<h3>A.6 v1.3 정합 개정(설계지시문 v4.0 기준) <span class="chg add">v1.3</span></h3>
+<p>MyBee 전체 문서 정합성 2차 검증(설계지시문 v3.9 대조)에서 이 문서에 17건(높음 1 · 중간 8 · 낮음 8)이 나왔고, 스스로 다시 대조해 4건을 더 찾았다.
+v1.3 은 이를 고치고 근거 판을 <b>설계지시문 v4.0</b>(조항 번호는 v3.9 와 같다) · <b>DB 테이블설계서 v2.8</b>(33스키마 · 473표) · <b>코드체계 설계서 v2.8</b>로 올렸다.
+A.3 · A.4 는 v1.1 당시(설계지시문 v3.2) 기록, A.5 는 v1.2 당시(v3.9) 기록이라 근거 판을 그대로 두고 당시 기록임을 표시했다. 다만 A.4 의 위치 오기(V-12 · V-19)와 현행 규칙과 어긋나는 문구(V-17 · V-19)는 v1.3 정정 표시와 함께 고쳤다.</p>
+<div class="tw"><table class="chgtab">
+<thead><tr><th style="width:4%">No</th><th style="width:9%">발견 ID</th><th style="width:15%">위치</th><th>불일치</th><th>정정</th><th style="width:16%">근거</th></tr></thead><tbody>
+<tr><td>1</td><td>legal-01</td><td>21.3 lgmat.matter(work_code · project_code) · 21.1</td><td>업무코드 char(9) · 프로젝트 코드 char(10) 고정 길이, 설명 「9자리 · 10자리」 — 코드 구성을 데이터로 두는 원칙과 플랫폼 타입에 어긋남</td><td>work_code varchar(20) · project_code varchar(30)으로 바꾸고 설명을 「길이 · 구성은 code_scheme 데이터가 정한다」로 고침. 21.4 검사 10항목 재실행 — 전부 통과, 수치(23표 · 310컬럼 · FK 32 · UK 18 · CHECK 54/13) 변화 없음(두 컬럼은 FK · 열거 대상이 아님)</td><td>설계지시문 v4.0 제4.7.1조, 코드체계 설계서 v2.8, DB 테이블설계서 v2.8(mbcode.work_code varchar(20) · mbproj.project.project_code varchar(30))</td></tr><tr><td>2</td><td>legal-02</td><td>A.1 검증 범위 — MyBee 플랫폼 정합 행</td><td>대조 기준을 설계지시문 v3.2 로만 적어 v1.2 · v1.3 재대조가 드러나지 않음</td><td>「v1.1 당시: v3.2 / v1.2: v3.9 재대조(A.5) / v1.3(현행): 설계지시문 v4.0 · DB 테이블설계서 v2.8(A.6)」로 판을 나누어 적음</td><td>설계지시문 v3.9 부속서 R.2(근거 조항 판 재대조 — v4.0 에서 조항 번호 불변)</td></tr><tr><td>3</td><td>legal-03</td><td>28.3 MyBee 내부 기준 — DB 테이블 설계서</td><td>DB 테이블 설계서 v2.0 을 현행 근거로 인용</td><td>「MyBee DB 테이블설계서 v2.8(33스키마 · 473표 · 공통 컬럼 15개)」로 고치고 v1.1 당시 판(v2.0)을 병기. 코드체계 설계서 v2.8 을 추가</td><td>DB 테이블설계서 v2.8</td></tr><tr><td>4</td><td>legal-04</td><td>12장 End-to-End Sequence ① 주석</td><td>「VA 자격 판정 통과분만」 — Trust Agent 착수 판정 누락</td><td>「Trust Agent 착수 판정 → VA 지시 자격 판정 통과분만」(두 줄)으로 고침</td><td>설계지시문 v4.0 제6.11.1조</td></tr><tr><td>5</td><td>legal-05</td><td>29장 최종 권고 아키텍처 — MyBee PA 행</td><td>PA 행에 「VA 자격 판정」만 적어 판정이 PA 의 일처럼 읽힘</td><td>「Trust Agent 착수 판정 · VA 지시 자격 판정을 통과한 지시만 수행」으로 고침(판정 자체는 Control 행)</td><td>제6.11.1조(PA · EA · TA 는 판정하지 않는다)</td></tr><tr><td>6</td><td>legal-06</td><td>23.1 권한 V-16 문단 · 23장 Zero-Trust 그림</td><td>권한 3분할의 대상을 사안 영역 · 기밀분류로 두고 업무코드를 별도 축으로 덧붙임, 판정 주체를 VA 로만 기술</td><td>대상 = 업무코드(업무영역 전체 / 열거된 업무코드). 세 조각 보유는 Trust Agent 가 착수 판정에서, 지시 자격(범위 · 한도 · 협조 금지쌍 · 직무분리 · 기간)은 VA 가 판정. 사안 영역 · 기밀분류는 검색 사전필터 · 파생 데이터 권한 속성. 그림 라벨 VA 「지시 자격」, Trust Agent 「신원 · 착수 판정(권한 세 조각)」</td><td>제8.1.1 · 6.11.1 · 8.6.4조</td></tr><tr><td>7</td><td>legal-07</td><td>5장 전체 아키텍처 1층</td><td>구 시스템 약어 ACC/TRS/PRC/MMS 와 「업무 에이전트」라는 없는 종류</td><td>「임직원 IA · 업무영역 프로젝트의 PA(D04 회계 · D05 재무 · D15 구매 · D06 제조 등)」로 고침</td><td>제6.1.1조(에이전트 6종), 업무영역 18(D01~D18)</td></tr><tr><td>8</td><td>legal-08</td><td>15.2 원천 데이터 연계</td><td>총계정원장 소유자를 구 시스템 「회계관리시스템(ACC)」, 조정 제안 경로를 「ACC 의 전표 제안 워크플로」로 표기</td><td>D04 회계업무 영역이 총계정원장(mbacct)을 단독 소유, 조정 제안은 사안을 맡은 PA 가 전표 제안함(mbacct.journal_inbox)에 멱등키와 함께 넣음(EA 는 의견만), matter_fact.source_domain=&#x27;D04&#x27; 로 기록</td><td>제10.1.1 · 6.5.3조, DB 테이블설계서 v2.8 mbacct.journal_inbox</td></tr><tr><td>9</td><td>legal-09</td><td>21.3 lgmat.matter_fact.source_system 설명</td><td>원천 시스템 값 예시가 구 시스템 약어(ACC · TRS · PRC)</td><td>원천 업무영역(D04 · D05 · D15 등)으로 고침 — 컬럼은 공통 컬럼과 이름이 겹쳐 source_domain 으로 개명(new-legal-02)</td><td>업무영역 18(D04 회계업무 · D05 재무업무 · D15 부품·반제품 구매업무)</td></tr><tr><td>10</td><td>legal-10</td><td>7장 책임표 · 협업도 (A.4 V-26 · 5장 3층)</td><td>V-26 은 Compliance 를 책임표에 넣었다고 했으나 7장 책임표에 Corporate · Compliance · Litigation EA 행이 없음</td><td>책임표에 Corporate EA · Compliance EA · Litigation EA 3행(주요 책임 · 금지사항)을 추가하고 협업도에 Compliance · Litigation EA 노드를 추가 — 5장 3층의 EA 목록과 일치</td><td>문서 내부 정합(5장 3층 · lgmat.matter.matter_domain 열거값)</td></tr><tr><td>11</td><td>legal-11</td><td>A.2 결과 요약</td><td>요약 수치가 v1.1 개정 43건만 반영, 판 한정 표시 없음</td><td>제목을 「A.2 결과 요약(v1.1 검증)」으로 하고 v1.2 플랫폼 정합 7건(A.5) · v1.3 정합 개정 카드(A.6)를 추가</td><td>문서 내부 정합</td></tr><tr><td>12</td><td>legal-12</td><td>A.3 치명 결함 3건 — V-14</td><td>Trust Agent 를 「인증」, VA 를 「권한」으로 v3.2 당시 역할로 요약하면서 당시 기록이라는 표시가 없음</td><td>A.3 제목에 「v1.1 당시 기록 · 설계지시문 v3.2 기준」을 달고 V-14 카드에 현행 역할(Trust Agent(TR) 착수 판정 · VA 지시 자격)을 병기</td><td>제6.1.1 · 6.1.5 · 6.11.4조</td></tr><tr><td>13</td><td>legal-13</td><td>28.3 MyBee 내부 기준 — 제4.9조 표제</td><td>제4.9조를 「도구 3층 구조」로 표기</td><td>「제4.9조(실행 수단의 3층 구조 — 수치 산출은 등록 도구, 4.9.6 · 4.9.7)」로 고침</td><td>설계지시문 v4.0 4.9 표제</td></tr><tr><td>14</td><td>legal-14</td><td>6.1 책임 재배치 — 데이터 반출 정책 행 · 23.1 V-43</td><td>VA 반출 규칙이 판정 기준 보호(8.7.1) 대상인지 적혀 있지 않음</td><td>반출 규칙은 VA 규칙으로 판정 기준 목록(제8.7.1조)에 등재하고 판 승인(FL0013041) · 정책 묶음 게시(FL0013042)로만 바뀌며 목록에 없는 규칙은 VA 가 적재하지 않음. 외부 모델의 학습 이용 · 국외 이전은 계약 통제(제15.3.6조)</td><td>제6.6.3 · 8.7.1 · 8.7.4 · 15.3.6조</td></tr><tr><td>15</td><td>legal-15</td><td>21.1 공통 규약</td><td>lg* 23표의 공통 컬럼을 created_at · ext 2개로만 정의 — 플랫폼 공통 컬럼 15개와의 관계가 없음</td><td>플랫폼 탑재 시 MyBee 공통 컬럼 15개를 채택한다고 명시하고 이름을 모두 나열. 명세 컬럼 수 310은 고유 컬럼 + created_at · ext 기준(나머지 13개 제외)이며, 공통 컬럼을 모두 넣은 물리 컬럼 수는 599(23표 × 13 − lgmat 10표의 tenant_id)임을 적음. 공용 표(lgsrc · lgeval)의 tenant_id 는 플랫폼 예약 테넌트(mbcore.platform_asset 규약)</td><td>DB 테이블설계서 v2.8 7.3 공통 컬럼 15개 · R23-12</td></tr><tr><td>16</td><td>legal-16</td><td>17장 학습 데이터 제약 ③ · 23.2 학습을 통한 누출 · A.4 V-17</td><td>17장 · 23.2 는 동의 시 학습 허용, V-17 은 무조건 금지 — 기준이 둘</td><td>「원칙 금지, 불가피 시 해당 테넌트 · 원본 최소 권한 범위 전용(제8.6.10조), 동의 근거 기록, 공용 어댑터 금지」로 세 곳을 통일(V-17 에 v1.3 정정 표시)</td><td>제8.6.10조</td></tr><tr><td>17</td><td>legal-17</td><td>A.4 V-12 · V-19 「v1.1 반영」 위치</td><td>V-12 를 15.1장, V-19 를 15.3장으로만 표기</td><td>V-12 → 15장(Tax Evidence Stack), V-19 → 15.2·15.3장</td><td>본문 표식(15장 Tax Evidence Stack V-11·V-12, 15.2 V-19)</td></tr><tr><td>18</td><td>new-legal-01</td><td>8.1 데이터 분류 — 사내(테넌트) 행 · A.4 V-19</td><td>구 시스템 약어가 발견사항 밖에도 남음 — 「전표(ACC 참조)」 · 분류 속성 「원천 시스템」, V-19 내용 「ACC(원장 소유)」</td><td>「전표(D04 회계업무 원장 mbacct 읽기 전용 참조)」 · 「원천 업무영역」으로 고치고 V-19 는 v1.3 정정 표시로 바꿈 — 본문의 ACC/TRS/PRC/MMS 0건</td><td>제10.1.1조, 업무영역 18</td></tr><tr><td>19</td><td>new-legal-02</td><td>21.3 lgmat.matter_fact.source_system</td><td>공통 컬럼 15개를 채택하면 고유 컬럼 source_system(varchar(10))이 공통 컬럼 source_system(varchar(30), 행을 만든 채널)과 이름이 겹쳐 21.4 S2(컬럼명 중복)를 위반</td><td>source_domain varchar(20)으로 개명하고 15.2 본문 참조를 맞춤. 빌드에서 23표 전 컬럼을 공통 15개와 대조(겹치는 이름은 tenant_id · created_at · ext 뿐, 타입 동일)</td><td>DB 테이블설계서 v2.8 7.3, 21.4 S2</td></tr><tr><td>20</td><td>new-legal-03</td><td>3.1 단계별 역할 — L7 행</td><td>「VA 권한 판정」 — 착수 판정 누락, VA 역할을 권한으로 요약</td><td>「Trust Agent 착수 판정 + VA 지시 자격 판정」으로 고침</td><td>제6.11.1 · 6.6.3조</td></tr><tr><td>21</td><td>new-legal-04</td><td>19.1 · 21.3 lgeval.golden_case.contains_tenant_data · 27장 O-04</td><td>공용 평가 표(테넌트 무관)에 테넌트 자료를 동의 근거로 담도록 설계되어 테넌트 사이 파생 데이터 공유 금지(8.6.10)와 긴장</td><td>스키마 결정(테넌트 전용 평가 집합 분리 여부)이 필요해 이번 판에서 표를 바꾸지 않고 27장 O-04 에 결정 사항으로 등재</td><td>제8.6.10조</td></tr>
+</tbody></table></div>
+<div class="callout amber"><b>바뀌지 않은 것.</b> Legal/Tax 에이전트는 EA 이고(6.2), 의견 확정은 자격자 승인(내용 해시), 발행은 TA 로만 나간다. 13장 LTG 규칙 · 20장 출력 스키마는 바꾸지 않았다.
+21장 명세는 컬럼 타입 2건 · 개명 1건만 바뀌었고 21.4 정적 검사 10항목을 다시 돌려 전부 통과했다(23표 · 명세 컬럼 310 · FK 32 · UK 18 · CHECK(열거) 54 · CHECK(식) 13, v1.2 와 같음).
+new-legal-04(공용 평가 표의 테넌트 자료)는 스키마 결정이 필요해 27장 O-04 에 올리고 표는 바꾸지 않았다. PostgreSQL 실행 검증은 하지 않았다.</div>
+<h3>A.7 v1.4 정합 개정(설계지시문 v4.6 기준) <span class="chg add">v1.4</span></h3>
+<p>MyBee 전체 문서 정합성 3차 검증에서 이 문서의 <b>근거 판이 v4.0 계열에 멈춰 있다</b>는 발견(1건)이 나왔다. 설계 내용 · 테이블 · 규칙 · 출력 스키마는 바꾸지 않았고 근거 판과 그 판이 요구하는 확인만 고쳤다.</p>
+<div class="tw"><table class="chgtab"><thead><tr><th>자리</th><th>고치기 전(v1.3)</th><th>고친 뒤(v1.4)</th></tr></thead><tbody>
+<tr><td>A.1 검증 범위 · 28.3 참고 근거 · 6장 · 꼬리말</td><td>설계지시문 v4.0 · DB 테이블설계서 v2.8(473표) · 코드체계 설계서 v2.8. 「조항 번호는 v3.9 와 같음」이라고 단언. 꼬리말은 「v1.2 정합 개정」으로 판 표기도 틀렸다</td><td>설계지시문 v4.6 · DB 테이블설계서 v3.2(485표) · 코드체계 설계서 v3.2. v4.3 에서 6.9.11 · 6.9.12 신설 · 6.11.1 개정을 밝히고, 이 문서가 인용한 조항 번호가 모두 v4.6 에 실재함을 확인했다. 꼬리말 판 표기를 바로잡았다</td></tr>
+<tr><td>V-14 약어 설명</td><td>「현행 v4.0 은 TR, 착수 판정」</td><td>「현행 v4.6 은 TR, ⓐ 세션 판정 · ⓑ 착수 판정」 — Trust Agent 2단(6.11.1)</td></tr>
+</tbody></table></div>
+<div class="callout"><b>6.9.12 와의 관계 — 어긋나지 않는다.</b> 설계지시문 6.9.12 는 <b>업무코드 의도 카드 · 예문 색인</b>의 후보 검색을 테넌트와 활성 카드로만 거르고 요청자의 권한으로 거르지 말라고 정하고, 8.6.5 의 권한 사전 필터는 <b>업무 데이터 · 파생 데이터 검색</b>에 적용한다고 정한다. 이 문서의 사전 필터(23.2 · 5B 「사내문서 색인 — 권한 사전필터 · 파생데이터 최소권한」)는 사안 문서 · 의견 · 근거 묶음 같은 <b>업무 · 파생 데이터</b>의 검색이며 의도 해석의 카드 검색이 아니다. 따라서 8.6.5 쪽 규칙이 적용되는 자리이고 6.9.12 와 충돌하지 않는다. 12장 시퀀스의 「Trust Agent 착수 판정 → VA 지시 자격 판정 통과분만」도 판정 게이트(한 번 호출 · 기록 한 행)와 같은 순서다.</div>
+</section>
+
+<!-- ───────────────────────── 1 ───────────────────────── -->
+<section class="card" id="s1">
+<div class="kicker">Executive Summary</div>
+<h2>1. 설계 결론</h2>
+<div class="diagram">
+<div class="diagram-title">핵심 구조 — "법률 두뇌"를 LLM 안이 아니라 MyBee 플랫폼에 둔다</div>
+<div class="flow">
+  <div class="node blue">MyBee PA 과업<br><small>업무코드·프로젝트</small></div><div class="arrow">→</div>
+  <div class="node green">Legal Intelligence Layer<br><small>지식·검색·절차·검증</small></div><div class="arrow">→</div>
+  <div class="node purple">교체 가능한 Local LLM<br><small>Reasoning Engine</small></div><div class="arrow">→</div>
+  <div class="node amber">Evidence Auditor<br>Legal Trust Gate <span class="chg mod">V-14</span></div><div class="arrow">→</div>
+  <div class="node red">자격자 승인 <span class="chg add">V-05</span></div><div class="arrow">→</div>
+  <div class="node blue">의견 발행<br><small>TA 경유</small></div>
+</div>
+</div>
+<div class="callout green"><b>최상위 설계 원칙</b><br>
+① 법령·판례·예규를 모델에 암기시키지 않는다. ② 법률가의 업무절차도 가능한 범위에서 Skill/Workflow로 외부화한다.
+③ Post-training은 새 모델이 Benchmark를 통과하지 못하는 능력에만 선택적으로 적용한다.
+④ 모든 중요한 결론은 원문 근거, <b>적용 기준일과 부칙 적용규칙</b>, 사실관계, 반대논리와 연결한다. <span class="chg mod">V-06</span><br>
+⑤ 시스템은 의견을 <b>제안</b>하고, 발행 책임은 <b>자격자</b>가 진다. 근거가 부족하면 답하지 않는다(보류). <span class="chg add">V-01·V-27</span></div>
+
+<div class="grid3">
+ <div class="metric"><b>80~90%</b>법률 역량을 DB·RAG·Graph·Skill·Rule·Evaluator로 외부화 — <i>설계 지향치</i></div>
+ <div class="metric"><b>10~20%</b>모델 고유 추론·언어능력 의존 — <i>설계 지향치</i></div>
+ <div class="metric"><b>0%</b>"모델이 기억한다"는 이유만으로 허용되는 법적 결론</div>
+</div>
+<p class="note"><span class="chg mod">V-37</span> 위 두 비율은 측정값이 아니라 설계 방향이다. 측정은 Golden Set에서 <b>검색 결과를 비운 상태(closed-book)</b>와 <b>전체 구성</b>의 점수 차이로 한다. 차이가 작을수록 모델 의존이 크다는 뜻이며, Phase 0 기준선 측정 후 목표치로 확정한다.</p>
+</section>
+
+<!-- ───────────────────────── 2 ───────────────────────── -->
+<section class="card" id="s2">
+<div class="kicker">Legal Boundary</div>
+<h2>2. 서비스 포지셔닝과 법적 경계 <span class="chg add">V-01·V-02</span></h2>
+<p>v1.0은 "자문변호사 수준"을 목표로 하면서도 <b>누가 누구에게 의견을 제공하는가</b>를 정하지 않았다. MyBee는 1,000개 이상 테넌트에 제공되는 SaaS이므로, 이 구조가 곧 "플랫폼 운영사가 다수 회사에 법률·세무 판단을 제공하는 것"으로 읽힐 수 있다. 이 장은 설계 전제를 고정하기 위한 검토이며, 출시 전 외부 법률의견으로 확정한다.</p>
+
+<h3>2.1 규제 쟁점</h3>
+<table>
+<tr><th style="width:20%">규범</th><th>쟁점</th><th style="width:34%">설계에 주는 제약</th></tr>
+<tr><td>변호사법 제109조</td><td>변호사가 아닌 자가 금품 등을 받고 법률사무(법률상담·법률관계 문서 작성 등)를 취급하면 처벌 대상이다. 유료 SaaS가 타사의 구체적 사안에 법률판단을 제공하면 쟁점이 된다.</td><td>플랫폼 운영사는 의견의 <b>발행 주체</b>가 되지 않는다. 의견은 테넌트 내부 조직 또는 테넌트가 선임한 자격자의 업무 보조 산출물이다.</td></tr>
+<tr><td>2025 리걸테크 판결(로폼 사건 보도)</td><td>이용자 입력에 따라 표준 양식을 채우는 서비스는 "구체적 사안에 대한 법률적 판단이나 개입이 없는 단순 양식 제공"으로 법률사무가 아니라고 보았다. 반면 생성형 AI가 개별 상황에 법률판단을 가미하거나 유료 변호사 검토와 연계하면 위법 소지가 있다고 언급되었다.</td><td>MyBee Legal Agent는 개별 사안 판단을 하므로 <b>양식 제공 논리로 면책되지 않는다</b>. 따라서 사용자·발행 주체 제한이 필수다.</td></tr>
+<tr><td>변호사법 제34조</td><td>변호사가 아닌 자와의 동업·알선 등을 제한한다.</td><td>플랫폼 안에서 외부 변호사·세무사 <b>매칭·연계·수수료 구조를 두지 않는다</b>. 자격자는 테넌트가 직접 등록한다.</td></tr>
+<tr><td>세무사법(세무대리)</td><td>타인의 세무 신고·조정·의견 제공은 세무대리 자격 영역이다.</td><td>세무 의견 승인은 세무사·공인회계사 등 자격자 또는 테넌트 자신의 내부 결정으로 한정한다. 신고서 제출은 TA 경유 + 사람 승인(설계지시문 제6.7.2조).</td></tr>
+<tr><td>AI 기본법(2026-01-22 시행)</td><td>생성형 AI 기반 서비스는 이용자에게 사전 고지하고 결과물을 표시할 의무가 있다. 고영향 AI 해당 여부도 검토해야 한다.</td><td>모든 의견에 AI 생성 고지(<code>legal_opinion.ai_generated_notice</code>), 화면·약관에 사전 고지, 고영향 해당성 검토를 27장 미결 사항으로 관리한다.</td></tr>
+</table>
+
+<h3>2.2 운영 원칙</h3>
+<div class="grid2">
+<div class="callout green"><b>허용 구조</b><ul>
+<li>테넌트 소속 법무·세무 담당자와 사내 변호사의 <b>리서치·초안 보조</b></li>
+<li>테넌트가 직접 선임·등록한 외부 자격자의 검토 도구</li>
+<li>근거 원문·시점·반대논리를 제시하는 <b>의사결정 지원</b></li>
+<li>자격자 승인 후 테넌트 명의로 발행</li></ul></div>
+<div class="callout red"><b>금지 구조</b><ul>
+<li>플랫폼 운영사 명의의 법률·세무 의견 발행</li>
+<li>자격자 승인 없이 고위험 의견을 확정 결론으로 제공</li>
+<li>외부 자격자 알선·매칭·수수료 연계</li>
+<li>"정확성 보장", "변호사 대체" 표현의 마케팅·화면 문구</li></ul></div>
+</div>
+
+<h3>2.3 사용자에게 항상 보이는 고지</h3>
+<pre>① 이 결과물은 생성형 AI 시스템이 작성한 초안입니다.
+② 기준일: 2025-03-14 · 원문 스냅샷: kr-law-2026-09-13
+③ 확인되지 않은 사실(가정) N건, 상충 근거 M건이 있습니다.
+④ 승인 상태: 미승인 초안 / ○○○ 변호사 승인(2026-09-13)</pre>
+</section>
+
+<!-- ───────────────────────── 3 ───────────────────────── -->
+<section class="card" id="maturity">
+<div class="kicker">Capability Maturity Model</div>
+<h2>3. Legal/Tax Agent 7단계 성숙도 모델</h2>
+
+<div class="diagram">
+<div class="diagram-title">MyBee Legal Intelligence Capability Ladder</div>
+<div class="arch">
+<div class="layer"><strong>Level 1 · 일반 RAG</strong> — 법률 검색 보조 <span class="pill">검색·요약</span></div>
+<div class="layer"><strong>Level 2 · Hybrid RAG + 시점 필터</strong> — 법무팀 직원 수준 <span class="pill">정확검색·정리·초기검토</span></div>
+<div class="layer"><strong>Level 3 · Agentic RAG</strong> — 주니어 변호사 수준 <span class="pill">사실·쟁점·리서치 계획</span></div>
+<div class="layer"><strong>Level 4 · Graph + Agentic RAG</strong> — 전문 법률 Researcher 수준 <span class="pill">법리관계·판례계보·복합쟁점</span></div>
+<div class="layer"><strong>Level 5 · 자문 초안 품질</strong> — 자격자 수준의 초안 <span class="pill">쟁점판단·사실비교·논증</span> <span class="pill">Post-training은 조건부</span> <span class="chg mod">V-20</span></div>
+<div class="layer"><strong>Level 6 · + Auditor / Opponent / Legal Trust Gate</strong> — <b>고신뢰 Legal Decision Support</b> <span class="pill">반대논리·증거검증·보류</span></div>
+<div class="layer"><strong>Level 7 · + 자격자 승인</strong> — 실제 기업 법률·세무 업무 프로세스 <span class="pill">책임 있는 최종 승인</span> <span class="chg mod">V-05</span></div>
+</div>
+</div>
+
+<table>
+<tr><th>단계</th><th>목표 역할 수준</th><th>필수 기술 구성</th><th>주요 산출물</th><th>다음 단계 진입조건</th></tr>
+<tr><td><b>L1</b></td><td>법률 검색 보조</td><td>Vector RAG, 문서 Chunking, 기본 Citation</td><td>관련 법령·판례 목록, 요약</td><td>검색 Recall/정확도 기준 충족</td></tr>
+<tr><td><b>L2</b></td><td>법무팀 직원</td><td>BM25 + Vector + Metadata Filter + Reranker + <b>기준일 사전필터</b>, 기본 Citation Validator</td><td>관련 법령·판례 정리, 쟁점별 근거 묶음</td><td>법령·판례 검색 안정화, 시점 오류 기준 충족</td></tr>
+<tr><td><b>L3</b></td><td>주니어 변호사</td><td>Fact Agent, Issue Spotter, Research Planner, Tool-use Agentic RAG, <b>부칙 적용규칙 판정</b></td><td>사실관계 정리, 쟁점 리스트, 리서치 메모, 1차 의견</td><td>Issue Recall, Tool-use 정확도, 구조화 답변 기준 충족</td></tr>
+<tr><td><b>L4</b></td><td>전문 법률 Researcher</td><td>Knowledge Graph, 판례 인용·변경·심급 관계, 법리/요건/사실요소 Graph</td><td>판례계보, 상충법리, 사실유사도 비교, 복합쟁점 분석</td><td>Graph 탐색 품질, 판례 비교 정확도, 상충근거 탐지 기준 충족</td></tr>
+<tr><td><b>L5</b></td><td>자격자 수준의 초안</td><td>모델 독립 Golden Dataset + Case Comparison Skill + Output Schema. <b>Benchmark 미달 능력에 한해</b> SFT/DPO <span class="chg mod">V-20</span></td><td>의견서 초안, 리스크 분석, 대안 구조 비교</td><td>자격자 Blind Review에서 쟁점·논증·결론 품질 기준 충족</td></tr>
+<tr><td><b>L6</b></td><td><b>고신뢰 Legal Decision Support</b></td><td>Evidence Auditor, Opponent Agent, Temporal/Citation Validator, Legal Trust Gate, 보류(ABSTAIN) 경로</td><td>검증된 의견 초안, 반대논리, Evidence Map, 확신도 벡터</td><td>Unsupported Claim·Citation·Temporal 오류를 기준 이하로 억제, 보류 적정성 기준 충족</td></tr>
+<tr><td><b>L7</b></td><td>실제 기업 법률·세무 업무 프로세스</td><td>L6 + 자격자 승인(내용 해시) + 전자서명 + Trust Agent 착수 판정 + VA 지시 자격 판정 + TA 발행 + Audit Trail <span class="chg mod">v1.3</span></td><td>승인된 의견, 의사결정 기록, 후속 Action</td><td>내부통제·자격 책임·권한정책 충족</td></tr>
+</table>
+
+<div class="callout green">
+<b>MyBee의 최종 목표는 L7이다.</b> L7은 "LLM이 변호사·세무사를 대체한다"는 뜻이 아니다. L1~L6에서 검색·추론·반대논리·증거검증·시점검증을 자동화하여 자격자가 <b>최종 판단과 책임 있는 승인에 집중할 수 있는 업무 프로세스</b>를 구축하는 것이 목표다.
+</div>
+
+<h3>3.1 단계별 역할과 책임의 경계</h3>
+<div class="diagram">
+<div class="diagram-title">자동화 범위의 확장과 인간 책임의 위치</div>
+<div class="flow">
+<div class="node blue">L1–L2<br>찾고 정리한다</div><div class="arrow">→</div>
+<div class="node green">L3–L4<br>쟁점을 찾고 비교한다</div><div class="arrow">→</div>
+<div class="node purple">L5<br>의견 초안을 작성한다</div><div class="arrow">→</div>
+<div class="node amber">L6<br>스스로 반박·검증·보류한다</div><div class="arrow">→</div>
+<div class="node red">L7<br>자격자가 최종 승인한다</div>
+</div>
+</div>
+
+<h3>3.2 단계별 권장 운영모드</h3>
+<table>
+<tr><th>단계</th><th>권장 사용방식</th><th>사람의 개입</th></tr>
+<tr><td>L1</td><td>검색·요약 보조</td><td>모든 판단은 사람이 수행</td></tr>
+<tr><td>L2</td><td>법무팀 리서치 보조</td><td>근거선정·결론은 사람</td></tr>
+<tr><td>L3</td><td>1차 이슈스팟팅·초기 분석</td><td>자격자가 쟁점·법리 검토</td></tr>
+<tr><td>L4</td><td>복합 리서치·판례 비교</td><td>자격자가 주요 법리와 전략 검토</td></tr>
+<tr><td>L5</td><td>의견 초안 생성</td><td>자격자 편집·보완 필수</td></tr>
+<tr><td>L6</td><td>고신뢰 의사결정 지원</td><td>HIGH·CRITICAL 사안은 승인 전 자격자 검토 필수</td></tr>
+<tr><td>L7</td><td>실제 기업 법률·세무 workflow</td><td>자격자 최종 승인·책임. LOW·MEDIUM은 권한 있는 담당자 승인 가능</td></tr>
+</table>
+
+<h3>3.3 MyBee 권고 구현 전략</h3>
+<p>초기 목표를 L5로 잡고 Post-training부터 시작하지 않는다. <b>L1 → L2 → L3 → L4 → L6</b>의 기반을 먼저 완성한 뒤, 모델 자체의 추론능력이 Golden Benchmark를 통과하지 못하는 영역에 한해 L5의 선택적 Post-training을 적용한다. 실제 구현 순서는 성숙도 숫자와 같지 않으며, <b>검증체계(Golden Set·Citation/Temporal Validator)는 Phase 0~2에 시작</b>한다(25장). <span class="chg mod">V-21</span></p>
+</section>
+
+<!-- ───────────────────────── 4 ───────────────────────── -->
+<section id="principle" class="card">
+<div class="kicker">Design Principle</div>
+<h2>4. 설계 철학</h2>
+<div class="diagram">
+<div class="diagram-title">기존 접근과 권고 접근의 차이</div>
+<div class="grid2">
+ <div>
+  <h3>피해야 할 구조</h3>
+  <div class="arch">
+   <div class="layer"><strong>법령/판례 대량 수집</strong></div>
+   <div class="layer"><strong>Local LLM에 대량 SFT / LoRA</strong></div>
+   <div class="layer"><strong>모델 내부 기억에 의존</strong></div>
+   <div class="layer"><strong>모델 변경 → 재학습·재검증</strong></div>
+  </div>
+ </div>
+ <div>
+  <h3>MyBee 권고 구조</h3>
+  <div class="arch">
+   <div class="layer"><strong>법률 원문·Temporal DB·부칙 적용규칙</strong></div>
+   <div class="layer"><strong>Hybrid RAG + Knowledge Graph</strong></div>
+   <div class="layer"><strong>Skill / Workflow / Rule 외부화</strong></div>
+   <div class="layer"><strong>LLM Hot-Swap + Benchmark Gate</strong></div>
+  </div>
+ </div>
+</div>
+</div>
+<p>MyBee Legal/Tax Agent의 경쟁력은 특정 모델이 아니라 <b>법률지식 관리체계, 검색 품질, 업무절차, 검증 및 평가체계</b>에 귀속되어야 한다. 그래야 Qwen, Llama, Gemma, Mistral 또는 향후 신규 모델로 교체해도 플랫폼 자산이 유지된다.</p>
+<p>MyBee 공통 원칙과의 분담: <b>판단=에이전트 · 계산=도구 · 부작용=TA · 책임 결정=사람 · 규칙/파라미터=데이터</b>. 수치를 산출하는 단계(세액·기한 계산)와 권한 판정에는 LLM을 두지 않는다. <span class="chg add">V-19</span></p>
+</section>
+
+<!-- ───────────────────────── 5 ───────────────────────── -->
+<section id="architecture" class="card">
+<div class="kicker">Reference Architecture</div>
+<h2>5. 전체 아키텍처 <span class="chg mod">V-22</span></h2>
+<div class="diagram svgwrap">
+<div class="diagram-title">MyBee Legal Intelligence 7-Layer Architecture</div>
+<svg viewBox="0 0 1160 640" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="7층 아키텍처">
+<defs><style>
+.t{font-family:'Malgun Gothic',Arial,sans-serif;fill:#173f73;font-weight:700;font-size:17px}
+.s{font-family:'Malgun Gothic',Arial,sans-serif;fill:#50657d;font-size:12.5px}
+</style></defs>
+<rect x="45" y="20" width="1070" height="64" rx="14" fill="#eaf2ff" stroke="#9fc1ed"/>
+<text x="70" y="48" class="t">1. Experience · Project Layer</text><text x="70" y="70" class="s">임직원 IA · 업무영역 프로젝트의 PA(D04 회계 · D05 재무 · D15 구매 · D06 제조 등) → 법률·세무 과업 발생(업무코드·프로젝트 코드 부착)</text>
+<rect x="45" y="96" width="1070" height="64" rx="14" fill="#e9f8f3" stroke="#9ed7c5"/>
+<text x="70" y="124" class="t">2. Legal Orchestration Layer</text><text x="70" y="146" class="s">Fact Extraction · Issue Spotting · Jurisdiction · Multi-date Resolver · Research Planner · EA Routing · 사실 보완 질의</text>
+<rect x="45" y="172" width="1070" height="64" rx="14" fill="#f3efff" stroke="#c7bae7"/>
+<text x="70" y="200" class="t">3. Specialist EA Layer</text><text x="70" y="222" class="s">Corporate(상법) · Tax(국세·지방세) · Contract · Labor(근로기준법) · Safety(중대재해처벌법) · Compliance · Litigation · Opponent · Legal Writer</text>
+<rect x="45" y="248" width="1070" height="64" rx="14" fill="#fff5df" stroke="#e5c47a"/>
+<text x="70" y="276" class="t">4. Legal Intelligence Layer</text><text x="70" y="298" class="s">Skills · Workflow · IRAC · Retrieval Policy · Legal Ontology · Applicability Rules(부칙) · Citation Policy · Output Schema</text>
+<rect x="45" y="324" width="520" height="92" rx="14" fill="#eaf2ff" stroke="#9fc1ed"/>
+<text x="70" y="352" class="t">5A. 공용 법률 코퍼스 (lgsrc)</text><text x="70" y="375" class="s">Source Registry · 원문 Store · Temporal DB · 부칙 규칙</text><text x="70" y="396" class="s">OpenSearch(BM25) · Vector · Graph · 전 테넌트 공유(읽기)</text>
+<rect x="595" y="324" width="520" height="92" rx="14" fill="#e6f4f1" stroke="#8fcdb9"/>
+<text x="620" y="352" class="t">5B. 테넌트 사안 (lgmat · RLS)</text><text x="620" y="375" class="s">사실 · 쟁점 · Evidence Pack · 의견 · 승인 · 영향 경보</text><text x="620" y="396" class="s">사내문서 색인 — 권한 사전필터 · 파생데이터 최소권한</text>
+<rect x="45" y="428" width="520" height="92" rx="14" fill="#fff0f0" stroke="#dfa9a9"/>
+<text x="70" y="456" class="t">6A. Verification Layer</text><text x="70" y="479" class="s">Evidence Auditor · Citation Validator · Temporal Validator</text><text x="70" y="500" class="s">Conflict Checker · Legal Trust Gate(LTG) · 보류 판정</text>
+<rect x="595" y="428" width="520" height="92" rx="14" fill="#f4f7fb" stroke="#b9c7d8"/>
+<text x="620" y="456" class="t">6B. Model Runtime Layer</text><text x="620" y="479" class="s">Model Adapter · Qwen / Llama / Gemma / Mistral / Future LLM</text><text x="620" y="500" class="s">Embedding · Reranker(독립 버전) · vLLM · 모델 식별자 대조</text>
+<rect x="45" y="532" width="1070" height="92" rx="14" fill="#eef1f6" stroke="#8a9bb3" stroke-width="1.6"/>
+<text x="70" y="560" class="t">7. Governance &amp; Control Layer (MyBee 공통)</text><text x="70" y="583" class="s">Trust Agent(TR) — 착수 판정 · VA — 지시 자격·반출 규칙 판정(결정론) · TA — 발행·외부 전송 통로</text><text x="70" y="604" class="s">감사 기록(agent_step_log → mbaudit) · Benchmark / 배포 게이트(lgeval → mbeval) · 원문 스냅샷·정책 버전 관리</text>
+</svg>
+</div>
+<p>LLM은 6B의 실행 엔진일 뿐이며, 법률의 핵심 지능은 4~6A에 둔다. 7층은 Legal Agent가 새로 만드는 것이 아니라 <b>MyBee 공통 통제를 그대로 사용</b>하는 층이다. 생산환경에서는 <b>Legal Intelligence 정책 버전</b>, <b>원문 스냅샷</b>, <b>색인 버전</b>, <b>Model Runtime 버전</b>을 서로 독립적으로 배포한다.</p>
+</section>
+
+<!-- ───────────────────────── 6 ───────────────────────── -->
+<section id="mybee" class="card">
+<div class="kicker">Platform Alignment</div>
+<h2>6. MyBee 에이전트 체계와의 정합 <span class="chg add">V-14·V-15</span></h2>
+<div class="callout red"><b>v1.0의 문제.</b> v1.0은 "Trust Agent(TA)"에 <i>정책·권한·증거충족도·최종 공개 여부 결정</i>을 모두 맡겼다. 설계지시문(v3.2 이후, 현행 v4.6)에서는 Trust Agent·VA·TA와 사람이 이 일을 나누어 맡고, 약어 TA는 이미 <b>외부실행 에이전트</b>를 가리킨다. 그대로 구현하면 ① 이름 충돌로 통신 경로가 섞이고 ② LLM이 개입하는 품질 판단과 LLM이 금지된 권한 판정이 한 주체에 묶인다.</div>
+
+<h3>6.1 책임 재배치</h3>
+<table>
+<tr><th style="width:18%">v1.0 기능</th><th style="width:22%">v1.3 담당</th><th>근거·방식</th></tr>
+<tr><td>권한 확인(누가 이 사안을 지시·열람할 수 있나)</td><td><b>VA</b> 검증 에이전트</td><td>제6.6조 — 지시 자격만 본다(권한·블랙리스트·한도·직무분리·기간). 신원은 Trust Agent 가 판정하며 VA 는 능력 토큰의 서명·기한·사용 횟수만 확인한다(제6.6.3·6.11.4조). 데이터 규칙과 결정론적 함수만 사용하며 LLM·벡터 검색 금지. <span class="chg mod">v1.2</span></td></tr>
+<tr><td>데이터 반출 정책(외부 모델 호출 등)</td><td><b>VA</b> 반출 규칙 + <b>TA</b> 경유</td><td>외부 모델 호출은 외부 시스템 호출이므로 TA만 수행(제6.7.1조). <span class="chg del">V-43</span> "Trust Agent가 반출정책 확인"은 삭제. 반출 규칙은 <b>VA 규칙</b>이므로 판정 기준 목록(제8.7.1조)에 등재하고, 판 승인(FL0013041 판정 기준 판 승인)·정책 묶음 게시(FL0013042)로만 바뀐다(제8.7.4조). 목록에 없는 반출 규칙은 VA 가 적재하지 않는다. 외부 모델의 입력 학습 이용·국외 이전 여부는 계약으로 통제한다(제15.3.6조). <span class="chg mod">v1.3</span></td></tr>
+<tr><td>증거충족도·위험 기반 공개 판단</td><td><b>Legal Trust Gate(LTG)</b> — Legal EA 내부 게이트</td><td>규칙 기반 판정(13.2장). 결과는 "승인"이 아니라 <b>승인 요청·보류·반려 권고</b>다. EA는 업무를 확정하지 않는다(제6.5.3조).</td></tr>
+<tr><td>최종 승인</td><td><b>사람</b>(자격자·권한 담당자)</td><td>승인은 의견 내용 해시에 성립(12.3장).</td></tr>
+<tr><td>의견 발행·외부 전송·신고 제출</td><td><b>TA</b> 외부실행 에이전트</td><td>되돌릴 수 없는 외부 행위는 사람 승인 후에만(제6.7.2조), 멱등키 필수.</td></tr>
+<tr><td>작업자·에이전트 신원·인증과 착수 판정</td><td><b>Trust Agent</b>(TR)</td><td>제6.11조·제8.4조 — 모든 업무 착수 전에 신원·인증 강도·세션 위험·권한 조각을 결정론적으로 판정하고, 허용이면 능력 토큰을 발급한다. 판정 순서는 사람·IA → Trust Agent → VA → PA. 판정 기준(인증 정책 등)은 판 승인·정책 묶음 게시로만 바뀐다(제8.7조). 종류 약어는 TR 이며 TA(외부실행)로 줄여 쓰지 않는다(제6.1.5조). <span class="chg mod">v1.2</span></td></tr>
+</table>
+
+<h3>6.2 Legal/Tax 에이전트는 EA다</h3>
+<table>
+<tr><th style="width:26%">설계지시문 v4.6 제6.5조</th><th>Legal/Tax Agent 적용</th></tr>
+<tr><td>6.5.1 EA 필수 영역: 상법, 세법, 근로기준법, 중대재해처벌법 등</td><td>Corporate·Tax EA에 더해 <b>Labor·Safety EA</b>를 3층에 명시했다. v1.0의 "Labor"만으로는 중대재해처벌법이 누락된다.</td></tr>
+<tr><td>6.5.2 규정 해석 EA는 근거 조문 인용</td><td>핵심 주장(MATERIAL)은 근거 없이 PASS할 수 없다(<code>evidence_claim</code> CHECK).</td></tr>
+<tr><td>6.5.3 EA는 판정 의견만, 업무 확정 불가</td><td>LTG 결과는 권고이고, 의견 상태 APPROVED는 사람 승인 레코드로만 도달한다.</td></tr>
+<tr><td>6.5.4 자동 승인 최소 확신도, 미달 시 상향</td><td>EA 프로파일별 기준치를 데이터로 등록한다. 미달 시 PENDING_REVIEW로 올린다(13.2장 규칙 G-04).</td></tr>
+<tr><td>6.5.5 고위험 판정은 서로 다른 기반 모델 복수 EA 교차검증, 불일치 시 사람</td><td>HIGH·CRITICAL 사안은 <b>주 EA와 Opponent를 서로 다른 기반 모델</b>로 실행하고, 결론이 다르면 자동으로 자격자 검토에 올린다(14장).</td></tr>
+</table>
+</section>
+
+<!-- ───────────────────────── 7 ───────────────────────── -->
+<section id="agents" class="card">
+<h2>7. Agent 구성 및 책임 분리 <span class="chg add">V-26</span></h2>
+<div class="diagram">
+<div class="diagram-title">Agent 협업도</div>
+<div class="flow">
+<div class="node blue">Project Agent<br>PA</div><div class="arrow">→</div>
+<div class="node">Trust Agent<br><small>착수 판정</small></div><div class="arrow">→</div>
+<div class="node">VA<br><small>지시 자격</small></div><div class="arrow">→</div>
+<div class="node green">Legal Orchestrator</div><div class="arrow">→</div>
+<div class="node">Fact Agent</div><div class="arrow">→</div>
+<div class="node">Issue Spotter</div><div class="arrow">→</div>
+<div class="node purple">Research Agent</div>
+</div>
+<div class="gap"></div>
+<div class="flow">
+<div class="node">Statute EA</div><div class="node">Case EA</div><div class="node">Corporate EA</div><div class="node">Tax EA</div><div class="node">Contract EA</div><div class="node">Labor·Safety EA</div><div class="node">Compliance EA</div><div class="node">Litigation EA</div><div class="node amber">Opponent Agent</div>
+</div>
+<div class="down">↓</div>
+<div class="flow">
+<div class="node red">Evidence Auditor</div><div class="arrow">→</div>
+<div class="node red">Citation · Temporal Validator</div><div class="arrow">→</div>
+<div class="node amber">Legal Trust Gate</div><div class="arrow">→</div>
+<div class="node blue">Legal Writer</div><div class="arrow">→</div>
+<div class="node">자격자 승인</div><div class="arrow">→</div>
+<div class="node">TA 발행</div>
+</div>
+</div>
+<table>
+<tr><th style="width:18%">Agent</th><th>주요 책임</th><th style="width:30%">금지사항</th></tr>
+<tr><td>Legal Orchestrator</td><td>질문 분해, 관할·기준일 판단, 사실 보완 질의, EA 라우팅, 사안 상태 전이</td><td>근거 없이 최종 결론 생성</td></tr>
+<tr><td>Fact Agent</td><td>확정·주장·가정·다툼·미확인 사실 분리, 사실별 기준일과 기준일 종류 부착</td><td>추정을 사실로 승격, 기준일 임의 보정</td></tr>
+<tr><td>Issue Spotter</td><td>법적 쟁점 트리 생성, 공용 쟁점 노드 매핑, 누락 점검</td><td>검색 전 결론 고정</td></tr>
+<tr><td>Research Agent</td><td>법령·판례·해석례 탐색계획 수립, Evidence Pack 구성</td><td>단일 검색결과에 의존, 권한 사전필터 우회</td></tr>
+<tr class="new"><td>Statute EA</td><td>기준일 유효 조문과 부칙 적용규칙 선택, 위임 법령 추적</td><td>현행 조문을 과거 사안에 적용</td></tr>
+<tr><td>Case EA</td><td>판시사항·판결요지·사실요소 비교, 판례 상태(변경·폐기) 확인</td><td>사건번호 미검증 인용, 변경된 판례를 유효 판례로 인용</td></tr>
+<tr class="new"><td>Corporate EA <span class="chg add">v1.3</span></td><td>상법 쟁점(이사회·주주총회 결의 요건, 자본거래, 이사의 충실의무·자기거래) 판단, 정관·의사록 사실과 대조</td><td>의사록·정관 원문 없이 결의 요건 충족을 단정, 기준일과 다른 시점의 조문 적용</td></tr>
+<tr><td>Tax EA</td><td>국세·지방세 법령, 해석례, 불복 결정, 계산 도구 입력 구성, 구조 비교</td><td>세율·적용연도 확인 생략, 직접 산술</td></tr>
+<tr class="new"><td>Contract EA</td><td>계약 조항 추출, 표준 대비 편차, 법령 강행규정 충돌 점검</td><td>계약서 원문 없는 조항 판단</td></tr>
+<tr class="new"><td>Labor·Safety EA</td><td>근로기준법·중대재해처벌법 의무 매핑, 사업장 사실과 대조</td><td>안전보건 의무 이행 여부 단정(현장 확인 사실 없이)</td></tr>
+<tr class="new"><td>Compliance EA <span class="chg add">v1.3</span></td><td>공정거래·개인정보·하도급 등 준법 의무 매핑, 사내 규정과 법령의 충돌 점검, 위반 가능성과 근거 제시</td><td>사실 확인 없이 위반을 확정, 제재 수준 단정</td></tr>
+<tr class="new"><td>Litigation EA <span class="chg add">v1.3</span></td><td>분쟁·쟁송 사안의 청구원인·항변·입증책임 구조화, 제소·불복 기간 계산 도구의 입력 구성</td><td>승소 가능성을 수치로 단정, 기간을 직접 산술(도구로만 산출, 제4.9.6조)</td></tr>
+<tr><td>Opponent Agent</td><td>반대당사자·과세관청·주주 관점의 독립 검색과 반대논리</td><td>최초 결론을 먼저 읽고 반복, 주 EA와 같은 Evidence Pack만 사용</td></tr>
+<tr><td>Evidence Auditor</td><td>모든 주장-근거 매핑, 원문 존재·범위 일치·취지 검증</td><td>LLM 기억만으로 통과, 인용 번호 자동 수정</td></tr>
+<tr class="new"><td>Citation Validator</td><td>사건번호·조문번호·문서번호 형식과 실재를 결정론적으로 검사</td><td>LLM 판단 사용</td></tr>
+<tr class="new"><td>Temporal Validator</td><td>기준일 × 부칙 적용규칙 × 효력 상태로 인용 조문 적합성 판정</td><td>LLM 판단 사용, DRAFT 규칙 강제</td></tr>
+<tr><td>Legal Trust Gate <span class="chg mod">V-14</span></td><td>증거충족도·위험등급·확신도 규칙으로 승인 요청·보류·반려 권고</td><td>불충분한 근거를 확정의견으로 표시, 권한 판정(=VA 몫)</td></tr>
+<tr class="new"><td>Legal Writer</td><td>출력 스키마(20장)를 사람이 읽는 의견서로 렌더링, 고지 문구 삽입</td><td>검증되지 않은 주장 추가, 불확실성 문구 삭제</td></tr>
+</table>
+</section>
+
+<!-- ───────────────────────── 8 ───────────────────────── -->
+<section id="data" class="card">
+<h2>8. Legal/Tax DB 구축 방법</h2>
+<div class="diagram">
+<div class="diagram-title">4계층 데이터 구조</div>
+<div class="arch">
+<div class="layer"><strong>① Original Source Store</strong> — 법령·부칙·판례·결정례·해석례·조세조약·사내문서 원본, 원문 Hash, 수집시각, 이용조건</div>
+<div class="layer"><strong>② Relational Legal DB</strong> — 문서 Metadata, 조·항·호·목, 버전·효력 상태, 부칙 적용규칙, 사건번호, 법원, 선고일, 세목, 문서번호</div>
+<div class="layer"><strong>③ Search / Vector Index</strong> — BM25 + Dense Vector + Metadata 사전필터 + Reranking (색인 버전 = 임베딩 모델 버전 포함)</div>
+<div class="layer"><strong>④ Legal Knowledge Graph</strong> — 법령↔조문↔판례↔쟁점↔해석례 (공용). 회사·계약·프로젝트는 테넌트 사안 쪽에서 참조만</div>
+</div>
+</div>
+
+<h3>8.1 데이터 분류</h3>
+<table>
+<tr><th>Domain</th><th>소스</th><th>권장 Chunk</th><th>핵심 Metadata</th></tr>
+<tr><td>법령</td><td>법률·시행령·시행규칙·행정규칙·자치법규</td><td>조/항/호/목 단위</td><td>공포일, 시행일, 종료일, 효력 상태, 개정이력, <b>부칙 적용규칙</b></td></tr>
+<tr><td>판례·결정례</td><td>대법원·하급심·헌법재판소·조세심판원·감사원</td><td>판시사항 / 판결요지 / 이유(사실·판단) <span class="chg mod">V-09</span></td><td>사건번호, 기관, 선고일, 심급, 전원합의체 여부, 판례 상태, 인용관계</td></tr>
+<tr><td>세법 해석</td><td>기획재정부 예규·국세청 사전답변·질의회신·기본통칙·집행기준, 행정안전부 지방세 해석, 조세조약</td><td>세목+쟁점+결론 단위</td><td>세목, 국세/지방세, 문서번호, 발행 기관, 구속 범위, 적용조문</td></tr>
+<tr><td>사내 (테넌트)</td><td>정관·계약·의사록·규정·거래자료·전표(D04 회계업무 원장 mbacct 읽기 전용 참조) <span class="chg mod">v1.3</span></td><td>조항/의사결정/거래 단위</td><td>테넌트, 법인, 프로젝트, 기밀분류, 유효기간, 원천 업무영역</td></tr>
+</table>
+
+<h3>8.2 판례 구조 — 국내 판결문 체계로 매핑 <span class="chg mod">V-09</span></h3>
+<table>
+<tr><th style="width:22%">v1.0 (영미식)</th><th style="width:28%">v1.1 (국내 표기)</th><th>저장 위치</th></tr>
+<tr><td>Issue</td><td>판시사항</td><td><code>case_law.headnote_issues</code></td></tr>
+<tr><td>Holding</td><td>판결요지 · 주문</td><td><code>headnote_summary</code> · <code>disposition</code></td></tr>
+<tr><td>Facts</td><td>이유 중 사실관계·원심 판단</td><td><code>reasoning</code> 원문 + <code>facts_structured</code>(비교용 구조화)</td></tr>
+<tr><td>Reasoning</td><td>이유 중 법리 판단(상고이유 판단)</td><td><code>reasoning</code></td></tr>
+<tr><td>—</td><td>참조조문 · 참조판례</td><td><code>cited_provisions_raw</code> → 정규화하여 <code>kg_edge</code>(CITES·APPLIES)</td></tr>
+</table>
+<p class="note">판시사항·판결요지는 공식 판례집·종합법률정보에 수록된 판례에 주로 존재한다. 하급심 판결서는 없는 경우가 많으므로 NULL을 허용하고, 사실비교는 <code>facts_structured</code>로 한다.</p>
+
+<h3>8.3 Source Authority 등급과 구속력 <span class="chg mod">V-08</span></h3>
+<p>권위(얼마나 믿을 만한가)와 구속력(누구를 구속하는가)은 다른 축이다. v1.0은 두 축을 한 등급에 섞었다.</p>
+<table>
+<tr><th style="width:9%">등급</th><th>자료</th><th style="width:34%">구속력 메모</th></tr>
+<tr><td><b>A1</b></td><td><b>기준일에 유효한</b> 법률·시행령·시행규칙 원문, 법령보충적 행정규칙</td><td>대외적 구속력. 기준일에 유효하지 않은 버전은 A1이 아니다.</td></tr>
+<tr><td><b>A2</b></td><td>대법원 판결(전원합의체 포함), 헌법재판소 결정(위헌·헌법불합치)</td><td>위헌결정은 법령 효력에 직접 영향 → <code>INVALIDATES</code> 관계로 반영. 변경된 판례는 A2에서 제외.</td></tr>
+<tr><td><b>B1</b></td><td>조세심판원·감사원·국세청 불복 결정, 기획재정부 세법해석(예규), 법제처 법령해석</td><td>불복 결정은 해당 사건 과세관청을 기속. 일반 사안에는 설득 권위.</td></tr>
+<tr><td><b>B2</b></td><td>하급심 판결, 국세청 사전답변·질의회신, 기본통칙·집행기준(행정규칙)</td><td>사전답변은 신청인·해당 거래 한정(<code>APPLICANT_ONLY</code>), 행정규칙은 행정 내부(<code>ADMIN_INTERNAL</code>) — 법원 비구속.</td></tr>
+<tr><td><b>C</b></td><td>전문서적, 로펌·회계법인 자료</td><td>탐색·설명 보조. 저작권·이용조건 확인 후에만 원문 보관.</td></tr>
+<tr><td><b>D</b></td><td>2차 자료(기사·블로그)</td><td>탐색 단서로만. 의견 근거로 인용 금지.</td></tr>
+</table>
+<p>최종 의견의 핵심 법률명제(MATERIAL)는 A/B 등급 근거에 연결한다. B2만으로 뒷받침되는 핵심 명제는 LTG가 "권위 보강 필요"로 표시한다.</p>
+
+<h3>8.4 출처 이용조건 관리 <span class="chg add">V-04</span></h3>
+<table>
+<tr><th style="width:22%">항목</th><th>규칙</th></tr>
+<tr><td>수집 방식</td><td>공식 Open API·일괄 파일을 우선한다. 화면 수집(WEB_MANUAL)은 이용약관 검토 기록이 있어야 활성화할 수 있다.</td></tr>
+<tr><td>사용 목적 분리</td><td><code>rag_use_allowed</code>(검색·인용), <code>training_use_allowed</code>(학습), <code>redistribution_allowed</code>(원문 첨부)를 각각 판단한다. 학습 데이터 생성기는 학습 허용 출처만 읽는다.</td></tr>
+<tr><td>판결서 개인정보</td><td>비실명 처리본만 적재(<code>deidentified=true</code>)한다. 사안 사실과 결합해 재식별되는 요약을 생성하지 않는다.</td></tr>
+<tr><td>재검토</td><td>출처별 이용조건 검토일(<code>reviewed_at</code>)을 두고, 약관 변경 시 비활성화 후 재검토한다.</td></tr>
+</table>
+</section>
+
+<!-- ───────────────────────── 9 ───────────────────────── -->
+<section id="temporal" class="card">
+<h2>9. Temporal Legal DB — 법률 AI의 핵심 <span class="chg mod">V-06·V-07</span></h2>
+<div class="diagram">
+<div class="diagram-title">사건 사실의 기준일로 적용 조문 결정</div>
+<div class="flow">
+<div class="node blue">사실별 기준일<br><small>행위·계약·성립·사업연도…</small></div><div class="arrow">→</div>
+<div class="node green">Multi-date Resolver</div><div class="arrow">→</div>
+<div class="node">조문 Version<br><small>유효기간·효력상태</small></div><div class="arrow">→</div>
+<div class="node amber">부칙 적용규칙<br><small>적용례·경과조치</small></div><div class="arrow">→</div>
+<div class="node">적용 조문 확정</div><div class="arrow">→</div>
+<div class="node red">Temporal Validator</div>
+</div>
+</div>
+
+<h3>9.1 시행일만으로는 적용법이 정해지지 않는다</h3>
+<table>
+<tr><th style="width:24%">누락되던 요소</th><th>예</th><th style="width:30%">처리</th></tr>
+<tr><td>부칙 적용례</td><td>"이 법 시행 이후 개시하는 사업연도분부터 적용한다" — 시행일 뒤에 발생한 거래라도 사업연도 개시일이 시행일 전이면 종전 규정</td><td><code>applicability_rule</code>의 기준일 종류 + 결정론적 판정식</td></tr>
+<tr><td>경과조치</td><td>"이 법 시행 전에 체결한 계약에 대하여는 종전의 규정에 따른다"</td><td>기준일 종류 = 계약일</td></tr>
+<tr><td>세법 기준일</td><td>납세의무 성립일(국세기본법 제21조), 과세기간·사업연도, 신고기한</td><td>Fact Agent가 사실마다 기준일 종류를 부착</td></tr>
+<tr><td>위헌·헌법불합치</td><td>위헌결정으로 효력 상실, 헌법불합치로 개정 시한까지 잠정 적용 또는 적용 중지</td><td><code>validity_status</code> + <code>INVALIDATES</code> 관계 + 결정문 근거</td></tr>
+<tr><td>판례 변경</td><td>전원합의체가 종전 판례를 변경</td><td><code>precedent_status=OVERRULED</code>, 변경 판례 연결</td></tr>
+</table>
+
+<h3>9.2 조문 버전 — 명세 통일 <span class="chg mod">V-24</span> <span class="chg del">V-25</span></h3>
+<p>v1.0의 8장 <code>LAW_VERSION</code>과 19장 <code>statute_version</code>을 <b><code>lgsrc.statute_version</code> 하나</b>로 통일했다. 전체 컬럼 명세는 21장에 있다. <code>next_version_id</code>는 <code>previous_version_id</code>와 이중으로 관리하면 불일치가 생기므로 삭제하고, 다음 버전은 조회로 도출한다.</p>
+<pre>-- 기준일 d 에, 인지시점 k 에 알고 있던 조문 버전
+SELECT *
+  FROM lgsrc.statute_version
+ WHERE law_id = :law AND provision_key = :key
+   AND effective_from &lt;= :d AND (effective_to IS NULL OR effective_to &gt;= :d)
+   AND recorded_from  &lt;= :k AND (recorded_to  IS NULL OR recorded_to  &gt;  :k);
+-- 이후 applicability_rule(CONFIRMED)의 condition_expr 을 사실 기준일로 평가해 최종 적용 여부 결정</pre>
+
+<h3>9.3 이중시간(bitemporal) <span class="chg add">V-07</span></h3>
+<div class="grid2">
+<div class="metric"><b>유효시간</b>법적으로 언제 효력이 있었나 — <code>effective_from/to</code>. 적용법 결정에 쓴다.</div>
+<div class="metric"><b>인지시간</b>시스템이 언제 그 내용을 알았나 — <code>recorded_from/to</code>. 원문 정정·늦은 적재가 있어도 "의견 발행 당시 알던 원문"을 재현한다.</div>
+</div>
+<p>의견은 <code>source_snapshot_id</code>를 기록한다. 감사 시 같은 스냅샷으로 <b>기록 재현(보장 100%)</b>을 하고, 최신 스냅샷으로 재실행해 결론이 달라지면 24.3장의 영향 경보를 만든다.</p>
+
+<h3>9.4 실제 개정 예시 <span class="chg add">V-13</span></h3>
+<div class="callout">상법 제382조의3(이사의 충실의무)은 2025-07-22 시행 개정으로 충실의무 대상에 '주주'가 명시되고 총주주 이익 보호·공평 대우 의무가 추가되었다. 이사회 결의일이 <b>2025-03-14</b>인 사안과 <b>2025-09-01</b>인 사안은 인용할 조문 버전이 다르다. 시점을 묻지 않고 현행 조문을 인용하면 전자의 의견이 틀린다.<br><small class="muted">예시는 설계 설명용이며, 시스템은 적재된 원문과 부칙으로만 판정한다.</small></div>
+
+<div class="callout amber"><b>필수 규칙.</b> T-01 사건 사실의 기준일이 있으면 현행법을 자동 적용하지 않는다. T-02 기준일이 없으면 Fact Agent가 "현재 기준"과 "거래 당시 기준" 중 무엇이 필요한지 판정하고, 판정할 수 없으면 <b>사실 보완 질의</b>를 한다. 그래도 불명확하면 가정으로 명시하고 확신도의 <code>fact_completeness</code>를 낮춘다. T-03 부칙 규칙이 DRAFT인 조문에 의존한 핵심 주장은 <code>temporal_check=REVIEW</code>로 둔다.</div>
+</section>
+
+<!-- ───────────────────────── 10 ───────────────────────── -->
+<section id="graph" class="card">
+<h2>10. Legal Knowledge Graph</h2>
+<div class="diagram">
+<div class="diagram-title">Graph 관계 예시</div>
+<div class="flow">
+<div class="node blue">상법 제398조</div><div class="arrow">→</div>
+<div class="node">INTERPRETS ←</div><div class="arrow">→</div>
+<div class="node purple">대법원 판례</div><div class="arrow">→</div>
+<div class="node">ADDRESSES_ISSUE</div><div class="arrow">→</div>
+<div class="node amber">자기거래</div>
+</div>
+<div class="gap"></div>
+<div class="flow">
+<div class="node amber">자기거래</div><div class="arrow">→</div>
+<div class="node">REQUIRES_ELEMENT</div><div class="arrow">→</div>
+<div class="node green">이해관계 존재</div><div class="arrow">+</div>
+<div class="node green">이사회 승인절차</div><div class="arrow">+</div>
+<div class="node green">거래 공정성</div>
+</div>
+<div class="gap"></div>
+<div class="flow">
+<div class="node purple">전원합의체 판결</div><div class="arrow">→</div>
+<div class="node red">OVERRULES</div><div class="arrow">→</div>
+<div class="node">종전 판례</div>
+<div class="node purple">헌재 위헌결정</div><div class="arrow">→</div>
+<div class="node red">INVALIDATES</div><div class="arrow">→</div>
+<div class="node">조문 버전</div>
+</div>
+</div>
+<table>
+<tr><th style="width:30%">Node</th><th>예시</th></tr>
+<tr><td>LAW / PROVISION / ELEMENT</td><td>상법, 제398조, 이사회 승인 요건</td></tr>
+<tr><td>CASE / HOLDING / FACT_PATTERN</td><td>판례, 판결요지, 사실요소</td></tr>
+<tr><td>ISSUE / CONCEPT</td><td>자기거래, 이사의 충실의무, 부당행위계산 부인(법인세법)</td></tr>
+<tr><td>TAX_INTERPRETATION</td><td>기재부 예규, 사전답변, 질의회신, 집행기준</td></tr>
+<tr><td><span class="chg mod">V-17</span> (삭제) Project / Entity / Contract</td><td>공용 그래프에서 제외. 테넌트 고유 정보가 공용 그래프에 들어가면 다른 테넌트의 검색·요약에 노출된다. 사안의 쟁점이 공용 쟁점 노드를 <b>참조</b>하는 방식으로 연결한다(<code>matter_issue.kg_issue_node_id</code>).</td></tr>
+</table>
+<h3>10.1 관계 유형 <span class="chg add">V-10</span></h3>
+<table>
+<tr><th style="width:28%">edge_type</th><th>의미</th></tr>
+<tr><td>INTERPRETS · APPLIES · CITES</td><td>판례·해석이 조문을 해석·적용·인용</td></tr>
+<tr><td>OVERRULES</td><td>전원합의체 등에 의한 판례 변경 — 대상 판례 상태를 OVERRULED로 전이</td></tr>
+<tr><td>REVERSES_REMANDS · FOLLOWS_UPPER_INSTANCE</td><td>파기환송·상급심 추종 — 심급 계보. 하급심 인용 시 최종 결론 확인에 사용</td></tr>
+<tr><td>INVALIDATES · AMENDS · DELEGATES_TO</td><td>위헌결정의 효력상실, 개정, 법률→시행령 위임</td></tr>
+<tr><td>REQUIRES_ELEMENT · ADDRESSES_ISSUE · HAS_FACT_PATTERN</td><td>요건·쟁점·사실요소 구조</td></tr>
+<tr><td>CONFLICTS_WITH</td><td>상충 판례·해석 — Opponent 검색의 출발점</td></tr>
+</table>
+<p>LLM이 추출한 관계는 <code>review_status=DRAFT</code>로 적재하고, CONFIRMED 전에는 검색 가중치를 제한하며 의견의 유일한 근거로 쓰지 않는다. Graph는 Vector 검색을 대체하지 않고 <b>관계 탐색·법리 계층·판례계보·유사사건 추적</b>을 보강한다.</p>
+</section>
+
+<!-- ───────────────────────── 11 ───────────────────────── -->
+<section id="retrieval" class="card">
+<h2>11. 검색·RAG 파이프라인 <span class="chg mod">V-23</span></h2>
+<div class="diagram">
+<div class="diagram-title">사전 필터 → Hybrid Retrieval → Fusion → Reranking → 검증 필터</div>
+<div class="flow">
+<div class="node blue">쟁점 + 사실 기준일</div><div class="arrow">→</div>
+<div class="node red">사전 필터<br><small>테넌트·권한·기준일·출처 이용조건</small></div><div class="arrow">→</div>
+<div class="node">Query 생성<br><small>정확어·의미·관계</small></div>
+</div>
+<div class="down">↓</div>
+<div class="flow">
+<div class="node green">BM25<br><small>번호·용어</small></div><div class="node green">Vector<br><small>유사 사실</small></div><div class="node green">Graph<br><small>관계 탐색</small></div><div class="node green">Citation Lookup<br><small>번호 직접 조회</small></div>
+</div>
+<div class="down">↓</div>
+<div class="flow">
+<div class="node purple">RRF Fusion</div><div class="arrow">→</div>
+<div class="node purple">Cross-Encoder Reranker</div><div class="arrow">→</div>
+<div class="node amber">부칙·효력상태 판정<br><small>Temporal Validator</small></div><div class="arrow">→</div>
+<div class="node amber">Authority 균형<br><small>반대 근거 확보</small></div><div class="arrow">→</div>
+<div class="node blue">Evidence Pack</div>
+</div>
+</div>
+<h3>11.1 검색 원칙</h3>
+<ul>
+<li>법률 검색은 단일 embedding similarity로 끝내지 않는다.</li>
+<li><b>권한·테넌트·기준일 필터는 검색 전에 건다.</b> 검색 후 걸러내면 권한 밖 문서가 점수·요약·캐시에 흔적을 남긴다. v1.0 그림의 Temporal 병렬 검색기와 후단 Date Filter 이중 표기를 이 원칙에 맞춰 정리했다.</li>
+<li>기준일 사전필터는 <b>유효기간 겹침</b>만 본다. 부칙 적용 여부는 결정론적 규칙이므로 후단 Temporal Validator가 판정한다.</li>
+<li>사건번호·조문번호·문서번호처럼 정확도가 중요한 것은 lexical/BM25와 번호 직접 조회를 우선한다.</li>
+<li>유사 사실관계는 dense vector + reranker, 법리 연결은 graph traversal.</li>
+<li>최종 Context는 "문서 Top-K"가 아니라 <b>쟁점별 Evidence Pack</b>이며, 지지 근거와 <b>반대 근거를 함께</b> 담는다.</li>
+<li>의미 캐시 키에는 질의 해시와 함께 <b>권한 범위 해시</b>와 원문 스냅샷을 넣는다.</li>
+</ul>
+<pre>EvidencePack {
+  pack_id, tenant_id, issue_id,
+  applicable_date,              // 사실 기준일
+  source_snapshot_id, index_version, retrieval_policy_version,
+  permission_scope_hash,        // 검색 당시 권한 범위
+  statutes[]            { statute_version_id, applicability_rule_ids[], span },
+  precedents[]          { case_id, precedent_status, span },
+  tax_interpretations[] { interpretation_id, binding_note, span },
+  internal_documents[]  { internal_doc_ref, span },
+  contrary_authorities[],
+  missing_evidence[],
+  retrieval_trace
+}</pre>
+</section>
+
+<!-- ───────────────────────── 12 ───────────────────────── -->
+<section id="workflow" class="card">
+<h2>12. 실제 질의 처리 Workflow <span class="chg mod">V-27·V-28</span></h2>
+<div class="diagram svgwrap">
+<div class="diagram-title">End-to-End Sequence — 보완 질의·재작성·보류·승인·발행 경로 포함</div>
+<svg viewBox="0 0 1140 640" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="질의 처리 시퀀스">
+<defs>
+<style>.tt{font-family:'Malgun Gothic',Arial,sans-serif;font-size:12.5px;fill:#173f73}.hd{font-weight:700;font-size:13.5px}</style>
+<marker id="mb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#537da7"/></marker>
+<marker id="mr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#b63a3a"/></marker>
+<marker id="mg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#127a5a"/></marker>
+<marker id="ma" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#a86100"/></marker>
+</defs>
+<g class="tt">
+<rect x="15" y="20" width="120" height="44" rx="10" fill="#eaf2ff" stroke="#9fc1ed"/><text x="75" y="47" text-anchor="middle" class="hd">사용자 · PA</text>
+<rect x="155" y="20" width="120" height="44" rx="10" fill="#e9f8f3" stroke="#9ed7c5"/><text x="215" y="47" text-anchor="middle" class="hd">Orchestrator</text>
+<rect x="295" y="20" width="120" height="44" rx="10" fill="#fff" stroke="#bbcbe0"/><text x="355" y="40" text-anchor="middle" class="hd">Research</text><text x="355" y="56" text-anchor="middle">· Opponent</text>
+<rect x="435" y="20" width="120" height="44" rx="10" fill="#f3efff" stroke="#c7bae7"/><text x="495" y="40" text-anchor="middle" class="hd">EA 추론</text><text x="495" y="56" text-anchor="middle">(LLM)</text>
+<rect x="575" y="20" width="120" height="44" rx="10" fill="#fff0f0" stroke="#dfa9a9"/><text x="635" y="47" text-anchor="middle" class="hd">Evidence Auditor</text>
+<rect x="715" y="20" width="120" height="44" rx="10" fill="#fff5df" stroke="#e5c47a"/><text x="775" y="47" text-anchor="middle" class="hd">Legal Trust Gate</text>
+<rect x="855" y="20" width="120" height="44" rx="10" fill="#fdecec" stroke="#d99a9a"/><text x="915" y="40" text-anchor="middle" class="hd">자격자</text><text x="915" y="56" text-anchor="middle">(사람)</text>
+<rect x="1000" y="20" width="120" height="44" rx="10" fill="#eef1f6" stroke="#8a9bb3"/><text x="1060" y="47" text-anchor="middle" class="hd">TA</text>
+<g stroke="#c3cfdd" stroke-dasharray="3 4">
+<line x1="75" y1="64" x2="75" y2="615"/><line x1="215" y1="64" x2="215" y2="615"/><line x1="355" y1="64" x2="355" y2="615"/><line x1="495" y1="64" x2="495" y2="615"/>
+<line x1="635" y1="64" x2="635" y2="615"/><line x1="775" y1="64" x2="775" y2="615"/><line x1="915" y1="64" x2="915" y2="615"/><line x1="1060" y1="64" x2="1060" y2="615"/>
+</g>
+<text x="145" y="103" text-anchor="middle">① 질의 + 업무코드·프로젝트</text>
+<line x1="75" y1="112" x2="213" y2="112" stroke="#537da7" stroke-width="1.6" marker-end="url(#mb)"/>
+<text x="145" y="126" text-anchor="middle" fill="#607086" font-size="10.5">(Trust Agent 착수 판정 →</text><text x="145" y="139" text-anchor="middle" fill="#607086" font-size="10.5">VA 지시 자격 판정 통과분만)</text>
+<text x="145" y="153" text-anchor="middle" fill="#a86100">② 사실·기준일 부족 → 보완 질의</text>
+<line x1="215" y1="162" x2="77" y2="162" stroke="#a86100" stroke-width="1.6" stroke-dasharray="6 4" marker-end="url(#ma)"/>
+<text x="285" y="198" text-anchor="middle">③ 쟁점·기준일·검색계획</text>
+<line x1="215" y1="207" x2="353" y2="207" stroke="#537da7" stroke-width="1.6" marker-end="url(#mb)"/>
+<text x="425" y="243" text-anchor="middle">④ Evidence Pack(지지·반대)</text>
+<line x1="355" y1="252" x2="493" y2="252" stroke="#537da7" stroke-width="1.6" marker-end="url(#mb)"/>
+<text x="565" y="288" text-anchor="middle">⑤ 초안 + 주장 목록</text>
+<line x1="495" y1="297" x2="633" y2="297" stroke="#537da7" stroke-width="1.6" marker-end="url(#mb)"/>
+<text x="565" y="333" text-anchor="middle" fill="#b63a3a">⑥ FAIL → 재검색·재작성(상한 N회)</text>
+<line x1="635" y1="342" x2="497" y2="342" stroke="#b63a3a" stroke-width="1.6" marker-end="url(#mr)"/>
+<text x="705" y="378" text-anchor="middle">⑦ 주장별 검증 결과</text>
+<line x1="635" y1="387" x2="773" y2="387" stroke="#537da7" stroke-width="1.6" marker-end="url(#mb)"/>
+<text x="495" y="423" text-anchor="middle" fill="#a86100">⑧ 핵심 근거 부족·재작성 상한 도달 → ABSTAIN(보류 사유 반환)</text>
+<line x1="775" y1="432" x2="217" y2="432" stroke="#a86100" stroke-width="1.6" stroke-dasharray="6 4" marker-end="url(#ma)"/>
+<text x="845" y="468" text-anchor="middle">⑨ 검토 요청</text>
+<line x1="775" y1="477" x2="913" y2="477" stroke="#537da7" stroke-width="1.6" marker-end="url(#mb)"/>
+<text x="845" y="492" text-anchor="middle" fill="#607086" font-size="11">(위험등급·확신도 규칙)</text>
+<text x="988" y="523" text-anchor="middle">⑩ 승인(내용 해시)</text>
+<line x1="915" y1="532" x2="1058" y2="532" stroke="#537da7" stroke-width="1.6" marker-end="url(#mb)"/>
+<text x="567" y="573" text-anchor="middle" fill="#127a5a">⑪ 의견 발행 + 근거 + 기준일 + 불확실성 + AI 생성 고지</text>
+<line x1="1060" y1="582" x2="77" y2="582" stroke="#127a5a" stroke-width="1.8" marker-end="url(#mg)"/>
+<text x="1060" y="606" text-anchor="middle" fill="#607086" font-size="11">멱등키 · 발행 기록</text>
+</g>
+</svg>
+</div>
+
+<h3>12.1 사안 상태기계 <span class="chg add">V-27</span></h3>
+<div class="diagram">
+<div class="diagram-title">정상 경로</div>
+<div class="flow">
+<div class="node blue">INTAKE</div><div class="arrow">→</div><div class="node">FACT_PENDING</div><div class="arrow">→</div><div class="node">RESEARCH</div><div class="arrow">→</div><div class="node">DRAFTING</div><div class="arrow">→</div><div class="node">VERIFYING</div><div class="arrow">→</div><div class="node amber">REVIEW</div><div class="arrow">→</div><div class="node green">APPROVED</div><div class="arrow">→</div><div class="node green">ISSUED</div><div class="arrow">→</div><div class="node">CLOSED</div>
+</div>
+<div class="gap"></div>
+<div class="diagram-title">되돌림 경로</div>
+<div class="grid2">
+<div class="layer"><strong>보완</strong> — FACT_PENDING ⇄ 사용자 보완 질의 응답</div>
+<div class="layer"><strong>재작성</strong> — VERIFYING → DRAFTING (핵심 주장 FAIL, 상한 N회 미만)</div>
+<div class="layer"><strong>보류</strong> — VERIFYING → <b>ABSTAINED</b> → FACT_PENDING (사실 보완 시)</div>
+<div class="layer"><strong>반려</strong> — REVIEW → DRAFTING (자격자 반려·보완요청)</div>
+<div class="layer"><strong>재개</strong> — CLOSED → <b>REOPENED</b> → FACT_PENDING (영향 경보 재검토)</div>
+</div>
+</div>
+<table>
+<tr><th style="width:20%">전이</th><th>조건(규칙으로 판정)</th></tr>
+<tr><td>→ FACT_PENDING</td><td>핵심 쟁점에 필요한 사실의 <code>fact_status=MISSING</code> 존재, 또는 기준일을 정할 수 없음</td></tr>
+<tr><td>VERIFYING → DRAFTING</td><td>MATERIAL 주장 중 auditor_status=FAIL 존재, 재작성 횟수 &lt; 상한</td></tr>
+<tr><td>→ ABSTAINED</td><td>재작성 상한 도달, 또는 MATERIAL 주장의 A/B 근거 부재, 또는 사실 보완 거절. <b>보류는 실패가 아니라 정상 산출물</b>이며 보류 사유·필요 자료를 반환한다.</td></tr>
+<tr><td>→ REVIEW</td><td>LTG 통과. HIGH·CRITICAL은 무조건 자격자 검토, LOW·MEDIUM은 EA 프로파일 기준 확신도 미달 시</td></tr>
+<tr><td>→ APPROVED</td><td>승인 레코드의 <code>approved_content_sha256</code> = 현재 의견 해시, 승인자 자격이 위험등급 요건 충족</td></tr>
+<tr><td>→ ISSUED</td><td>TA 발행 성공(결과 불명 시 UNKNOWN 조회 확정, 재전송 금지)</td></tr>
+<tr><td>CLOSED → REOPENED</td><td>영향 경보(24.3장)를 자격자가 "재검토"로 처리</td></tr>
+</table>
+
+<h3>12.2 Orchestrator 출력 예시</h3>
+<pre>{
+ "jurisdiction": ["KR"],
+ "matter_domain": ["CORPORATE", "TAX"],
+ "risk_grade": "HIGH",
+ "facts": [
+   {"id":"F1", "status":"CONFIRMED", "text":"대표이사 소유 법인과 부동산 매매계약",
+    "date":"2025-03-14", "date_type":"CONTRACT_DATE"},
+   {"id":"F2", "status":"ASSUMED", "text":"이사회 승인 결의 존재",
+    "date":null, "date_type":null},
+   {"id":"F3", "status":"MISSING", "text":"감정가액 대비 거래가액", "ask_user":true}
+ ],
+ "issues": [
+   {"id":"I1","title":"이사 등과 회사 간의 거래(자기거래) 승인요건","priority":"HIGH"},
+   {"id":"I2","title":"부당행위계산 부인(특수관계인 거래)","priority":"HIGH"}
+ ],
+ "research_plan": [...],
+ "required_authority_level": "A/B",
+ "next_state": "FACT_PENDING"
+}</pre>
+
+<h3>12.3 승인은 내용 해시에 성립한다 <span class="chg add">V-18</span></h3>
+<p>승인 레코드는 의견 ID가 아니라 <b>승인 시점 의견 내용의 해시</b>를 기록한다. 승인 뒤 한 글자라도 바뀌면 해시가 달라져 승인이 무효가 되고, 새 버전(<code>opinion_version+1</code>)으로 재승인을 받는다. 오탈자 수정도 예외가 아니다. 예외를 두면 "사소한 수정"으로 결론을 바꾸는 경로가 열린다.</p>
+</section>
+
+<!-- ───────────────────────── 13 ───────────────────────── -->
+<section id="audit" class="card">
+<h2>13. Evidence Auditor + Legal Trust Gate</h2>
+<div class="diagram">
+<div class="diagram-title">Claim-to-Evidence 검증 루프</div>
+<div class="flow">
+<div class="node purple">EA Claim</div><div class="arrow">→</div>
+<div class="node">원문 존재?</div><div class="arrow">→</div>
+<div class="node">번호·명칭 일치?<br><small>결정론</small></div><div class="arrow">→</div>
+<div class="node">기준일·부칙 적합?<br><small>결정론</small></div><div class="arrow">→</div>
+<div class="node">취지 왜곡 없음?<br><small>NLI + span</small></div><div class="arrow">→</div>
+<div class="node red">Legal Trust Gate</div>
+</div>
+</div>
+<h3>13.1 검사 항목</h3>
+<table>
+<tr><th style="width:13%">검사</th><th>Pass 조건</th><th style="width:15%">판정 방식</th><th style="width:24%">Fail 시</th></tr>
+<tr><td>Existence</td><td>공식 원문 또는 승인된 내부 원문이 존재하고 인용 span이 원문 범위 안</td><td>결정론</td><td>해당 주장 제거/재검색</td></tr>
+<tr><td>Citation</td><td>사건번호·조문·문서번호·기관·선고일 정확</td><td>결정론</td><td>자동 수정 금지, 원문 재조회</td></tr>
+<tr><td>Temporal</td><td>사실 기준일에 유효한 버전 + 부칙 적용규칙(CONFIRMED) 충족 + 판례 상태 VALID</td><td>결정론</td><td>올바른 버전 검색. 규칙이 DRAFT면 REVIEW</td></tr>
+<tr><td>Semantic</td><td>주장이 인용 span에 의해 함의됨(과장·일반화·부정 누락 없음)</td><td>NLI 모델 + LLM 판정, 불일치 시 REVIEW</td><td>재작성</td></tr>
+<tr><td>Authority</td><td>MATERIAL 주장에 A/B 등급 근거</td><td>결정론</td><td>상위 출처 추가 탐색, 없으면 보류 후보</td></tr>
+<tr><td>Conflict</td><td>Evidence Pack의 상충 근거를 의견이 언급·구분</td><td>규칙 + LLM</td><td>Opponent Agent 호출</td></tr>
+</table>
+
+<h3>13.2 Legal Trust Gate 판정 규칙 <span class="chg mod">V-14</span></h3>
+<table>
+<tr><th style="width:9%">규칙</th><th>조건</th><th style="width:22%">결과</th></tr>
+<tr><td>G-01</td><td>MATERIAL 주장 중 FAIL 1건 이상</td><td>재작성(상한 내) / 보류</td></tr>
+<tr><td>G-02</td><td>MATERIAL 주장 중 근거 없음(item 없음) 또는 A/B 근거 없음</td><td>보류 권고</td></tr>
+<tr><td>G-03</td><td>risk_grade HIGH·CRITICAL</td><td>자격자 검토 필수</td></tr>
+<tr><td>G-04</td><td>확신도 벡터 중 한 항목이라도 EA 프로파일 기준치 미달</td><td>검토 요청(상향)</td></tr>
+<tr><td>G-05</td><td>주 EA와 교차검증 EA(다른 기반 모델)의 결론 불일치</td><td>자격자 검토 필수</td></tr>
+<tr><td>G-06</td><td><code>model_identity_verified=false</code></td><td>자동 하향 — 검토 요청</td></tr>
+<tr><td>G-07</td><td>REVIEW 상태 주장 존재</td><td>검토 요청, 해당 주장 표시</td></tr>
+</table>
+<p>규칙 G-01~G-07은 데이터로 등록·버전 관리하며, LTG는 이 규칙을 적용할 뿐 LLM으로 게이트를 판정하지 않는다.</p>
+
+<h3>13.3 Confidence는 하나의 숫자로 만들지 않는다 <span class="chg mod">V-31</span></h3>
+<p>v1.0 예시는 <code>contrary_authority_risk</code>만 "높을수록 나쁨"이어서 나머지와 방향이 반대였다. 모든 항목을 <b>0~1, 높을수록 좋음</b>으로 통일한다.</p>
+<pre>confidence = {
+  evidence_completeness:        0.98,   // MATERIAL 주장 중 근거 연결 비율
+  citation_integrity:           1.00,   // 결정론 검사 통과 비율
+  temporal_fit:                 0.96,
+  fact_completeness:            0.82,   // 가정·미확인 사실이 결론에 미치는 정도의 역
+  interpretation_agreement:     0.88,   // 교차검증 EA 간 일치
+  contrary_authority_resilience: 0.79   // 상충 근거를 구분·반박한 정도 (v1.0 risk 0.21 의 역)
+}</pre>
+<p>수치의 가중합으로 게이트를 통과시키지 않는다(G-04는 항목별 최소치). 수치가 실제 정답률과 맞는지 Golden Set에서 <b>보정 오차(ECE)</b>로 측정하며, 보정되지 않은 확신도는 사용자 화면에 숫자로 표시하지 않고 등급(충분·보통·부족)으로만 보인다.</p>
+</section>
+
+<!-- ───────────────────────── 14 ───────────────────────── -->
+<section id="opponent" class="card">
+<h2>14. Opponent Agent — 반대편 변호사/과세관청 시뮬레이션 <span class="chg add">V-32</span></h2>
+<div class="diagram">
+<div class="diagram-title">양면 법률논증 — 독립 검색 후 공격</div>
+<div class="flow">
+<div class="node blue">주 EA<br><small>기반 모델 A</small></div><div class="arrow">→</div>
+<div class="node">초기 결론<br><small>(Opponent에 비공개)</small></div>
+</div>
+<div class="gap"></div>
+<div class="flow">
+<div class="node red">Opponent 1단계<br><small>기반 모델 B · 쟁점만 받음</small></div><div class="arrow">→</div>
+<div class="node">독립 검색계획<br><small>반대 관점 Query</small></div><div class="arrow">→</div>
+<div class="node red">Opponent 2단계<br><small>초기 결론 공개 후 공격</small></div><div class="arrow">→</div>
+<div class="node amber">Legal Trust Gate<br><small>G-05 불일치 판정</small></div>
+</div>
+</div>
+<p>Opponent Agent는 "틀린 점 찾기"가 아니라 <b>독립된 검색계획</b>을 수행한다. 주 EA와 같은 모델·같은 Evidence Pack으로 시작하면 같은 근거에서 같은 결론으로 수렴하는 동조 편향이 생긴다. 그래서 두 단계로 나눈다.</p>
+<ol>
+<li><b>1단계(블라인드)</b>: 쟁점과 사실만 받고 초기 결론은 보지 않은 채 반대 관점의 검색과 결론을 만든다.</li>
+<li><b>2단계(공격)</b>: 초기 결론을 공개하고 사실 공격(누락·다툼 사실), 법리 공격(상충 판례·해석), 시점 공격(부칙·기준일)을 구조화해 제출한다.</li>
+</ol>
+<p>관점: 세무 — 납세자 / 과세관청 / 조세심판원. 회사법 — 회사 / 이사 / 소수주주 / 채권자. 노동 — 사용자 / 근로자 / 감독기관. HIGH·CRITICAL 사안은 설계지시문 제6.5.5조에 따라 <b>주 EA와 다른 기반 모델</b>로 실행한다.</p>
+</section>
+
+<!-- ───────────────────────── 15 ───────────────────────── -->
+<section id="tax" class="card">
+<h2>15. Tax Agent 특화 설계</h2>
+<div class="diagram">
+<div class="diagram-title">Tax Evidence Stack <span class="chg mod">V-11·V-12</span></div>
+<div class="arch">
+<div class="layer"><strong>법률 — 국세</strong> — 국세기본법 · 법인세법 · 소득세법 · 부가가치세법 · 상속세 및 증여세법 · 「국제조세조정에 관한 법률」 · 조세특례제한법 등</div>
+<div class="layer"><strong>법률 — 지방세</strong> <span class="chg add">V-11</span> — 지방세기본법 · 지방세법(취득세·등록면허세·재산세·지방소득세 등) · 지방세특례제한법 · 지방세징수법</div>
+<div class="layer"><strong>하위규범</strong> — 시행령 · 시행규칙 · 고시 · 훈령 · 기본통칙 · 집행기준(행정규칙)</div>
+<div class="layer"><strong>해석</strong> — 기획재정부 세법해석(국세예규심사위원회) · 국세청 사전답변 · 질의회신 · 과세기준자문 · 행정안전부 지방세 해석 · 법제처 법령해석</div>
+<div class="layer"><strong>불복·쟁송</strong> — 과세전적부심사 · 이의신청 · 심사청구(국세청·감사원) · 심판청구(조세심판원) · 행정소송 · 헌법재판소</div>
+<div class="layer"><strong>국제</strong> — 조세조약 · 이전가격 · 국가별 원천징수 · 상호합의</div>
+</div>
+</div>
+<p>국세법령정보시스템은 법령, 세법해석례, 판례·결정례, 조세조약, 기본통칙·집행기준 등을 구분해 제공하므로 Tax 코퍼스 구조도 이를 반영한다. 지방세 자료는 별도 출처로 등록하고 <code>tax_scope=LOCAL</code>로 구분한다.</p>
+
+<h3>15.1 해석 자료의 구속 범위</h3>
+<table>
+<tr><th style="width:26%">자료</th><th style="width:16%">binding_note</th><th>의견에서의 사용</th></tr>
+<tr><td>사전답변</td><td>APPLICANT_ONLY</td><td>신청인·해당 거래에 한해 신뢰보호 근거. 타 테넌트 사안에는 유사성 참고로만 쓴다.</td></tr>
+<tr><td>질의회신 · 과세기준자문 · 기재부 예규</td><td>NON_BINDING</td><td>과세관청 견해로 제시하고 법원 판단과 다를 수 있음을 명시한다.</td></tr>
+<tr><td>기본통칙 · 집행기준</td><td>ADMIN_INTERNAL</td><td>행정 실무 기준으로 제시하며 A1 근거로 쓰지 않는다.</td></tr>
+</table>
+
+<h3>15.2 원천 데이터 연계 <span class="chg add">V-19</span></h3>
+<p>세무 사안의 거래·전표·세무조정 사실은 <b>D04 회계업무 영역이 총계정원장(mbacct)을 단독 소유</b>한다(설계지시문 제10.1.1조). Tax EA는 원장 데이터를 <b>읽기 전용</b>으로 참조해 <code>matter_fact.source_domain='D04'</code>, <code>source_ref</code>로 기록한다. 조정이 필요하면 EA 는 의견만 내고(제6.5.3조), 사안을 맡은 PA 가 전표 제안함(<code>mbacct.journal_inbox</code>)에 멱등키와 함께 제안한다. Legal/Tax Agent가 원장을 직접 수정하지 않는다. <span class="chg mod">v1.3</span></p>
+
+<h3>15.3 Tax Calculation Engine</h3>
+<p>세액·가산세·기한 계산은 LLM이 하지 않고 <b>MyBee 도구 층(mbtool)에 등록된 결정론적 계산 도구</b>가 한다. Tax EA는 <b>적용 규칙 선택과 가정 설명</b>을 맡고, 도구가 금액을 산출한다. 계산 도구의 시험 사례는 코드보다 <b>먼저 사람이 확정</b>한다. 에이전트가 코드와 시험을 같이 만들면 틀린 코드에 맞춘 시험이 전부 통과한다.</p>
+<pre>TaxCalcInput {
+ tool_id, tool_version,          // mbtool 등록 도구
+ jurisdiction, tax_scope,        // NATIONAL | LOCAL
+ tax_type, tax_year, fiscal_year_start,
+ liability_date,                 // 납세의무 성립일
+ taxable_base,
+ rates_version,                  // 기준일로 선택된 세율표 버전
+ applicability_rule_ids[],       // 적용한 부칙 규칙
+ treaty, related_party,
+ currency, fx_rate_source, fx_rate_date,
+ assumptions[]
+}</pre>
+</section>
+
+<!-- ───────────────────────── 16 ───────────────────────── -->
+<section id="model" class="card">
+<h2>16. Local LLM 교체 구조 <span class="chg add">V-33</span></h2>
+<div class="diagram">
+<div class="diagram-title">Model Hot-Swap Architecture</div>
+<div class="flow">
+<div class="node green">동일 Legal Intelligence Layer</div><div class="arrow">→</div>
+<div class="node purple">Model Adapter API</div><div class="arrow">→</div>
+<div class="node">Qwen</div><div class="node">Llama</div><div class="node">Gemma</div><div class="node">Mistral</div><div class="node">Future Model</div>
+</div>
+</div>
+<h3>16.1 Model Adapter 최소 인터페이스</h3>
+<pre>generate(messages, tools, schema, temperature, max_tokens) -> {output, model_id_reported}
+tool_call(name, args)
+structured_output(schema)
+embed(texts)          # LLM 과 분리된 임베딩 모델 — 교체 시 전면 재색인
+rerank(query, docs)   # 별도 모델 권장
+health()
+model_capabilities()  # context 길이, tool-use, structured output 지원 여부</pre>
+<p>Prompt template은 모델별로 하드코딩하지 않고 <b>Canonical Prompt → Model Adapter 변환</b> 방식으로 관리한다.</p>
+
+<h3>16.2 교체 시 함께 움직이는 것과 따로 움직이는 것</h3>
+<table>
+<tr><th style="width:18%">구성요소</th><th>교체 영향</th><th style="width:34%">절차</th></tr>
+<tr><td>LLM</td><td>추론·도구사용·출력 형식</td><td>동일 Golden Set 실행 → 게이트 통과 시 SHADOW → ACTIVE</td></tr>
+<tr><td>Embedding 모델</td><td><b>기존 벡터 전체가 무효</b> — 부분 교체 불가</td><td>새 색인을 병렬 구축(이중 색인) → 검색 지표 게이트 → 전환 → 구 색인 보존 기간 후 폐기</td></tr>
+<tr><td>Reranker</td><td>순위·Evidence Pack 구성</td><td>검색 지표 게이트</td></tr>
+<tr><td>Post-training Adapter</td><td>특정 기반 모델에만 유효</td><td>기반 모델 교체 시 자동 무효, 재평가 전 사용 금지</td></tr>
+</table>
+<p><b>모델 식별자 대조.</b> 호출마다 응답이 보고한 모델 식별자를 배포 레지스트리의 기대값과 대조한다. 불일치하면 <code>model_identity_verified=false</code>로 기록하고 G-06에 따라 자동 하향한다. "temperature 0이면 재현된다"는 보장하지 않는다. 재현은 <b>기록 재현</b>(agent_step_log의 원본 보관)으로 보장하고, 재실행 일치율은 측정 지표로 둔다.</p>
+</section>
+
+<!-- ───────────────────────── 17 ───────────────────────── -->
+<section id="training" class="card">
+<h2>17. Post-training 전략 — "기본값은 하지 않는다"</h2>
+<div class="diagram">
+<div class="diagram-title">모델 도입 의사결정</div>
+<div class="flow">
+<div class="node blue">새 Local LLM</div><div class="arrow">→</div>
+<div class="node">Golden Benchmark<br><small>HOLDOUT</small></div><div class="arrow">→</div>
+<div class="node green">목표 통과?</div><div class="arrow">YES</div>
+<div class="node green">SHADOW → 배포</div>
+</div>
+<div class="gap"></div>
+<div class="flow">
+<div class="node red">NO</div><div class="arrow">→</div>
+<div class="node amber">실패능력 분류</div><div class="arrow">→</div>
+<div class="node">Prompt/Skill 개선</div><div class="arrow">→</div>
+<div class="node">RAG·규칙 개선</div><div class="arrow">→</div>
+<div class="node purple">그래도 부족할 때만 선택적 SFT/DPO</div>
+</div>
+</div>
+<table>
+<tr><th>문제</th><th>우선 해결수단</th><th>Post-training 여부</th></tr>
+<tr><td>법령을 못 찾음</td><td>Index / Query / Retrieval 개선</td><td>대체로 불필요</td></tr>
+<tr><td>사건시점 틀림</td><td>부칙 적용규칙 / Temporal Validator</td><td>불필요(결정론 영역)</td></tr>
+<tr><td>인용 환각</td><td>Citation Validator / Evidence Gate / constrained generation</td><td>불필요</td></tr>
+<tr><td>쟁점 누락</td><td>Issue Skill + few-shot + evaluator</td><td>반복 실패 시 고려</td></tr>
+<tr><td>판례 사실비교 약함</td><td>Case Comparison Skill + 구조화 사실요소</td><td>지속 실패 시 SFT/DPO <b>효과 기대 — Benchmark로 확인</b> <span class="chg mod">V-38</span></td></tr>
+<tr><td>법률 의견서 문체</td><td>Template/Prompt</td><td>대체로 불필요</td></tr>
+<tr><td>보류해야 할 때 답함</td><td>LTG 규칙 G-01~G-02, ABSTAIN_EXPECTED 사례</td><td>규칙으로 해결되지 않을 때 DPO 고려</td></tr>
+</table>
+<div class="callout amber"><b>학습 데이터 제약.</b> ① HOLDOUT 사례와 그 변형은 학습에 쓰지 않는다. ② <code>training_use_allowed=false</code> 출처는 학습 데이터 생성기가 읽지 못한다. ③ 테넌트 사안 자료를 모델 가중치 미세조정 등 권한을 상속할 수 없는 형태의 학습에 쓰는 것은 <b>원칙적으로 금지</b>한다. 불가피한 경우에도 결과물(어댑터 등)은 <b>해당 테넌트 전용</b>으로 원본 중 가장 좁은 권한 범위 안에서만 쓰고(설계지시문 제8.6.10조), 테넌트 동의 근거를 기록하며, 다른 테넌트에 배포되는 공용 어댑터에는 넣지 않는다. 동의는 금지를 푸는 요건이 아니라 불가피한 사용의 추가 근거다. <span class="chg mod">v1.3</span></div>
+</section>
+
+<!-- ───────────────────────── 18 ───────────────────────── -->
+<section id="dataset" class="card">
+<h2>18. Model-independent Legal Reasoning Dataset</h2>
+<div class="diagram">
+<div class="diagram-title">데이터셋은 "Qwen용"이 아니라 "MyBee용"</div>
+<div class="flow">
+<div class="node blue">Canonical Dataset</div><div class="arrow">→</div>
+<div class="node">Qwen Formatter</div><div class="node">Llama Formatter</div><div class="node">Gemma Formatter</div><div class="node">Future Formatter</div>
+</div>
+</div>
+<pre>{
+ "case_code": "KR-CORP-000123",
+ "jurisdiction": "KR",
+ "as_of_date": "2025-03-01",
+ "answer_expires_on": null,
+ "case_kind": "BOUNDARY",
+ "data_split": "DEV",
+ "facts": {
+   "confirmed": [{"text":"...","date":"2025-03-01","date_type":"RESOLUTION_DATE"}],
+   "disputed": [...],
+   "missing": [...]
+ },
+ "issues": [...],
+ "authoritative_sources": [
+   {"type":"statute","law_code":"...","provision_key":"398","effective_on":"2025-03-01","applicability_rule_ids":[]},
+   {"type":"case","court":"대법원","case_number":"...","precedent_status":"VALID"}
+ ],
+ "issue_analysis": [
+   {
+     "issue_id": "I1",
+     "rule": "...",
+     "material_facts": [...],
+     "comparison_cases": [...],
+     "counterargument": "...",
+     "conclusion": "...",
+     "abstain": false
+   }
+ ],
+ "expected_tools": ["statute_search","case_search","temporal_lookup","applicability_eval"],
+ "final_answer_schema": "LegalOpinion/1.1"
+}</pre>
+<p>Chain-of-thought 원문을 학습자산으로 삼기보다는 <b>검증 가능한 중간 산출물</b>(facts, issues, authorities, comparison, conclusion, abstain)을 구조화한다. <code>final_answer_schema</code>는 20장에 정의한다(v1.0의 "LegalOpinionV2"는 정의가 없었다). <span class="chg mod">V-30</span></p>
+</section>
+
+<!-- ───────────────────────── 19 ───────────────────────── -->
+<section id="benchmark" class="card">
+<h2>19. Benchmark / Golden Set <span class="chg add">V-34</span></h2>
+<div class="diagram">
+<div class="diagram-title">배포 Gate</div>
+<div class="flow">
+<div class="node">Model</div><div class="arrow">+</div><div class="node">Embedding·Index</div><div class="arrow">+</div><div class="node">RAG·Rules</div><div class="arrow">+</div><div class="node">Skills</div><div class="arrow">→</div>
+<div class="node purple">Golden Set<br><small>HOLDOUT</small></div><div class="arrow">→</div>
+<div class="node red">Regression Gate</div><div class="arrow">→</div><div class="node amber">SHADOW</div><div class="arrow">→</div><div class="node green">ACTIVE</div>
+</div>
+</div>
+
+<h3>19.1 Golden Set 구성 규칙</h3>
+<table>
+<tr><th style="width:22%">규칙</th><th>내용</th></tr>
+<tr><td>정답 확정</td><td>정답은 사람(자격자)이 최종 확정한다. 에이전트 판정을 정답으로 삼지 않는다(설계지시문 제15.1.2조). HIGH 이상은 2인 검토, 일치도(κ)를 기록한다.</td></tr>
+<tr><td>사례 종류</td><td>정상(NORMAL) · 경계(BOUNDARY) · 과거 오답(PAST_FAILURE) · <b>보류 기대(ABSTAIN_EXPECTED)</b>를 모두 포함한다.</td></tr>
+<tr><td>분할</td><td>DEV(개발·프롬프트 조정용)와 HOLDOUT(게이트 전용, 학습·프롬프트 조정 금지). HOLDOUT이 개발 과정에 노출되면 해당 사례를 DEV로 강등하고 보충한다.</td></tr>
+<tr><td>시점</td><td>모든 사례에 정답 기준일(<code>as_of_date</code>)을 둔다. 법 개정·판례 변경으로 정답이 바뀌면 <code>answer_expires_on</code>을 설정하고 게이트 집계에서 제외한 뒤 개정 사례를 추가한다.</td></tr>
+<tr><td>규모</td><td>1,000건 이상을 목표로 하되, 도메인×위험등급별 최소 규모와 갱신 주기를 데이터로 등록한다(제15.1.4조). Phase 0 seed 규모는 27장 O-04에서 결정한다.</td></tr>
+</table>
+
+<h3>19.2 평가 지표와 초기 제안치</h3>
+<table>
+<tr><th>평가영역</th><th style="width:15%">초기 제안치</th><th>측정법</th></tr>
+<tr><td>법령 Retrieval Recall@20</td><td>≥ 0.98</td><td>정답 조문 버전 포함 여부</td></tr>
+<tr><td>판례 Retrieval Recall@20</td><td>≥ 0.95</td><td>핵심 판례 포함 여부</td></tr>
+<tr><td>Temporal Accuracy</td><td>≥ 0.99</td><td>기준일·부칙 규칙 적용 후 버전 선택 정확도</td></tr>
+<tr><td>Citation Integrity</td><td>≥ 0.995</td><td>실재/번호/원문 일치(발행본은 차단으로 1.0)</td></tr>
+<tr><td>Issue Recall</td><td>≥ 0.95</td><td>자격자 라벨 대비</td></tr>
+<tr><td>Material Fact Matching</td><td>≥ 0.94</td><td>판례 사실요소 비교</td></tr>
+<tr><td>Unsupported Claim Rate</td><td>≤ 1%</td><td>근거 없는 MATERIAL 주장</td></tr>
+<tr class="new"><td>Abstain Recall</td><td>≥ 0.90</td><td>ABSTAIN_EXPECTED 사례 중 보류한 비율</td></tr>
+<tr class="new"><td>Over-abstain Rate</td><td>≤ 0.10</td><td>답할 수 있는 사례에서 보류한 비율</td></tr>
+<tr class="new"><td>Confidence Calibration(ECE)</td><td>≤ 0.05</td><td>확신도 구간별 실제 정답률 차이</td></tr>
+<tr class="new"><td>Cross-tenant Leakage</td><td>0건</td><td>타 테넌트 문서가 Evidence Pack·캐시·요약에 등장한 횟수(음성 시험)</td></tr>
+<tr><td>Tax Calculation Accuracy <span class="chg mod">V-35</span></td><td><b>100%</b></td><td>사람이 확정한 시험사례 전건 일치(결정론적 도구 — 오차 허용 없음)</td></tr>
+</table>
+<p class="note">위 수치는 <b>초기 제안치</b>다. Phase 0에서 기준선을 측정한 뒤, 수행자가 제안하고 발주자가 승인한 값을 <code>lgeval.benchmark_metric.threshold_value</code>에 등록해 게이트가 읽는다. 문서의 숫자를 코드에 박지 않는다.</p>
+<div class="callout"><b>모델 교체 원칙:</b> 새 모델은 "재학습부터"가 아니라 "동일 Benchmark부터" 수행한다. 목표를 통과하면 Post-training 없이 교체한다.</div>
+</section>
+
+<!-- ───────────────────────── 20 ───────────────────────── -->
+<section id="output" class="card">
+<h2>20. 의견 출력 스키마 — LegalOpinion/1.1 <span class="chg add">V-30</span></h2>
+<p>Agent 사이와 저장(<code>legal_opinion.opinion_body</code>)은 이 구조를 쓰고, 사람이 읽는 의견서는 Legal Writer가 렌더링한다. 필드를 비울 수는 있어도 <b>삭제할 수는 없다</b>. 예를 들어 불확실성이 없으면 빈 배열이다.</p>
+<pre>LegalOpinion/1.1 {
+  matter_id, opinion_version, risk_grade,
+  as_of_date, source_snapshot_id,
+  notice: { ai_generated: true, approval_status, approver?, approved_at? },
+  question_restated,                      // 질의를 시스템이 이해한 대로 재진술
+  bottom_line: { conclusion, strength: "충분|보통|부족", abstain: bool, abstain_reason? },
+  facts: { confirmed[], assumed[], disputed[], missing[] },
+  issues: [{
+    issue_id, title,
+    rule:        [{ claim_id, text, citations[] }],   // 법규·법리
+    application: [{ claim_id, text, fact_ids[], citations[] }],
+    counterarguments: [{ text, source: "OPPONENT|EVIDENCE", citations[], rebuttal? }],
+    conclusion, temporal_notes[]          // 적용한 부칙·기준일 설명
+  }],
+  alternatives: [{ option, legal_risk, tax_effect?, required_actions[] }],
+  recommended_actions: [{ action, owner_role, due?, via: "PA|TA" }],
+  uncertainties: [{ text, impact: "결론 변경 가능|범위 변경|표현 수준" }],
+  confidence: { ...13.3장 벡터 },
+  limitations: [ "본 결과물은 ... 자격자 검토 전 초안" ],
+  citations: [{ citation_id, authority_rank, document_id|internal_doc_ref, span, binding_note? }]
+}</pre>
+</section>
+
+<!-- ───────────────────────── 21 ───────────────────────── -->
+<section id="schema" class="card">
+<h2>21. DB Table / Column 설계 <span class="chg mod">V-24</span> <span class="chg add">V-06·V-17·V-36</span></h2>
+<p>v1.0은 예시 테이블 3개(statute_version·case_law·evidence_claim)만 있었고, 8장과 명칭·컬럼이 달랐다. v1.1은 설계에 필요한 테이블을 <b>3개 스키마로 분리</b>해 전체 컬럼을 명세한다.</p>
+<div class="grid3">
+<div class="metric"><b>lgsrc</b>공용 법률 코퍼스 — 전 테넌트가 읽기만 한다. tenant_id 없음.</div>
+<div class="metric"><b>lgmat</b>테넌트 사안 — RLS 적용, 모든 테넌트 간 참조는 (tenant_id, id) 복합 FK로 차단한다.</div>
+<div class="metric"><b>lgeval</b>평가·배포 게이트 — MyBee mbeval 테이블의 법률 특화 확장이다.</div>
+</div>
+<h3>21.1 공통 규약</h3>
+<ul>
+<li>모든 테이블 끝에 <code>created_at timestamptz NOT NULL DEFAULT now()</code>, <code>ext jsonb NOT NULL DEFAULT '{}'</code>를 둔다. 운영 중 속성 추가는 ALTER TABLE 없이 <code>ext</code> + 필드 메타데이터로 흡수한다(Zero-DDL).</li>
+<li><b>MyBee 공통 컬럼 15개 채택</b> <span class="chg add">v1.3</span> — MyBee 플랫폼에 탑재할 때 lg* 23표는 DB 테이블설계서 v3.2 제7.3 의 공통 컬럼 15개(<code>tenant_id</code> · <code>created_at</code> · <code>created_by</code> · <code>created_actor</code> · <code>updated_at</code> · <code>updated_by</code> · <code>deleted_at</code> · <code>is_deleted</code> · <code>row_version</code> · <code>trace_id</code> · <code>schema_ver</code> · <code>source_system</code> · <code>ext</code> · <code>updated_actor</code> · <code>deleted_by</code>)를 그대로 갖는다. 21.2 · 21.3 의 컬럼 수(23표 · 310컬럼)는 <b>이 문서 고유 컬럼 + 공통 컬럼 중 created_at · ext 2개</b>로 센 값이며 나머지 13개는 명세에 되풀이하지 않는다. lgmat 10표는 명세에 이미 있는 <code>tenant_id</code>(uuid NOT NULL)가 공통 컬럼과 같은 컬럼이므로, 공통 컬럼을 모두 넣은 물리 컬럼 수는 310 + 23×13 − 10 = <b>599</b>이다. 공용 표(lgsrc · lgeval)의 공통 <code>tenant_id</code>는 플랫폼 예약 테넌트 값만 가지며 <code>mbcore.platform_asset</code>에 등재한다 — 테넌트 자료 컬럼이 아니므로 21.4 S9 판정은 그대로다. 추가 전용 표(<code>agent_step_log</code>)는 논리 삭제가 금지되어 <code>deleted_at</code> · <code>deleted_by</code>가 항상 NULL 이다. 고유 컬럼 중 공통 컬럼과 이름이 겹치는 것은 없다(빌드에서 대조 — v1.3 에서 <code>matter_fact.source_system</code>을 <code>source_domain</code>으로 개명).</li>
+<li><b>코드 컬럼은 가변 길이</b> <span class="chg mod">v1.3</span> — <code>matter.work_code varchar(20)</code> · <code>matter.project_code varchar(30)</code>. 업무코드 · 프로젝트 코드의 자릿수 · 세그먼트 구성 · 검증식은 코드 체계(<code>mbcode.code_scheme</code>) 데이터가 정하며, 고객사가 구성을 바꿔도 DDL 이 생기지 않는다(설계지시문 제4.7.1조, 플랫폼 표와 같은 타입).</li>
+<li>열거형은 CHECK 제약으로 강제하며, 열거값 길이는 컬럼 길이 안에 있음을 정적 검사로 확인했다(21.4장 S6).</li>
+<li>복합 UK에 들어가는 컬럼은 NOT NULL로 둔다. "전체"를 뜻하는 값은 NULL 대신 <code>'ALL'</code>·<code>'NONE'</code> 같은 명시값을 쓴다.</li>
+<li>Platform2 대응 열은 MyBee Platform2 스키마와 연결할 위치다. 실제 결합 방식(확장 테이블 vs 뷰)은 27장 O-06에서 결정한다.</li>
+</ul>
+<h3>21.2 테이블 목록</h3>
+<div class="tw"><table><thead><tr><th>스키마</th><th>테이블</th><th>설명</th><th style="width:7%">컬럼</th><th style="width:6%">FK</th><th style="width:22%">Platform2 대응</th></tr></thead><tbody>
+<tr><td>lgsrc</td><td><a href="#t-lgsrc-source_registry"><code>source_registry</code></a></td><td>출처 레지스트리</td><td>15</td><td>0</td><td>신규</td></tr>
+<tr><td>lgsrc</td><td><a href="#t-lgsrc-source_document"><code>source_document</code></a></td><td>원문 문서(불변 저장)</td><td>14</td><td>2</td><td>mbknow 원본 계층</td></tr>
+<tr><td>lgsrc</td><td><a href="#t-lgsrc-law_master"><code>law_master</code></a></td><td>법령 마스터</td><td>11</td><td>1</td><td>신규</td></tr>
+<tr><td>lgsrc</td><td><a href="#t-lgsrc-statute_version"><code>statute_version</code></a></td><td>조문 버전(이중시간)</td><td>21</td><td>3</td><td>신규</td></tr>
+<tr><td>lgsrc</td><td><a href="#t-lgsrc-applicability_rule"><code>applicability_rule</code></a></td><td>부칙 적용례·경과조치</td><td>14</td><td>2</td><td>신규</td></tr>
+<tr><td>lgsrc</td><td><a href="#t-lgsrc-case_law"><code>case_law</code></a></td><td>판례·결정례</td><td>18</td><td>2</td><td>신규</td></tr>
+<tr><td>lgsrc</td><td><a href="#t-lgsrc-tax_interpretation"><code>tax_interpretation</code></a></td><td>세법 해석례</td><td>14</td><td>2</td><td>신규</td></tr>
+<tr><td>lgsrc</td><td><a href="#t-lgsrc-kg_node"><code>kg_node</code></a></td><td>지식그래프 노드(공용)</td><td>8</td><td>0</td><td>신규</td></tr>
+<tr><td>lgsrc</td><td><a href="#t-lgsrc-kg_edge"><code>kg_edge</code></a></td><td>지식그래프 관계</td><td>11</td><td>3</td><td>신규</td></tr>
+<tr><td>lgmat</td><td><a href="#t-lgmat-matter"><code>matter</code></a></td><td>법률·세무 사안</td><td>15</td><td>0</td><td>PA 과업의 법률 사안</td></tr>
+<tr><td>lgmat</td><td><a href="#t-lgmat-matter_fact"><code>matter_fact</code></a></td><td>사실관계</td><td>12</td><td>1</td><td>신규</td></tr>
+<tr><td>lgmat</td><td><a href="#t-lgmat-matter_issue"><code>matter_issue</code></a></td><td>쟁점 트리</td><td>10</td><td>3</td><td>신규</td></tr>
+<tr><td>lgmat</td><td><a href="#t-lgmat-evidence_pack"><code>evidence_pack</code></a></td><td>쟁점별 Evidence Pack</td><td>12</td><td>1</td><td>mbknow.retrieval_log 연계</td></tr>
+<tr><td>lgmat</td><td><a href="#t-lgmat-evidence_item"><code>evidence_item</code></a></td><td>근거 항목</td><td>13</td><td>3</td><td>신규</td></tr>
+<tr><td>lgmat</td><td><a href="#t-lgmat-legal_opinion"><code>legal_opinion</code></a></td><td>의견(버전)</td><td>16</td><td>1</td><td>EA 판정 의견 — mbeval.judgment_record 연계</td></tr>
+<tr><td>lgmat</td><td><a href="#t-lgmat-evidence_claim"><code>evidence_claim</code></a></td><td>주장-근거 검증</td><td>17</td><td>3</td><td>신규</td></tr>
+<tr><td>lgmat</td><td><a href="#t-lgmat-opinion_approval"><code>opinion_approval</code></a></td><td>자격자 승인</td><td>12</td><td>1</td><td>승인 스냅샷 해시 원칙</td></tr>
+<tr><td>lgmat</td><td><a href="#t-lgmat-opinion_impact_alert"><code>opinion_impact_alert</code></a></td><td>기발행 의견 영향 경보</td><td>10</td><td>1</td><td>신규</td></tr>
+<tr><td>lgmat</td><td><a href="#t-lgmat-agent_step_log"><code>agent_step_log</code></a></td><td>에이전트 단계 기록(추가 전용)</td><td>13</td><td>1</td><td>mbaudit 연계</td></tr>
+<tr><td>lgeval</td><td><a href="#t-lgeval-golden_case"><code>golden_case</code></a></td><td>골든 사례</td><td>17</td><td>0</td><td>mbeval.evaluation_case 확장</td></tr>
+<tr><td>lgeval</td><td><a href="#t-lgeval-benchmark_run"><code>benchmark_run</code></a></td><td>벤치마크 실행</td><td>17</td><td>0</td><td>mbeval.evaluation_run 확장</td></tr>
+<tr><td>lgeval</td><td><a href="#t-lgeval-benchmark_metric"><code>benchmark_metric</code></a></td><td>벤치마크 지표</td><td>10</td><td>1</td><td>mbeval.evaluation_result 확장</td></tr>
+<tr><td>lgeval</td><td><a href="#t-lgeval-component_release"><code>component_release</code></a></td><td>구성요소 배포</td><td>10</td><td>1</td><td>mbeval.model_change 확장</td></tr>
+<tr><td colspan="3"><b>합계</b> — lgsrc 9테이블·126컬럼, lgmat 10테이블·130컬럼, lgeval 4테이블·54컬럼</td><td><b>310</b></td><td><b>32</b></td><td>UK 18 · CHECK(열거) 54 · CHECK(식) 13</td></tr>
+</tbody></table></div>
+<h3>21.3 테이블별 컬럼 명세</h3>
+<p class="muted">키: PK 기본키 · UK 단일 유니크 · FK 외래키(대상은 표 아래 제약에 기재). NULL: NN = NOT NULL.</p>
+<h4 style="margin-top:28px;color:#173f73">■ lgsrc — 공용 법률 코퍼스</h4>
+<div class="tblhead" id="t-lgsrc-source_registry"><h4>lgsrc.source_registry</h4><span class="t">출처 레지스트리</span></div>
+<div class="tw"><table class="cols"><thead><tr><th style="width:19%">컬럼</th><th style="width:13%">타입</th><th style="width:5%">키</th><th style="width:5%">NULL</th><th style="width:9%">기본값</th><th>설명</th></tr></thead><tbody>
+<tr><td>source_id</td><td>uuid</td><td>PK</td><td>NN</td><td></td><td>출처 ID</td></tr>
+<tr><td>source_code</td><td>varchar(40)</td><td>UK</td><td>NN</td><td></td><td>출처 코드(예: LAW_GO_KR_API)</td></tr>
+<tr><td>source_name</td><td>varchar(200)</td><td></td><td>NN</td><td></td><td>출처명</td></tr>
+<tr><td>publisher</td><td>varchar(200)</td><td></td><td>NN</td><td></td><td>제공 기관</td></tr>
+<tr><td>access_method</td><td>varchar(20)</td><td></td><td>NN</td><td></td><td>수집 방식<br><small>값: <code>OPEN_API</code> · <code>BULK_FILE</code> · <code>WEB_MANUAL</code> · <code>LICENSED_FEED</code> · <code>INTERNAL</code></small></td></tr>
+<tr><td>license_terms_ref</td><td>varchar(500)</td><td></td><td>NN</td><td></td><td>이용약관·라이선스 문서 위치</td></tr>
+<tr><td>rag_use_allowed</td><td>boolean</td><td></td><td>NN</td><td>false</td><td>검색·인용 사용 허용</td></tr>
+<tr><td>training_use_allowed</td><td>boolean</td><td></td><td>NN</td><td>false</td><td>모델 학습 사용 허용 — RAG 허용과 별개로 판단</td></tr>
+<tr><td>redistribution_allowed</td><td>boolean</td><td></td><td>NN</td><td>false</td><td>원문 재배포(의견서 첨부) 허용</td></tr>
+<tr><td>default_authority_rank</td><td>varchar(4)</td><td></td><td>NN</td><td></td><td>기본 권위 등급 A1~D<br><small>값: <code>A1</code> · <code>A2</code> · <code>B1</code> · <code>B2</code> · <code>C</code> · <code>D</code></small></td></tr>
+<tr><td>is_active</td><td>boolean</td><td></td><td>NN</td><td>true</td><td>수집 활성</td></tr>
+<tr><td>reviewed_by</td><td>uuid</td><td></td><td>NULL</td><td></td><td>이용조건 검토자</td></tr>
+<tr><td>reviewed_at</td><td>date</td><td></td><td>NULL</td><td></td><td>이용조건 검토일</td></tr>
+<tr><td>created_at</td><td>timestamptz</td><td></td><td>NN</td><td>now()</td><td>생성 시각(감사 공통)</td></tr>
+<tr><td>ext</td><td>jsonb</td><td></td><td>NN</td><td>&#x27;{}&#x27;</td><td>확장 속성 — 운영 중 컬럼 추가 없이 흡수(Zero-DDL)</td></tr>
+</tbody></table></div>
+<ul class="cons"><li>PK <code>(source_id)</code></li><li>UK <code>(source_code)</code></li></ul>
+<div class="tblhead" id="t-lgsrc-source_document"><h4>lgsrc.source_document</h4><span class="t">원문 문서(불변 저장)</span></div>
+<div class="tw"><table class="cols"><thead><tr><th style="width:19%">컬럼</th><th style="width:13%">타입</th><th style="width:5%">키</th><th style="width:5%">NULL</th><th style="width:9%">기본값</th><th>설명</th></tr></thead><tbody>
+<tr><td>document_id</td><td>uuid</td><td>PK</td><td>NN</td><td></td><td>원문 ID</td></tr>
+<tr><td>source_id</td><td>uuid</td><td>FK</td><td>NN</td><td></td><td>출처</td></tr>
+<tr><td>doc_type</td><td>varchar(30)</td><td></td><td>NN</td><td></td><td>문서 유형<br><small>값: <code>STATUTE</code> · <code>ADDENDUM</code> · <code>CASE</code> · <code>CONST_DECISION</code> · <code>TAX_INTERPRETATION</code> · <code>TAX_APPEAL_DECISION</code> · <code>ADMIN_RULE</code> · <code>TREATY</code> · <code>SECONDARY</code></small></td></tr>
+<tr><td>external_ref</td><td>varchar(200)</td><td></td><td>NN</td><td></td><td>출처 측 식별자(법령ID·사건번호·문서번호)</td></tr>
+<tr><td>title</td><td>varchar(500)</td><td></td><td>NN</td><td></td><td>제목</td></tr>
+<tr><td>original_uri</td><td>varchar(1000)</td><td></td><td>NN</td><td></td><td>원문 URI</td></tr>
+<tr><td>content_object_key</td><td>varchar(500)</td><td></td><td>NN</td><td></td><td>오브젝트 스토어 키</td></tr>
+<tr><td>content_sha256</td><td>char(64)</td><td></td><td>NN</td><td></td><td>원문 해시(무결성)</td></tr>
+<tr><td>language</td><td>char(2)</td><td></td><td>NN</td><td>&#x27;ko&#x27;</td><td>언어</td></tr>
+<tr><td>deidentified</td><td>boolean</td><td></td><td>NN</td><td>false</td><td>비실명 처리 여부(판결서)</td></tr>
+<tr><td>collected_at</td><td>timestamptz</td><td></td><td>NN</td><td></td><td>수집 시각 = 인지시간 시작</td></tr>
+<tr><td>superseded_by_document_id</td><td>uuid</td><td>FK</td><td>NULL</td><td></td><td>원문 정정 시 대체 문서</td></tr>
+<tr><td>created_at</td><td>timestamptz</td><td></td><td>NN</td><td>now()</td><td>생성 시각(감사 공통)</td></tr>
+<tr><td>ext</td><td>jsonb</td><td></td><td>NN</td><td>&#x27;{}&#x27;</td><td>확장 속성 — 운영 중 컬럼 추가 없이 흡수(Zero-DDL)</td></tr>
+</tbody></table></div>
+<ul class="cons"><li>PK <code>(document_id)</code></li><li>UK <code>(source_id, external_ref, content_sha256)</code></li><li>FK <code>(source_id)</code> → <code>lgsrc.source_registry(source_id)</code></li><li>FK <code>(superseded_by_document_id)</code> → <code>lgsrc.source_document(document_id)</code></li></ul>
+<div class="tblhead" id="t-lgsrc-law_master"><h4>lgsrc.law_master</h4><span class="t">법령 마스터</span></div>
+<div class="tw"><table class="cols"><thead><tr><th style="width:19%">컬럼</th><th style="width:13%">타입</th><th style="width:5%">키</th><th style="width:5%">NULL</th><th style="width:9%">기본값</th><th>설명</th></tr></thead><tbody>
+<tr><td>law_id</td><td>uuid</td><td>PK</td><td>NN</td><td></td><td>법령 ID</td></tr>
+<tr><td>law_code</td><td>varchar(40)</td><td>UK</td><td>NN</td><td></td><td>국가법령정보센터 법령 식별자</td></tr>
+<tr><td>law_name</td><td>varchar(300)</td><td></td><td>NN</td><td></td><td>법령명(정식 명칭)</td></tr>
+<tr><td>law_level</td><td>varchar(20)</td><td></td><td>NN</td><td></td><td>법률·시행령·시행규칙·행정규칙·자치법규·조약<br><small>값: <code>ACT</code> · <code>DECREE</code> · <code>RULE</code> · <code>ADMIN_RULE</code> · <code>ORDINANCE</code> · <code>TREATY</code></small></td></tr>
+<tr><td>tax_scope</td><td>varchar(10)</td><td></td><td>NN</td><td>&#x27;NONE&#x27;</td><td>국세·지방세 구분(세법 아님=NONE)<br><small>값: <code>NONE</code> · <code>NATIONAL</code> · <code>LOCAL</code></small></td></tr>
+<tr><td>jurisdiction</td><td>varchar(10)</td><td></td><td>NN</td><td>&#x27;KR&#x27;</td><td>관할</td></tr>
+<tr><td>competent_ministry</td><td>varchar(100)</td><td></td><td>NULL</td><td></td><td>소관 부처</td></tr>
+<tr><td>parent_law_id</td><td>uuid</td><td>FK</td><td>NULL</td><td></td><td>위임 모법</td></tr>
+<tr><td>binding_external</td><td>boolean</td><td></td><td>NN</td><td></td><td>대외적 구속력 여부(행정규칙은 원칙적 false)</td></tr>
+<tr><td>created_at</td><td>timestamptz</td><td></td><td>NN</td><td>now()</td><td>생성 시각(감사 공통)</td></tr>
+<tr><td>ext</td><td>jsonb</td><td></td><td>NN</td><td>&#x27;{}&#x27;</td><td>확장 속성 — 운영 중 컬럼 추가 없이 흡수(Zero-DDL)</td></tr>
+</tbody></table></div>
+<ul class="cons"><li>PK <code>(law_id)</code></li><li>UK <code>(law_code)</code></li><li>FK <code>(parent_law_id)</code> → <code>lgsrc.law_master(law_id)</code></li></ul>
+<div class="tblhead" id="t-lgsrc-statute_version"><h4>lgsrc.statute_version</h4><span class="t">조문 버전(이중시간)</span></div>
+<div class="tw"><table class="cols"><thead><tr><th style="width:19%">컬럼</th><th style="width:13%">타입</th><th style="width:5%">키</th><th style="width:5%">NULL</th><th style="width:9%">기본값</th><th>설명</th></tr></thead><tbody>
+<tr><td>statute_version_id</td><td>uuid</td><td>PK</td><td>NN</td><td></td><td>조문 버전 ID</td></tr>
+<tr><td>law_id</td><td>uuid</td><td>FK</td><td>NN</td><td></td><td>법령</td></tr>
+<tr><td>document_id</td><td>uuid</td><td>FK</td><td>NN</td><td></td><td>근거 원문</td></tr>
+<tr><td>article_no</td><td>varchar(20)</td><td></td><td>NN</td><td></td><td>조(예: 382의3)</td></tr>
+<tr><td>paragraph_no</td><td>varchar(10)</td><td></td><td>NULL</td><td></td><td>항</td></tr>
+<tr><td>item_no</td><td>varchar(10)</td><td></td><td>NULL</td><td></td><td>호</td></tr>
+<tr><td>sub_item_no</td><td>varchar(10)</td><td></td><td>NULL</td><td></td><td>목</td></tr>
+<tr><td>provision_key</td><td>varchar(80)</td><td></td><td>NN</td><td></td><td>조·항·호·목 정규화 키(예: 382-3.1) — NULL 없는 UK 구성용</td></tr>
+<tr><td>text</td><td>text</td><td></td><td>NN</td><td></td><td>조문 원문</td></tr>
+<tr><td>promulgation_date</td><td>date</td><td></td><td>NN</td><td></td><td>공포일</td></tr>
+<tr><td>promulgation_no</td><td>varchar(30)</td><td></td><td>NULL</td><td></td><td>공포번호</td></tr>
+<tr><td>effective_from</td><td>date</td><td></td><td>NN</td><td></td><td>시행일(유효시간 시작)</td></tr>
+<tr><td>effective_to</td><td>date</td><td></td><td>NULL</td><td></td><td>유효시간 종료(NULL=현재 유효)</td></tr>
+<tr><td>validity_status</td><td>varchar(20)</td><td></td><td>NN</td><td></td><td>효력 상태<br><small>값: <code>IN_FORCE</code> · <code>REPEALED</code> · <code>UNCONSTITUTIONAL</code> · <code>NONCONFORMING</code> · <code>PENDING</code></small></td></tr>
+<tr><td>revision_type</td><td>varchar(20)</td><td></td><td>NN</td><td></td><td>제정·일부·전부·폐지·타법개정<br><small>값: <code>ENACT</code> · <code>PARTIAL</code> · <code>FULL</code> · <code>REPEAL</code> · <code>OTHER_LAW</code></small></td></tr>
+<tr><td>revision_reason</td><td>text</td><td></td><td>NULL</td><td></td><td>개정 이유</td></tr>
+<tr><td>previous_version_id</td><td>uuid</td><td>FK</td><td>NULL</td><td></td><td>직전 버전(역방향은 조회로 도출)</td></tr>
+<tr><td>recorded_from</td><td>timestamptz</td><td></td><td>NN</td><td>now()</td><td>인지시간 시작 — 이 내용을 시스템이 알게 된 시각</td></tr>
+<tr><td>recorded_to</td><td>timestamptz</td><td></td><td>NULL</td><td></td><td>인지시간 종료 — 정정으로 대체된 시각</td></tr>
+<tr><td>created_at</td><td>timestamptz</td><td></td><td>NN</td><td>now()</td><td>생성 시각(감사 공통)</td></tr>
+<tr><td>ext</td><td>jsonb</td><td></td><td>NN</td><td>&#x27;{}&#x27;</td><td>확장 속성 — 운영 중 컬럼 추가 없이 흡수(Zero-DDL)</td></tr>
+</tbody></table></div>
+<ul class="cons"><li>PK <code>(statute_version_id)</code></li><li>UK <code>(law_id, provision_key, effective_from, recorded_from)</code></li><li>FK <code>(law_id)</code> → <code>lgsrc.law_master(law_id)</code></li><li>FK <code>(document_id)</code> → <code>lgsrc.source_document(document_id)</code></li><li>FK <code>(previous_version_id)</code> → <code>lgsrc.statute_version(statute_version_id)</code></li><li>CHECK <code>effective_to IS NULL OR effective_to &gt;= effective_from</code></li><li>CHECK <code>recorded_to IS NULL OR recorded_to &gt; recorded_from</code></li></ul>
+<div class="tblhead" id="t-lgsrc-applicability_rule"><h4>lgsrc.applicability_rule</h4><span class="t">부칙 적용례·경과조치</span></div>
+<div class="tw"><table class="cols"><thead><tr><th style="width:19%">컬럼</th><th style="width:13%">타입</th><th style="width:5%">키</th><th style="width:5%">NULL</th><th style="width:9%">기본값</th><th>설명</th></tr></thead><tbody>
+<tr><td>rule_id</td><td>uuid</td><td>PK</td><td>NN</td><td></td><td>적용규칙 ID</td></tr>
+<tr><td>statute_version_id</td><td>uuid</td><td>FK</td><td>NN</td><td></td><td>적용 대상 조문 버전</td></tr>
+<tr><td>addendum_document_id</td><td>uuid</td><td>FK</td><td>NN</td><td></td><td>부칙 원문</td></tr>
+<tr><td>addendum_article</td><td>varchar(20)</td><td></td><td>NN</td><td></td><td>부칙 조항(예: 부칙 제2조)</td></tr>
+<tr><td>rule_type</td><td>varchar(20)</td><td></td><td>NN</td><td></td><td>적용례·경과조치·유리한 소급·특례<br><small>값: <code>APPLICATION</code> · <code>TRANSITIONAL</code> · <code>RETROACTIVE_BENEFIT</code> · <code>SPECIAL_CASE</code></small></td></tr>
+<tr><td>anchor_date_type</td><td>varchar(30)</td><td></td><td>NN</td><td></td><td>판정 기준일 종류<br><small>값: <code>ACT_DATE</code> · <code>CONTRACT_DATE</code> · <code>TAX_LIABILITY_DATE</code> · <code>FISCAL_YEAR_START</code> · <code>FILING_DATE</code> · <code>DISPOSITION_DATE</code> · <code>RESOLUTION_DATE</code> · <code>SUPPLY_DATE</code></small></td></tr>
+<tr><td>threshold_date</td><td>date</td><td></td><td>NULL</td><td></td><td>기준일 경계</td></tr>
+<tr><td>condition_expr</td><td>jsonb</td><td></td><td>NN</td><td></td><td>결정론적 판정식 — LLM 판단 금지</td></tr>
+<tr><td>rule_text</td><td>text</td><td></td><td>NN</td><td></td><td>부칙 원문 발췌</td></tr>
+<tr><td>rule_status</td><td>varchar(10)</td><td></td><td>NN</td><td>&#x27;DRAFT&#x27;</td><td>DRAFT는 기록만, CONFIRMED만 강제<br><small>값: <code>DRAFT</code> · <code>CONFIRMED</code></small></td></tr>
+<tr><td>verified_by</td><td>uuid</td><td></td><td>NULL</td><td></td><td>확정한 사람</td></tr>
+<tr><td>verified_at</td><td>timestamptz</td><td></td><td>NULL</td><td></td><td>확정 시각</td></tr>
+<tr><td>created_at</td><td>timestamptz</td><td></td><td>NN</td><td>now()</td><td>생성 시각(감사 공통)</td></tr>
+<tr><td>ext</td><td>jsonb</td><td></td><td>NN</td><td>&#x27;{}&#x27;</td><td>확장 속성 — 운영 중 컬럼 추가 없이 흡수(Zero-DDL)</td></tr>
+</tbody></table></div>
+<ul class="cons"><li>PK <code>(rule_id)</code></li><li>FK <code>(statute_version_id)</code> → <code>lgsrc.statute_version(statute_version_id)</code></li><li>FK <code>(addendum_document_id)</code> → <code>lgsrc.source_document(document_id)</code></li><li>CHECK <code>rule_status = &#x27;DRAFT&#x27; OR (verified_by IS NOT NULL AND verified_at IS NOT NULL)</code></li></ul>
+<div class="tblhead" id="t-lgsrc-case_law"><h4>lgsrc.case_law</h4><span class="t">판례·결정례</span></div>
+<div class="tw"><table class="cols"><thead><tr><th style="width:19%">컬럼</th><th style="width:13%">타입</th><th style="width:5%">키</th><th style="width:5%">NULL</th><th style="width:9%">기본값</th><th>설명</th></tr></thead><tbody>
+<tr><td>case_id</td><td>uuid</td><td>PK</td><td>NN</td><td></td><td>판례 ID</td></tr>
+<tr><td>document_id</td><td>uuid</td><td>FK</td><td>NN</td><td></td><td>원문</td></tr>
+<tr><td>court_type</td><td>varchar(20)</td><td></td><td>NN</td><td></td><td>기관 구분<br><small>값: <code>SUPREME</code> · <code>HIGH</code> · <code>DISTRICT</code> · <code>ADMIN</code> · <code>CONSTITUTIONAL</code> · <code>TAX_TRIBUNAL</code> · <code>BAI</code> · <code>NTS_REVIEW</code></small></td></tr>
+<tr><td>court_name</td><td>varchar(100)</td><td></td><td>NN</td><td></td><td>법원·기관명</td></tr>
+<tr><td>case_number</td><td>varchar(60)</td><td></td><td>NN</td><td></td><td>사건번호·결정번호</td></tr>
+<tr><td>decision_date</td><td>date</td><td></td><td>NN</td><td></td><td>선고·결정일</td></tr>
+<tr><td>decision_type</td><td>varchar(30)</td><td></td><td>NN</td><td></td><td>판결·결정·전원합의체<br><small>값: <code>JUDGMENT</code> · <code>DECISION</code> · <code>EN_BANC_JUDGMENT</code> · <code>EN_BANC_DECISION</code> · <code>RULING</code></small></td></tr>
+<tr><td>instance_level</td><td>smallint</td><td></td><td>NULL</td><td></td><td>심급(1·2·3)</td></tr>
+<tr><td>headnote_issues</td><td>text</td><td></td><td>NULL</td><td></td><td>판시사항</td></tr>
+<tr><td>headnote_summary</td><td>text</td><td></td><td>NULL</td><td></td><td>판결요지</td></tr>
+<tr><td>disposition</td><td>text</td><td></td><td>NULL</td><td></td><td>주문</td></tr>
+<tr><td>reasoning</td><td>text</td><td></td><td>NULL</td><td></td><td>이유(사실관계·원심 판단·상고이유 판단)</td></tr>
+<tr><td>facts_structured</td><td>jsonb</td><td></td><td>NN</td><td>&#x27;{}&#x27;</td><td>구조화 사실요소(사실비교용)</td></tr>
+<tr><td>cited_provisions_raw</td><td>text</td><td></td><td>NULL</td><td></td><td>참조조문 원문 — 정규화 관계는 kg_edge</td></tr>
+<tr><td>precedent_status</td><td>varchar(20)</td><td></td><td>NN</td><td>&#x27;VALID&#x27;</td><td>판례 상태<br><small>값: <code>VALID</code> · <code>OVERRULED</code> · <code>PARTIALLY_OVERRULED</code> · <code>NEEDS_REVIEW</code></small></td></tr>
+<tr><td>status_changed_by_case_id</td><td>uuid</td><td>FK</td><td>NULL</td><td></td><td>상태를 바꾼 판례(전원합의체 등)</td></tr>
+<tr><td>created_at</td><td>timestamptz</td><td></td><td>NN</td><td>now()</td><td>생성 시각(감사 공통)</td></tr>
+<tr><td>ext</td><td>jsonb</td><td></td><td>NN</td><td>&#x27;{}&#x27;</td><td>확장 속성 — 운영 중 컬럼 추가 없이 흡수(Zero-DDL)</td></tr>
+</tbody></table></div>
+<ul class="cons"><li>PK <code>(case_id)</code></li><li>UK <code>(court_name, case_number, decision_date)</code></li><li>FK <code>(document_id)</code> → <code>lgsrc.source_document(document_id)</code></li><li>FK <code>(status_changed_by_case_id)</code> → <code>lgsrc.case_law(case_id)</code></li></ul>
+<div class="tblhead" id="t-lgsrc-tax_interpretation"><h4>lgsrc.tax_interpretation</h4><span class="t">세법 해석례</span></div>
+<div class="tw"><table class="cols"><thead><tr><th style="width:19%">컬럼</th><th style="width:13%">타입</th><th style="width:5%">키</th><th style="width:5%">NULL</th><th style="width:9%">기본값</th><th>설명</th></tr></thead><tbody>
+<tr><td>interpretation_id</td><td>uuid</td><td>PK</td><td>NN</td><td></td><td>해석례 ID</td></tr>
+<tr><td>document_id</td><td>uuid</td><td>FK</td><td>NN</td><td></td><td>원문</td></tr>
+<tr><td>issuer</td><td>varchar(10)</td><td></td><td>NN</td><td></td><td>기획재정부·국세청·행정안전부·법제처<br><small>값: <code>MOEF</code> · <code>NTS</code> · <code>MOIS</code> · <code>MOLEG</code> · <code>OTHER</code></small></td></tr>
+<tr><td>interp_type</td><td>varchar(30)</td><td></td><td>NN</td><td></td><td>해석 유형<br><small>값: <code>ADVANCE_RULING</code> · <code>WRITTEN_REPLY</code> · <code>TAX_STANDARD_ADVICE</code> · <code>MOEF_RULING</code> · <code>BASIC_RULE</code> · <code>ENFORCEMENT_STANDARD</code> · <code>MOLEG_INTERPRETATION</code></small></td></tr>
+<tr><td>doc_number</td><td>varchar(80)</td><td></td><td>NN</td><td></td><td>문서번호</td></tr>
+<tr><td>issued_date</td><td>date</td><td></td><td>NN</td><td></td><td>회신·생산일</td></tr>
+<tr><td>tax_scope</td><td>varchar(10)</td><td></td><td>NN</td><td></td><td>국세·지방세<br><small>값: <code>NATIONAL</code> · <code>LOCAL</code></small></td></tr>
+<tr><td>tax_item</td><td>varchar(30)</td><td></td><td>NN</td><td></td><td>세목 코드</td></tr>
+<tr><td>question_summary</td><td>text</td><td></td><td>NULL</td><td></td><td>질의 요지</td></tr>
+<tr><td>answer_summary</td><td>text</td><td></td><td>NULL</td><td></td><td>회신 요지</td></tr>
+<tr><td>binding_note</td><td>varchar(20)</td><td></td><td>NN</td><td></td><td>구속 범위 — 권위 등급과 별개<br><small>값: <code>APPLICANT_ONLY</code> · <code>ADMIN_INTERNAL</code> · <code>NON_BINDING</code></small></td></tr>
+<tr><td>superseded_by_id</td><td>uuid</td><td>FK</td><td>NULL</td><td></td><td>변경·대체 해석</td></tr>
+<tr><td>created_at</td><td>timestamptz</td><td></td><td>NN</td><td>now()</td><td>생성 시각(감사 공통)</td></tr>
+<tr><td>ext</td><td>jsonb</td><td></td><td>NN</td><td>&#x27;{}&#x27;</td><td>확장 속성 — 운영 중 컬럼 추가 없이 흡수(Zero-DDL)</td></tr>
+</tbody></table></div>
+<ul class="cons"><li>PK <code>(interpretation_id)</code></li><li>UK <code>(issuer, doc_number)</code></li><li>FK <code>(document_id)</code> → <code>lgsrc.source_document(document_id)</code></li><li>FK <code>(superseded_by_id)</code> → <code>lgsrc.tax_interpretation(interpretation_id)</code></li></ul>
+<div class="tblhead" id="t-lgsrc-kg_node"><h4>lgsrc.kg_node</h4><span class="t">지식그래프 노드(공용)</span></div>
+<div class="tw"><table class="cols"><thead><tr><th style="width:19%">컬럼</th><th style="width:13%">타입</th><th style="width:5%">키</th><th style="width:5%">NULL</th><th style="width:9%">기본값</th><th>설명</th></tr></thead><tbody>
+<tr><td>node_id</td><td>uuid</td><td>PK</td><td>NN</td><td></td><td>노드 ID</td></tr>
+<tr><td>node_type</td><td>varchar(30)</td><td></td><td>NN</td><td></td><td>노드 유형<br><small>값: <code>LAW</code> · <code>PROVISION</code> · <code>ELEMENT</code> · <code>CASE</code> · <code>HOLDING</code> · <code>FACT_PATTERN</code> · <code>ISSUE</code> · <code>TAX_INTERPRETATION</code> · <code>CONCEPT</code></small></td></tr>
+<tr><td>label</td><td>varchar(300)</td><td></td><td>NN</td><td></td><td>표시명</td></tr>
+<tr><td>ref_table</td><td>varchar(60)</td><td></td><td>NULL</td><td></td><td>원천 테이블(선택)</td></tr>
+<tr><td>ref_id</td><td>uuid</td><td></td><td>NULL</td><td></td><td>원천 행 ID(선택)</td></tr>
+<tr><td>ontology_version</td><td>varchar(20)</td><td></td><td>NN</td><td></td><td>온톨로지 버전</td></tr>
+<tr><td>created_at</td><td>timestamptz</td><td></td><td>NN</td><td>now()</td><td>생성 시각(감사 공통)</td></tr>
+<tr><td>ext</td><td>jsonb</td><td></td><td>NN</td><td>&#x27;{}&#x27;</td><td>확장 속성 — 운영 중 컬럼 추가 없이 흡수(Zero-DDL)</td></tr>
+</tbody></table></div>
+<ul class="cons"><li>PK <code>(node_id)</code></li><li>UK <code>(node_type, label, ontology_version)</code></li><li>테넌트 고유 노드(회사·계약·프로젝트)는 공용 그래프에 넣지 않는다 — 사안 쪽 matter_issue 가 공용 쟁점 노드를 참조한다.</li></ul>
+<div class="tblhead" id="t-lgsrc-kg_edge"><h4>lgsrc.kg_edge</h4><span class="t">지식그래프 관계</span></div>
+<div class="tw"><table class="cols"><thead><tr><th style="width:19%">컬럼</th><th style="width:13%">타입</th><th style="width:5%">키</th><th style="width:5%">NULL</th><th style="width:9%">기본값</th><th>설명</th></tr></thead><tbody>
+<tr><td>edge_id</td><td>uuid</td><td>PK</td><td>NN</td><td></td><td>관계 ID</td></tr>
+<tr><td>from_node_id</td><td>uuid</td><td>FK</td><td>NN</td><td></td><td>시작 노드</td></tr>
+<tr><td>to_node_id</td><td>uuid</td><td>FK</td><td>NN</td><td></td><td>끝 노드</td></tr>
+<tr><td>edge_type</td><td>varchar(30)</td><td></td><td>NN</td><td></td><td>관계 유형<br><small>값: <code>INTERPRETS</code> · <code>APPLIES</code> · <code>CITES</code> · <code>OVERRULES</code> · <code>REVERSES_REMANDS</code> · <code>FOLLOWS_UPPER_INSTANCE</code> · <code>REQUIRES_ELEMENT</code> · <code>ADDRESSES_ISSUE</code> · <code>HAS_FACT_PATTERN</code> · <code>DELEGATES_TO</code> · <code>AMENDS</code> · <code>INVALIDATES</code> · <code>CONFLICTS_WITH</code></small></td></tr>
+<tr><td>valid_from</td><td>date</td><td></td><td>NULL</td><td></td><td>관계 유효 시작(판례변경·개정 반영)</td></tr>
+<tr><td>valid_to</td><td>date</td><td></td><td>NULL</td><td></td><td>관계 유효 종료</td></tr>
+<tr><td>evidence_document_id</td><td>uuid</td><td>FK</td><td>NULL</td><td></td><td>관계 근거 원문</td></tr>
+<tr><td>extraction_method</td><td>varchar(20)</td><td></td><td>NN</td><td></td><td>규칙·LLM 추출·사람<br><small>값: <code>RULE</code> · <code>LLM_EXTRACTED</code> · <code>HUMAN</code></small></td></tr>
+<tr><td>review_status</td><td>varchar(10)</td><td></td><td>NN</td><td>&#x27;DRAFT&#x27;</td><td>LLM 추출 관계는 CONFIRMED 전 검색 가중 제한<br><small>값: <code>DRAFT</code> · <code>CONFIRMED</code></small></td></tr>
+<tr><td>created_at</td><td>timestamptz</td><td></td><td>NN</td><td>now()</td><td>생성 시각(감사 공통)</td></tr>
+<tr><td>ext</td><td>jsonb</td><td></td><td>NN</td><td>&#x27;{}&#x27;</td><td>확장 속성 — 운영 중 컬럼 추가 없이 흡수(Zero-DDL)</td></tr>
+</tbody></table></div>
+<ul class="cons"><li>PK <code>(edge_id)</code></li><li>UK <code>(from_node_id, to_node_id, edge_type)</code></li><li>FK <code>(from_node_id)</code> → <code>lgsrc.kg_node(node_id)</code></li><li>FK <code>(to_node_id)</code> → <code>lgsrc.kg_node(node_id)</code></li><li>FK <code>(evidence_document_id)</code> → <code>lgsrc.source_document(document_id)</code></li><li>CHECK <code>from_node_id &lt;&gt; to_node_id</code></li></ul>
+<h4 style="margin-top:28px;color:#173f73">■ lgmat — 테넌트 사안(RLS)</h4>
+<div class="tblhead" id="t-lgmat-matter"><h4>lgmat.matter</h4><span class="t">법률·세무 사안</span> <span class=pill>RLS</span></div>
+<div class="tw"><table class="cols"><thead><tr><th style="width:19%">컬럼</th><th style="width:13%">타입</th><th style="width:5%">키</th><th style="width:5%">NULL</th><th style="width:9%">기본값</th><th>설명</th></tr></thead><tbody>
+<tr><td>matter_id</td><td>uuid</td><td>PK</td><td>NN</td><td></td><td>사안 ID</td></tr>
+<tr><td>tenant_id</td><td>uuid</td><td></td><td>NN</td><td></td><td>테넌트(RLS 기준)</td></tr>
+<tr><td>project_code</td><td>varchar(30)</td><td></td><td>NN</td><td></td><td>프로젝트 코드 — 자릿수 · 구성 · 검증식은 코드 체계(code_scheme) 데이터가 정한다(설계지시문 제4.7.1조, 플랫폼 mbproj.project.project_code 와 같은 타입)</td></tr>
+<tr><td>work_code</td><td>varchar(20)</td><td></td><td>NN</td><td></td><td>업무코드 — 기본 구성 표본은 9자리(FL0013041 형), 길이 · 구성은 코드 체계(code_scheme) 데이터가 정한다(제4.7.1조, 플랫폼 표와 같은 varchar(20))</td></tr>
+<tr><td>matter_title</td><td>varchar(300)</td><td></td><td>NN</td><td></td><td>사안명</td></tr>
+<tr><td>matter_domain</td><td>varchar(20)</td><td></td><td>NN</td><td></td><td>사안 영역<br><small>값: <code>CORPORATE</code> · <code>TAX</code> · <code>CONTRACT</code> · <code>LABOR</code> · <code>SAFETY</code> · <code>COMPLIANCE</code> · <code>LITIGATION</code></small></td></tr>
+<tr><td>risk_grade</td><td>varchar(10)</td><td></td><td>NN</td><td></td><td>위험 등급<br><small>값: <code>LOW</code> · <code>MEDIUM</code> · <code>HIGH</code> · <code>CRITICAL</code></small></td></tr>
+<tr><td>jurisdiction</td><td>varchar(10)</td><td></td><td>NN</td><td>&#x27;KR&#x27;</td><td>관할</td></tr>
+<tr><td>as_of_date</td><td>date</td><td></td><td>NN</td><td></td><td>판단 기준일(사실별 기준일은 matter_fact)</td></tr>
+<tr><td>confidentiality</td><td>varchar(20)</td><td></td><td>NN</td><td></td><td>기밀 분류<br><small>값: <code>INTERNAL</code> · <code>CONFIDENTIAL</code> · <code>LAWYER_SECRET</code> · <code>PERSONAL_DATA</code> · <code>TRADE_SECRET</code></small></td></tr>
+<tr><td>matter_status</td><td>varchar(20)</td><td></td><td>NN</td><td>&#x27;INTAKE&#x27;</td><td>사안 상태(12장 상태기계)<br><small>값: <code>INTAKE</code> · <code>FACT_PENDING</code> · <code>RESEARCH</code> · <code>DRAFTING</code> · <code>VERIFYING</code> · <code>ABSTAINED</code> · <code>REVIEW</code> · <code>APPROVED</code> · <code>ISSUED</code> · <code>CLOSED</code> · <code>REOPENED</code></small></td></tr>
+<tr><td>requested_by</td><td>uuid</td><td></td><td>NN</td><td></td><td>요청자(IA/PA 주체)</td></tr>
+<tr><td>responsible_professional_id</td><td>uuid</td><td></td><td>NULL</td><td></td><td>책임 자격자</td></tr>
+<tr><td>created_at</td><td>timestamptz</td><td></td><td>NN</td><td>now()</td><td>생성 시각(감사 공통)</td></tr>
+<tr><td>ext</td><td>jsonb</td><td></td><td>NN</td><td>&#x27;{}&#x27;</td><td>확장 속성 — 운영 중 컬럼 추가 없이 흡수(Zero-DDL)</td></tr>
+</tbody></table></div>
+<ul class="cons"><li>PK <code>(matter_id)</code></li><li>UK <code>(tenant_id, matter_id)</code></li><li>CHECK <code>risk_grade IN (&#x27;LOW&#x27;,&#x27;MEDIUM&#x27;) OR responsible_professional_id IS NOT NULL OR matter_status IN (&#x27;INTAKE&#x27;,&#x27;FACT_PENDING&#x27;,&#x27;RESEARCH&#x27;,&#x27;DRAFTING&#x27;,&#x27;VERIFYING&#x27;,&#x27;ABSTAINED&#x27;)</code></li></ul>
+<div class="tblhead" id="t-lgmat-matter_fact"><h4>lgmat.matter_fact</h4><span class="t">사실관계</span> <span class=pill>RLS</span></div>
+<div class="tw"><table class="cols"><thead><tr><th style="width:19%">컬럼</th><th style="width:13%">타입</th><th style="width:5%">키</th><th style="width:5%">NULL</th><th style="width:9%">기본값</th><th>설명</th></tr></thead><tbody>
+<tr><td>fact_id</td><td>uuid</td><td>PK</td><td>NN</td><td></td><td>사실 ID</td></tr>
+<tr><td>tenant_id</td><td>uuid</td><td></td><td>NN</td><td></td><td>테넌트(RLS 기준)</td></tr>
+<tr><td>matter_id</td><td>uuid</td><td>FK</td><td>NN</td><td></td><td>사안</td></tr>
+<tr><td>fact_status</td><td>varchar(20)</td><td></td><td>NN</td><td></td><td>확정·주장·가정·다툼·미확인<br><small>값: <code>CONFIRMED</code> · <code>ASSERTED</code> · <code>ASSUMED</code> · <code>DISPUTED</code> · <code>MISSING</code></small></td></tr>
+<tr><td>fact_text</td><td>text</td><td></td><td>NN</td><td></td><td>사실 내용</td></tr>
+<tr><td>fact_date</td><td>date</td><td></td><td>NULL</td><td></td><td>사실의 기준일</td></tr>
+<tr><td>date_type</td><td>varchar(30)</td><td></td><td>NULL</td><td></td><td>기준일 종류(적용규칙과 동일 어휘)<br><small>값: <code>ACT_DATE</code> · <code>CONTRACT_DATE</code> · <code>TAX_LIABILITY_DATE</code> · <code>FISCAL_YEAR_START</code> · <code>FILING_DATE</code> · <code>DISPOSITION_DATE</code> · <code>RESOLUTION_DATE</code> · <code>SUPPLY_DATE</code></small></td></tr>
+<tr><td>source_domain</td><td>varchar(20)</td><td></td><td>NULL</td><td></td><td>원천 업무영역(D04 회계업무 · D05 재무업무 · D15 부품·반제품 구매업무 등) — 원천 기록은 읽기 전용 참조. v1.3 에서 source_system 을 개명(공통 컬럼 source_system 과 이름 충돌)</td></tr>
+<tr><td>source_ref</td><td>varchar(500)</td><td></td><td>NULL</td><td></td><td>원천 문서·전표 참조</td></tr>
+<tr><td>asked_to_user</td><td>boolean</td><td></td><td>NN</td><td>false</td><td>보완 질의로 확인했는지</td></tr>
+<tr><td>created_at</td><td>timestamptz</td><td></td><td>NN</td><td>now()</td><td>생성 시각(감사 공통)</td></tr>
+<tr><td>ext</td><td>jsonb</td><td></td><td>NN</td><td>&#x27;{}&#x27;</td><td>확장 속성 — 운영 중 컬럼 추가 없이 흡수(Zero-DDL)</td></tr>
+</tbody></table></div>
+<ul class="cons"><li>PK <code>(fact_id)</code></li><li>FK <code>(tenant_id, matter_id)</code> → <code>lgmat.matter(tenant_id, matter_id)</code></li><li>CHECK <code>(fact_date IS NULL) = (date_type IS NULL)</code></li></ul>
+<div class="tblhead" id="t-lgmat-matter_issue"><h4>lgmat.matter_issue</h4><span class="t">쟁점 트리</span> <span class=pill>RLS</span></div>
+<div class="tw"><table class="cols"><thead><tr><th style="width:19%">컬럼</th><th style="width:13%">타입</th><th style="width:5%">키</th><th style="width:5%">NULL</th><th style="width:9%">기본값</th><th>설명</th></tr></thead><tbody>
+<tr><td>issue_id</td><td>uuid</td><td>PK</td><td>NN</td><td></td><td>쟁점 ID</td></tr>
+<tr><td>tenant_id</td><td>uuid</td><td></td><td>NN</td><td></td><td>테넌트(RLS 기준)</td></tr>
+<tr><td>matter_id</td><td>uuid</td><td>FK</td><td>NN</td><td></td><td>사안</td></tr>
+<tr><td>parent_issue_id</td><td>uuid</td><td>FK</td><td>NULL</td><td></td><td>상위 쟁점</td></tr>
+<tr><td>issue_title</td><td>varchar(300)</td><td></td><td>NN</td><td></td><td>쟁점명</td></tr>
+<tr><td>kg_issue_node_id</td><td>uuid</td><td>FK</td><td>NULL</td><td></td><td>공용 그래프 쟁점 노드</td></tr>
+<tr><td>priority</td><td>varchar(10)</td><td></td><td>NN</td><td></td><td>우선순위<br><small>값: <code>HIGH</code> · <code>MEDIUM</code> · <code>LOW</code></small></td></tr>
+<tr><td>spotted_by</td><td>varchar(10)</td><td></td><td>NN</td><td></td><td>에이전트·사람<br><small>값: <code>AGENT</code> · <code>HUMAN</code></small></td></tr>
+<tr><td>created_at</td><td>timestamptz</td><td></td><td>NN</td><td>now()</td><td>생성 시각(감사 공통)</td></tr>
+<tr><td>ext</td><td>jsonb</td><td></td><td>NN</td><td>&#x27;{}&#x27;</td><td>확장 속성 — 운영 중 컬럼 추가 없이 흡수(Zero-DDL)</td></tr>
+</tbody></table></div>
+<ul class="cons"><li>PK <code>(issue_id)</code></li><li>UK <code>(tenant_id, issue_id)</code></li><li>FK <code>(tenant_id, matter_id)</code> → <code>lgmat.matter(tenant_id, matter_id)</code></li><li>FK <code>(tenant_id, parent_issue_id)</code> → <code>lgmat.matter_issue(tenant_id, issue_id)</code></li><li>FK <code>(kg_issue_node_id)</code> → <code>lgsrc.kg_node(node_id)</code></li></ul>
+<div class="tblhead" id="t-lgmat-evidence_pack"><h4>lgmat.evidence_pack</h4><span class="t">쟁점별 Evidence Pack</span> <span class=pill>RLS</span></div>
+<div class="tw"><table class="cols"><thead><tr><th style="width:19%">컬럼</th><th style="width:13%">타입</th><th style="width:5%">키</th><th style="width:5%">NULL</th><th style="width:9%">기본값</th><th>설명</th></tr></thead><tbody>
+<tr><td>pack_id</td><td>uuid</td><td>PK</td><td>NN</td><td></td><td>팩 ID</td></tr>
+<tr><td>tenant_id</td><td>uuid</td><td></td><td>NN</td><td></td><td>테넌트(RLS 기준)</td></tr>
+<tr><td>issue_id</td><td>uuid</td><td>FK</td><td>NN</td><td></td><td>쟁점</td></tr>
+<tr><td>applicable_date</td><td>date</td><td></td><td>NN</td><td></td><td>적용 기준일</td></tr>
+<tr><td>source_snapshot_id</td><td>varchar(40)</td><td></td><td>NN</td><td></td><td>원문 스냅샷(예: kr-law-2026-09-13)</td></tr>
+<tr><td>retrieval_policy_version</td><td>varchar(20)</td><td></td><td>NN</td><td></td><td>검색 정책 버전</td></tr>
+<tr><td>index_version</td><td>varchar(40)</td><td></td><td>NN</td><td></td><td>색인 버전(임베딩 모델 포함)</td></tr>
+<tr><td>permission_scope_hash</td><td>char(64)</td><td></td><td>NN</td><td></td><td>검색 당시 권한 범위 해시 — 캐시 키 구성요소</td></tr>
+<tr><td>missing_evidence</td><td>jsonb</td><td></td><td>NN</td><td>&#x27;[]&#x27;</td><td>찾지 못한 근거</td></tr>
+<tr><td>retrieval_trace</td><td>jsonb</td><td></td><td>NN</td><td></td><td>질의·후보·점수·필터 기록</td></tr>
+<tr><td>created_at</td><td>timestamptz</td><td></td><td>NN</td><td>now()</td><td>생성 시각(감사 공통)</td></tr>
+<tr><td>ext</td><td>jsonb</td><td></td><td>NN</td><td>&#x27;{}&#x27;</td><td>확장 속성 — 운영 중 컬럼 추가 없이 흡수(Zero-DDL)</td></tr>
+</tbody></table></div>
+<ul class="cons"><li>PK <code>(pack_id)</code></li><li>UK <code>(tenant_id, pack_id)</code></li><li>FK <code>(tenant_id, issue_id)</code> → <code>lgmat.matter_issue(tenant_id, issue_id)</code></li></ul>
+<div class="tblhead" id="t-lgmat-evidence_item"><h4>lgmat.evidence_item</h4><span class="t">근거 항목</span> <span class=pill>RLS</span></div>
+<div class="tw"><table class="cols"><thead><tr><th style="width:19%">컬럼</th><th style="width:13%">타입</th><th style="width:5%">키</th><th style="width:5%">NULL</th><th style="width:9%">기본값</th><th>설명</th></tr></thead><tbody>
+<tr><td>item_id</td><td>uuid</td><td>PK</td><td>NN</td><td></td><td>근거 ID</td></tr>
+<tr><td>tenant_id</td><td>uuid</td><td></td><td>NN</td><td></td><td>테넌트(RLS 기준)</td></tr>
+<tr><td>pack_id</td><td>uuid</td><td>FK</td><td>NN</td><td></td><td>Evidence Pack</td></tr>
+<tr><td>document_id</td><td>uuid</td><td>FK</td><td>NULL</td><td></td><td>공용 원문</td></tr>
+<tr><td>internal_doc_ref</td><td>varchar(500)</td><td></td><td>NULL</td><td></td><td>사내 문서 참조</td></tr>
+<tr><td>statute_version_id</td><td>uuid</td><td>FK</td><td>NULL</td><td></td><td>조문 버전(법령 근거일 때)</td></tr>
+<tr><td>span_start</td><td>integer</td><td></td><td>NULL</td><td></td><td>원문 인용 시작 오프셋</td></tr>
+<tr><td>span_end</td><td>integer</td><td></td><td>NULL</td><td></td><td>원문 인용 끝 오프셋</td></tr>
+<tr><td>evidence_role</td><td>varchar(20)</td><td></td><td>NN</td><td></td><td>지지·반대·맥락<br><small>값: <code>SUPPORTING</code> · <code>CONTRARY</code> · <code>CONTEXT</code></small></td></tr>
+<tr><td>authority_rank</td><td>varchar(4)</td><td></td><td>NN</td><td></td><td>권위 등급<br><small>값: <code>A1</code> · <code>A2</code> · <code>B1</code> · <code>B2</code> · <code>C</code> · <code>D</code></small></td></tr>
+<tr><td>rerank_score</td><td>numeric(6,4)</td><td></td><td>NULL</td><td></td><td>리랭커 점수</td></tr>
+<tr><td>created_at</td><td>timestamptz</td><td></td><td>NN</td><td>now()</td><td>생성 시각(감사 공통)</td></tr>
+<tr><td>ext</td><td>jsonb</td><td></td><td>NN</td><td>&#x27;{}&#x27;</td><td>확장 속성 — 운영 중 컬럼 추가 없이 흡수(Zero-DDL)</td></tr>
+</tbody></table></div>
+<ul class="cons"><li>PK <code>(item_id)</code></li><li>UK <code>(tenant_id, item_id)</code></li><li>FK <code>(tenant_id, pack_id)</code> → <code>lgmat.evidence_pack(tenant_id, pack_id)</code></li><li>FK <code>(document_id)</code> → <code>lgsrc.source_document(document_id)</code></li><li>FK <code>(statute_version_id)</code> → <code>lgsrc.statute_version(statute_version_id)</code></li><li>CHECK <code>(document_id IS NULL) &lt;&gt; (internal_doc_ref IS NULL)</code></li><li>CHECK <code>span_end IS NULL OR span_end &gt; span_start</code></li></ul>
+<div class="tblhead" id="t-lgmat-legal_opinion"><h4>lgmat.legal_opinion</h4><span class="t">의견(버전)</span> <span class=pill>RLS</span></div>
+<div class="tw"><table class="cols"><thead><tr><th style="width:19%">컬럼</th><th style="width:13%">타입</th><th style="width:5%">키</th><th style="width:5%">NULL</th><th style="width:9%">기본값</th><th>설명</th></tr></thead><tbody>
+<tr><td>opinion_id</td><td>uuid</td><td>PK</td><td>NN</td><td></td><td>의견 ID</td></tr>
+<tr><td>tenant_id</td><td>uuid</td><td></td><td>NN</td><td></td><td>테넌트(RLS 기준)</td></tr>
+<tr><td>matter_id</td><td>uuid</td><td>FK</td><td>NN</td><td></td><td>사안</td></tr>
+<tr><td>opinion_version</td><td>integer</td><td></td><td>NN</td><td></td><td>의견 버전(1부터)</td></tr>
+<tr><td>opinion_body</td><td>jsonb</td><td></td><td>NN</td><td></td><td>LegalOpinion 출력 스키마(20장)</td></tr>
+<tr><td>output_schema_version</td><td>varchar(20)</td><td></td><td>NN</td><td></td><td>출력 스키마 버전</td></tr>
+<tr><td>opinion_status</td><td>varchar(20)</td><td></td><td>NN</td><td>&#x27;DRAFT&#x27;</td><td>의견 상태<br><small>값: <code>DRAFT</code> · <code>AUDIT_FAILED</code> · <code>ABSTAINED</code> · <code>PENDING_REVIEW</code> · <code>APPROVED</code> · <code>ISSUED</code> · <code>WITHDRAWN</code> · <code>REVIEW_REQUIRED</code></small></td></tr>
+<tr><td>content_sha256</td><td>char(64)</td><td></td><td>NN</td><td></td><td>의견 내용 해시 — 승인이 성립하는 대상</td></tr>
+<tr><td>model_id</td><td>varchar(100)</td><td></td><td>NN</td><td></td><td>생성 모델 식별자</td></tr>
+<tr><td>model_identity_verified</td><td>boolean</td><td></td><td>NN</td><td></td><td>호출 응답의 모델 식별자 대조 결과</td></tr>
+<tr><td>skill_version</td><td>varchar(20)</td><td></td><td>NN</td><td></td><td>Skill/Workflow 버전</td></tr>
+<tr><td>ontology_version</td><td>varchar(20)</td><td></td><td>NN</td><td></td><td>온톨로지 버전</td></tr>
+<tr><td>source_snapshot_id</td><td>varchar(40)</td><td></td><td>NN</td><td></td><td>원문 스냅샷</td></tr>
+<tr><td>ai_generated_notice</td><td>boolean</td><td></td><td>NN</td><td>true</td><td>생성형 AI 결과물 고지 표시</td></tr>
+<tr><td>created_at</td><td>timestamptz</td><td></td><td>NN</td><td>now()</td><td>생성 시각(감사 공통)</td></tr>
+<tr><td>ext</td><td>jsonb</td><td></td><td>NN</td><td>&#x27;{}&#x27;</td><td>확장 속성 — 운영 중 컬럼 추가 없이 흡수(Zero-DDL)</td></tr>
+</tbody></table></div>
+<ul class="cons"><li>PK <code>(opinion_id)</code></li><li>UK <code>(tenant_id, matter_id, opinion_version)</code></li><li>UK <code>(tenant_id, opinion_id)</code></li><li>FK <code>(tenant_id, matter_id)</code> → <code>lgmat.matter(tenant_id, matter_id)</code></li><li>CHECK <code>opinion_version &gt;= 1</code></li></ul>
+<div class="tblhead" id="t-lgmat-evidence_claim"><h4>lgmat.evidence_claim</h4><span class="t">주장-근거 검증</span> <span class=pill>RLS</span></div>
+<div class="tw"><table class="cols"><thead><tr><th style="width:19%">컬럼</th><th style="width:13%">타입</th><th style="width:5%">키</th><th style="width:5%">NULL</th><th style="width:9%">기본값</th><th>설명</th></tr></thead><tbody>
+<tr><td>claim_id</td><td>uuid</td><td>PK</td><td>NN</td><td></td><td>주장 ID</td></tr>
+<tr><td>tenant_id</td><td>uuid</td><td></td><td>NN</td><td></td><td>테넌트(RLS 기준)</td></tr>
+<tr><td>opinion_id</td><td>uuid</td><td>FK</td><td>NN</td><td></td><td>의견</td></tr>
+<tr><td>issue_id</td><td>uuid</td><td>FK</td><td>NN</td><td></td><td>쟁점</td></tr>
+<tr><td>claim_text</td><td>text</td><td></td><td>NN</td><td></td><td>개별 주장</td></tr>
+<tr><td>claim_materiality</td><td>varchar(10)</td><td></td><td>NN</td><td></td><td>핵심·보조<br><small>값: <code>MATERIAL</code> · <code>SUPPORTING</code></small></td></tr>
+<tr><td>item_id</td><td>uuid</td><td>FK</td><td>NULL</td><td></td><td>연결 근거(NULL=근거 없음)</td></tr>
+<tr><td>existence_check</td><td>varchar(10)</td><td></td><td>NN</td><td></td><td>원문 존재<br><small>값: <code>PASS</code> · <code>FAIL</code> · <code>REVIEW</code> · <code>NA</code></small></td></tr>
+<tr><td>citation_check</td><td>varchar(10)</td><td></td><td>NN</td><td></td><td>번호·명칭 일치<br><small>값: <code>PASS</code> · <code>FAIL</code> · <code>REVIEW</code> · <code>NA</code></small></td></tr>
+<tr><td>temporal_check</td><td>varchar(10)</td><td></td><td>NN</td><td></td><td>기준일 적합<br><small>값: <code>PASS</code> · <code>FAIL</code> · <code>REVIEW</code> · <code>NA</code></small></td></tr>
+<tr><td>semantic_check</td><td>varchar(10)</td><td></td><td>NN</td><td></td><td>취지 왜곡 없음<br><small>값: <code>PASS</code> · <code>FAIL</code> · <code>REVIEW</code> · <code>NA</code></small></td></tr>
+<tr><td>authority_check</td><td>varchar(10)</td><td></td><td>NN</td><td></td><td>권위 충분<br><small>값: <code>PASS</code> · <code>FAIL</code> · <code>REVIEW</code> · <code>NA</code></small></td></tr>
+<tr><td>conflict_check</td><td>varchar(10)</td><td></td><td>NN</td><td></td><td>상충 근거 설명<br><small>값: <code>PASS</code> · <code>FAIL</code> · <code>REVIEW</code> · <code>NA</code></small></td></tr>
+<tr><td>auditor_status</td><td>varchar(10)</td><td></td><td>NN</td><td></td><td>종합 판정<br><small>값: <code>PASS</code> · <code>FAIL</code> · <code>REVIEW</code></small></td></tr>
+<tr><td>auditor_rule_version</td><td>varchar(20)</td><td></td><td>NN</td><td></td><td>판정 규칙 버전</td></tr>
+<tr><td>created_at</td><td>timestamptz</td><td></td><td>NN</td><td>now()</td><td>생성 시각(감사 공통)</td></tr>
+<tr><td>ext</td><td>jsonb</td><td></td><td>NN</td><td>&#x27;{}&#x27;</td><td>확장 속성 — 운영 중 컬럼 추가 없이 흡수(Zero-DDL)</td></tr>
+</tbody></table></div>
+<ul class="cons"><li>PK <code>(claim_id)</code></li><li>FK <code>(tenant_id, opinion_id)</code> → <code>lgmat.legal_opinion(tenant_id, opinion_id)</code></li><li>FK <code>(tenant_id, issue_id)</code> → <code>lgmat.matter_issue(tenant_id, issue_id)</code></li><li>FK <code>(tenant_id, item_id)</code> → <code>lgmat.evidence_item(tenant_id, item_id)</code></li><li>CHECK <code>NOT (claim_materiality = &#x27;MATERIAL&#x27; AND item_id IS NULL AND auditor_status = &#x27;PASS&#x27;)</code></li></ul>
+<div class="tblhead" id="t-lgmat-opinion_approval"><h4>lgmat.opinion_approval</h4><span class="t">자격자 승인</span> <span class=pill>RLS</span></div>
+<div class="tw"><table class="cols"><thead><tr><th style="width:19%">컬럼</th><th style="width:13%">타입</th><th style="width:5%">키</th><th style="width:5%">NULL</th><th style="width:9%">기본값</th><th>설명</th></tr></thead><tbody>
+<tr><td>approval_id</td><td>uuid</td><td>PK</td><td>NN</td><td></td><td>승인 ID</td></tr>
+<tr><td>tenant_id</td><td>uuid</td><td></td><td>NN</td><td></td><td>테넌트(RLS 기준)</td></tr>
+<tr><td>opinion_id</td><td>uuid</td><td>FK</td><td>NN</td><td></td><td>의견</td></tr>
+<tr><td>approved_content_sha256</td><td>char(64)</td><td></td><td>NN</td><td></td><td>승인한 의견 내용 해시 — legal_opinion.content_sha256 과 일치해야 유효</td></tr>
+<tr><td>approver_id</td><td>uuid</td><td></td><td>NN</td><td></td><td>승인자</td></tr>
+<tr><td>approver_qualification</td><td>varchar(20)</td><td></td><td>NN</td><td></td><td>승인자 자격<br><small>값: <code>ATTORNEY</code> · <code>TAX_ACCOUNTANT</code> · <code>CPA</code> · <code>AUTHORIZED_MANAGER</code></small></td></tr>
+<tr><td>decision</td><td>varchar(10)</td><td></td><td>NN</td><td></td><td>승인·반려·보완요청<br><small>값: <code>APPROVE</code> · <code>REJECT</code> · <code>RETURN</code></small></td></tr>
+<tr><td>decision_comment</td><td>text</td><td></td><td>NULL</td><td></td><td>의견</td></tr>
+<tr><td>signature_ref</td><td>varchar(300)</td><td></td><td>NULL</td><td></td><td>전자서명 참조</td></tr>
+<tr><td>decided_at</td><td>timestamptz</td><td></td><td>NN</td><td></td><td>결정 시각</td></tr>
+<tr><td>created_at</td><td>timestamptz</td><td></td><td>NN</td><td>now()</td><td>생성 시각(감사 공통)</td></tr>
+<tr><td>ext</td><td>jsonb</td><td></td><td>NN</td><td>&#x27;{}&#x27;</td><td>확장 속성 — 운영 중 컬럼 추가 없이 흡수(Zero-DDL)</td></tr>
+</tbody></table></div>
+<ul class="cons"><li>PK <code>(approval_id)</code></li><li>FK <code>(tenant_id, opinion_id)</code> → <code>lgmat.legal_opinion(tenant_id, opinion_id)</code></li><li>규칙: risk_grade HIGH·CRITICAL 사안의 APPROVE 는 AUTHORIZED_MANAGER 로 성립하지 않는다(트리거로 강제 — 사안 테이블 조인이 필요해 CHECK 로는 표현 불가).</li></ul>
+<div class="tblhead" id="t-lgmat-opinion_impact_alert"><h4>lgmat.opinion_impact_alert</h4><span class="t">기발행 의견 영향 경보</span> <span class=pill>RLS</span></div>
+<div class="tw"><table class="cols"><thead><tr><th style="width:19%">컬럼</th><th style="width:13%">타입</th><th style="width:5%">키</th><th style="width:5%">NULL</th><th style="width:9%">기본값</th><th>설명</th></tr></thead><tbody>
+<tr><td>alert_id</td><td>uuid</td><td>PK</td><td>NN</td><td></td><td>경보 ID</td></tr>
+<tr><td>tenant_id</td><td>uuid</td><td></td><td>NN</td><td></td><td>테넌트(RLS 기준)</td></tr>
+<tr><td>opinion_id</td><td>uuid</td><td>FK</td><td>NN</td><td></td><td>영향받는 의견</td></tr>
+<tr><td>trigger_type</td><td>varchar(30)</td><td></td><td>NN</td><td></td><td>변경 유형<br><small>값: <code>STATUTE_AMENDED</code> · <code>CASE_OVERRULED</code> · <code>UNCONSTITUTIONAL</code> · <code>INTERPRETATION_CHANGED</code> · <code>SOURCE_CORRECTED</code></small></td></tr>
+<tr><td>trigger_ref_id</td><td>uuid</td><td></td><td>NN</td><td></td><td>변경된 조문 버전·판례·해석 ID(다형 참조)</td></tr>
+<tr><td>detected_at</td><td>timestamptz</td><td></td><td>NN</td><td></td><td>탐지 시각</td></tr>
+<tr><td>alert_status</td><td>varchar(20)</td><td></td><td>NN</td><td>&#x27;OPEN&#x27;</td><td>처리 상태<br><small>값: <code>OPEN</code> · <code>ACKNOWLEDGED</code> · <code>REOPENED</code> · <code>NO_IMPACT</code></small></td></tr>
+<tr><td>handled_by</td><td>uuid</td><td></td><td>NULL</td><td></td><td>처리자</td></tr>
+<tr><td>created_at</td><td>timestamptz</td><td></td><td>NN</td><td>now()</td><td>생성 시각(감사 공통)</td></tr>
+<tr><td>ext</td><td>jsonb</td><td></td><td>NN</td><td>&#x27;{}&#x27;</td><td>확장 속성 — 운영 중 컬럼 추가 없이 흡수(Zero-DDL)</td></tr>
+</tbody></table></div>
+<ul class="cons"><li>PK <code>(alert_id)</code></li><li>UK <code>(tenant_id, opinion_id, trigger_type, trigger_ref_id)</code></li><li>FK <code>(tenant_id, opinion_id)</code> → <code>lgmat.legal_opinion(tenant_id, opinion_id)</code></li></ul>
+<div class="tblhead" id="t-lgmat-agent_step_log"><h4>lgmat.agent_step_log</h4><span class="t">에이전트 단계 기록(추가 전용)</span> <span class=pill>RLS</span></div>
+<div class="tw"><table class="cols"><thead><tr><th style="width:19%">컬럼</th><th style="width:13%">타입</th><th style="width:5%">키</th><th style="width:5%">NULL</th><th style="width:9%">기본값</th><th>설명</th></tr></thead><tbody>
+<tr><td>step_id</td><td>uuid</td><td>PK</td><td>NN</td><td></td><td>단계 ID</td></tr>
+<tr><td>tenant_id</td><td>uuid</td><td></td><td>NN</td><td></td><td>테넌트(RLS 기준)</td></tr>
+<tr><td>matter_id</td><td>uuid</td><td>FK</td><td>NN</td><td></td><td>사안</td></tr>
+<tr><td>agent_role</td><td>varchar(30)</td><td></td><td>NN</td><td></td><td>Orchestrator·Case·Tax·Auditor 등</td></tr>
+<tr><td>step_type</td><td>varchar(20)</td><td></td><td>NN</td><td></td><td>단계 유형<br><small>값: <code>PLAN</code> · <code>TOOL_CALL</code> · <code>RETRIEVAL</code> · <code>GENERATION</code> · <code>AUDIT</code> · <code>GATE</code> · <code>ESCALATION</code></small></td></tr>
+<tr><td>model_id</td><td>varchar(100)</td><td></td><td>NULL</td><td></td><td>모델 식별자(LLM 단계)</td></tr>
+<tr><td>input_sha256</td><td>char(64)</td><td></td><td>NN</td><td></td><td>입력 해시</td></tr>
+<tr><td>output_sha256</td><td>char(64)</td><td></td><td>NN</td><td></td><td>출력 해시</td></tr>
+<tr><td>payload_object_key</td><td>varchar(500)</td><td></td><td>NN</td><td></td><td>프롬프트·도구호출·결과 원본 위치(기록 재현용)</td></tr>
+<tr><td>started_at</td><td>timestamptz</td><td></td><td>NN</td><td></td><td>시작 시각</td></tr>
+<tr><td>duration_ms</td><td>integer</td><td></td><td>NULL</td><td></td><td>소요 시간</td></tr>
+<tr><td>created_at</td><td>timestamptz</td><td></td><td>NN</td><td>now()</td><td>생성 시각(감사 공통)</td></tr>
+<tr><td>ext</td><td>jsonb</td><td></td><td>NN</td><td>&#x27;{}&#x27;</td><td>확장 속성 — 운영 중 컬럼 추가 없이 흡수(Zero-DDL)</td></tr>
+</tbody></table></div>
+<ul class="cons"><li>PK <code>(step_id)</code></li><li>FK <code>(tenant_id, matter_id)</code> → <code>lgmat.matter(tenant_id, matter_id)</code></li><li>UPDATE·DELETE 금지(추가 전용 트리거).</li></ul>
+<h4 style="margin-top:28px;color:#173f73">■ lgeval — 평가·배포 게이트</h4>
+<div class="tblhead" id="t-lgeval-golden_case"><h4>lgeval.golden_case</h4><span class="t">골든 사례</span></div>
+<div class="tw"><table class="cols"><thead><tr><th style="width:19%">컬럼</th><th style="width:13%">타입</th><th style="width:5%">키</th><th style="width:5%">NULL</th><th style="width:9%">기본값</th><th>설명</th></tr></thead><tbody>
+<tr><td>golden_case_id</td><td>uuid</td><td>PK</td><td>NN</td><td></td><td>사례 ID</td></tr>
+<tr><td>case_code</td><td>varchar(40)</td><td>UK</td><td>NN</td><td></td><td>사례 코드(예: KR-CORP-000123)</td></tr>
+<tr><td>domain</td><td>varchar(20)</td><td></td><td>NN</td><td></td><td>영역<br><small>값: <code>CORPORATE</code> · <code>TAX</code> · <code>CONTRACT</code> · <code>LABOR</code> · <code>SAFETY</code> · <code>COMPLIANCE</code> · <code>LITIGATION</code></small></td></tr>
+<tr><td>risk_grade</td><td>varchar(10)</td><td></td><td>NN</td><td></td><td>위험 등급<br><small>값: <code>LOW</code> · <code>MEDIUM</code> · <code>HIGH</code> · <code>CRITICAL</code></small></td></tr>
+<tr><td>case_kind</td><td>varchar(20)</td><td></td><td>NN</td><td></td><td>정상·경계·과거 오답·보류 기대<br><small>값: <code>NORMAL</code> · <code>BOUNDARY</code> · <code>PAST_FAILURE</code> · <code>ABSTAIN_EXPECTED</code></small></td></tr>
+<tr><td>data_split</td><td>varchar(10)</td><td></td><td>NN</td><td></td><td>DEV·HOLDOUT(HOLDOUT 학습 사용 금지)<br><small>값: <code>DEV</code> · <code>HOLDOUT</code></small></td></tr>
+<tr><td>as_of_date</td><td>date</td><td></td><td>NN</td><td></td><td>정답이 성립하는 기준일</td></tr>
+<tr><td>answer_expires_on</td><td>date</td><td></td><td>NULL</td><td></td><td>법 개정 등으로 정답이 무효가 되는 날</td></tr>
+<tr><td>case_payload</td><td>jsonb</td><td></td><td>NN</td><td></td><td>Canonical Dataset 레코드(18장)</td></tr>
+<tr><td>expected_issues</td><td>jsonb</td><td></td><td>NN</td><td></td><td>기대 쟁점</td></tr>
+<tr><td>expected_authorities</td><td>jsonb</td><td></td><td>NN</td><td></td><td>기대 근거</td></tr>
+<tr><td>confirmed_by</td><td>uuid</td><td></td><td>NN</td><td></td><td>정답 확정자(사람)</td></tr>
+<tr><td>second_reviewer</td><td>uuid</td><td></td><td>NULL</td><td></td><td>2차 검토자</td></tr>
+<tr><td>agreement_kappa</td><td>numeric(4,3)</td><td></td><td>NULL</td><td></td><td>검토자 간 일치도</td></tr>
+<tr><td>contains_tenant_data</td><td>boolean</td><td></td><td>NN</td><td>false</td><td>테넌트 자료 포함(포함 시 동의 근거 필수)</td></tr>
+<tr><td>created_at</td><td>timestamptz</td><td></td><td>NN</td><td>now()</td><td>생성 시각(감사 공통)</td></tr>
+<tr><td>ext</td><td>jsonb</td><td></td><td>NN</td><td>&#x27;{}&#x27;</td><td>확장 속성 — 운영 중 컬럼 추가 없이 흡수(Zero-DDL)</td></tr>
+</tbody></table></div>
+<ul class="cons"><li>PK <code>(golden_case_id)</code></li><li>UK <code>(case_code)</code></li><li>CHECK <code>answer_expires_on IS NULL OR answer_expires_on &gt; as_of_date</code></li><li>CHECK <code>second_reviewer IS NULL OR second_reviewer &lt;&gt; confirmed_by</code></li></ul>
+<div class="tblhead" id="t-lgeval-benchmark_run"><h4>lgeval.benchmark_run</h4><span class="t">벤치마크 실행</span></div>
+<div class="tw"><table class="cols"><thead><tr><th style="width:19%">컬럼</th><th style="width:13%">타입</th><th style="width:5%">키</th><th style="width:5%">NULL</th><th style="width:9%">기본값</th><th>설명</th></tr></thead><tbody>
+<tr><td>run_id</td><td>uuid</td><td>PK</td><td>NN</td><td></td><td>실행 ID</td></tr>
+<tr><td>run_purpose</td><td>varchar(20)</td><td></td><td>NN</td><td></td><td>실행 목적<br><small>값: <code>MODEL_SWAP</code> · <code>REGRESSION</code> · <code>POLICY_CHANGE</code> · <code>TRAINING_EVAL</code></small></td></tr>
+<tr><td>golden_set_version</td><td>varchar(20)</td><td></td><td>NN</td><td></td><td>골든셋 버전</td></tr>
+<tr><td>model_id</td><td>varchar(100)</td><td></td><td>NN</td><td></td><td>LLM</td></tr>
+<tr><td>embedding_model_id</td><td>varchar(100)</td><td></td><td>NN</td><td></td><td>임베딩 모델</td></tr>
+<tr><td>reranker_id</td><td>varchar(100)</td><td></td><td>NN</td><td></td><td>리랭커</td></tr>
+<tr><td>index_version</td><td>varchar(40)</td><td></td><td>NN</td><td></td><td>색인</td></tr>
+<tr><td>retrieval_policy_version</td><td>varchar(20)</td><td></td><td>NN</td><td></td><td>검색 정책</td></tr>
+<tr><td>skill_version</td><td>varchar(20)</td><td></td><td>NN</td><td></td><td>Skill/Workflow</td></tr>
+<tr><td>ontology_version</td><td>varchar(20)</td><td></td><td>NN</td><td></td><td>온톨로지</td></tr>
+<tr><td>source_snapshot_id</td><td>varchar(40)</td><td></td><td>NN</td><td></td><td>원문 스냅샷</td></tr>
+<tr><td>adapter_version</td><td>varchar(40)</td><td></td><td>NN</td><td>&#x27;NONE&#x27;</td><td>Post-training 어댑터(없으면 NONE)</td></tr>
+<tr><td>gate_result</td><td>varchar(10)</td><td></td><td>NN</td><td></td><td>게이트 결과<br><small>값: <code>PASS</code> · <code>FAIL</code> · <code>PARTIAL</code></small></td></tr>
+<tr><td>started_at</td><td>timestamptz</td><td></td><td>NN</td><td></td><td>시작</td></tr>
+<tr><td>finished_at</td><td>timestamptz</td><td></td><td>NULL</td><td></td><td>종료</td></tr>
+<tr><td>created_at</td><td>timestamptz</td><td></td><td>NN</td><td>now()</td><td>생성 시각(감사 공통)</td></tr>
+<tr><td>ext</td><td>jsonb</td><td></td><td>NN</td><td>&#x27;{}&#x27;</td><td>확장 속성 — 운영 중 컬럼 추가 없이 흡수(Zero-DDL)</td></tr>
+</tbody></table></div>
+<ul class="cons"><li>PK <code>(run_id)</code></li></ul>
+<div class="tblhead" id="t-lgeval-benchmark_metric"><h4>lgeval.benchmark_metric</h4><span class="t">벤치마크 지표</span></div>
+<div class="tw"><table class="cols"><thead><tr><th style="width:19%">컬럼</th><th style="width:13%">타입</th><th style="width:5%">키</th><th style="width:5%">NULL</th><th style="width:9%">기본값</th><th>설명</th></tr></thead><tbody>
+<tr><td>metric_row_id</td><td>uuid</td><td>PK</td><td>NN</td><td></td><td>지표 행 ID</td></tr>
+<tr><td>run_id</td><td>uuid</td><td>FK</td><td>NN</td><td></td><td>실행</td></tr>
+<tr><td>metric_code</td><td>varchar(40)</td><td></td><td>NN</td><td></td><td>지표 코드(19장)</td></tr>
+<tr><td>domain</td><td>varchar(20)</td><td></td><td>NN</td><td>&#x27;ALL&#x27;</td><td>영역(전체=ALL — NULL 금지로 복합 UK 중복 차단)</td></tr>
+<tr><td>metric_value</td><td>numeric(8,5)</td><td></td><td>NN</td><td></td><td>측정값</td></tr>
+<tr><td>threshold_value</td><td>numeric(8,5)</td><td></td><td>NN</td><td></td><td>기준치(승인된 값)</td></tr>
+<tr><td>threshold_direction</td><td>varchar(4)</td><td></td><td>NN</td><td></td><td>GTE·LTE<br><small>값: <code>GTE</code> · <code>LTE</code></small></td></tr>
+<tr><td>passed</td><td>boolean</td><td></td><td>NN</td><td></td><td>통과</td></tr>
+<tr><td>created_at</td><td>timestamptz</td><td></td><td>NN</td><td>now()</td><td>생성 시각(감사 공통)</td></tr>
+<tr><td>ext</td><td>jsonb</td><td></td><td>NN</td><td>&#x27;{}&#x27;</td><td>확장 속성 — 운영 중 컬럼 추가 없이 흡수(Zero-DDL)</td></tr>
+</tbody></table></div>
+<ul class="cons"><li>PK <code>(metric_row_id)</code></li><li>UK <code>(run_id, metric_code, domain)</code></li><li>FK <code>(run_id)</code> → <code>lgeval.benchmark_run(run_id)</code></li></ul>
+<div class="tblhead" id="t-lgeval-component_release"><h4>lgeval.component_release</h4><span class="t">구성요소 배포</span></div>
+<div class="tw"><table class="cols"><thead><tr><th style="width:19%">컬럼</th><th style="width:13%">타입</th><th style="width:5%">키</th><th style="width:5%">NULL</th><th style="width:9%">기본값</th><th>설명</th></tr></thead><tbody>
+<tr><td>release_id</td><td>uuid</td><td>PK</td><td>NN</td><td></td><td>배포 ID</td></tr>
+<tr><td>run_id</td><td>uuid</td><td>FK</td><td>NN</td><td></td><td>근거 벤치마크 실행</td></tr>
+<tr><td>component</td><td>varchar(20)</td><td></td><td>NN</td><td></td><td>배포 구성요소<br><small>값: <code>LLM</code> · <code>EMBEDDING</code> · <code>RERANKER</code> · <code>INDEX</code> · <code>SKILL</code> · <code>ONTOLOGY</code> · <code>RETRIEVAL_POLICY</code> · <code>SOURCE_SNAPSHOT</code> · <code>ADAPTER</code></small></td></tr>
+<tr><td>version_label</td><td>varchar(60)</td><td></td><td>NN</td><td></td><td>버전 라벨</td></tr>
+<tr><td>release_status</td><td>varchar(20)</td><td></td><td>NN</td><td>&#x27;CANDIDATE&#x27;</td><td>배포 상태<br><small>값: <code>CANDIDATE</code> · <code>SHADOW</code> · <code>ACTIVE</code> · <code>ROLLED_BACK</code> · <code>RETIRED</code></small></td></tr>
+<tr><td>approved_by</td><td>uuid</td><td></td><td>NULL</td><td></td><td>배포 승인자</td></tr>
+<tr><td>activated_at</td><td>timestamptz</td><td></td><td>NULL</td><td></td><td>활성 시각</td></tr>
+<tr><td>rolled_back_at</td><td>timestamptz</td><td></td><td>NULL</td><td></td><td>롤백 시각</td></tr>
+<tr><td>created_at</td><td>timestamptz</td><td></td><td>NN</td><td>now()</td><td>생성 시각(감사 공통)</td></tr>
+<tr><td>ext</td><td>jsonb</td><td></td><td>NN</td><td>&#x27;{}&#x27;</td><td>확장 속성 — 운영 중 컬럼 추가 없이 흡수(Zero-DDL)</td></tr>
+</tbody></table></div>
+<ul class="cons"><li>PK <code>(release_id)</code></li><li>UK <code>(component, version_label)</code></li><li>FK <code>(run_id)</code> → <code>lgeval.benchmark_run(run_id)</code></li><li>CHECK <code>release_status IN (&#x27;CANDIDATE&#x27;,&#x27;SHADOW&#x27;) OR approved_by IS NOT NULL</code></li></ul>
+<h3>21.4 정적 정합성 검사 결과</h3>
+<div class="tw"><table><thead><tr><th style="width:6%">No</th><th>검사</th><th style="width:9%">결과</th><th style="width:30%">내용</th></tr></thead><tbody>
+<tr><td>S1</td><td>모든 테이블에 단일 PK</td><td class="ok">통과</td><td>이상 없음</td></tr>
+<tr><td>S2</td><td>테이블 내 컬럼명 중복 없음(공통 컬럼 포함)</td><td class="ok">통과</td><td>이상 없음</td></tr>
+<tr><td>S3</td><td>FK 대상이 PK 또는 UK</td><td class="ok">통과</td><td>이상 없음</td></tr>
+<tr><td>S4</td><td>FK 컬럼 타입 일치</td><td class="ok">통과</td><td>이상 없음</td></tr>
+<tr><td>S5</td><td>명세의 FK 표기와 제약 선언 일치</td><td class="ok">통과</td><td>이상 없음</td></tr>
+<tr><td>S6</td><td>열거값·기본값이 컬럼 길이와 열거 집합 안에 있음</td><td class="ok">통과</td><td>이상 없음</td></tr>
+<tr><td>S7</td><td>테넌트 테이블 tenant_id 필수 + 테넌트 간 참조 불가(복합 FK)</td><td class="ok">통과</td><td>이상 없음</td></tr>
+<tr><td>S8</td><td>복합 UK 구성 컬럼 모두 NOT NULL</td><td class="ok">통과</td><td>이상 없음</td></tr>
+<tr><td>S9</td><td>공용 코퍼스(lgsrc)·평가(lgeval)에 테넌트 자료 컬럼 없음</td><td class="ok">통과</td><td>이상 없음</td></tr>
+<tr><td>S10</td><td>설명이 유일성을 주장한 컬럼에 UK 존재</td><td class="ok">통과</td><td>이상 없음</td></tr>
+</tbody></table></div>
+<div class="callout amber"><b>검사의 한계.</b> 위 10항목은 명세 인벤토리에 대한 정적 검사다. 검사기가 오류를 실제로 잡는지 확인하려고 결함 5건(비유일 FK 대상 겸 타입 불일치·열거값 길이 초과·공통 컬럼명 중복·테넌트 비포함 FK·UK 구성 컬럼 NULL 허용)을 주입했고, 해당 검사 7개(S2~S8)가 모두 탐지했다. <b>PostgreSQL 실행 검증(DDL 적재·트리거·RLS 음성 시험)은 수행하지 않았다.</b> 트리거로만 표현되는 규칙(승인자 자격 × 위험등급, 승인 해시 일치, agent_step_log 추가 전용, 상태 전이)은 실행 검증 대상으로 남아 있다(27장 O-07).</div>
+</section>
+
+<!-- ───────────────────────── 22 ───────────────────────── -->
+<section id="api" class="card">
+<h2>22. Agent/API 인터페이스</h2>
+<div class="diagram">
+<div class="diagram-title">Tool Contract 표준화</div>
+<div class="flow">
+<div class="node purple">Any LLM</div><div class="arrow">→</div>
+<div class="node blue">Tool Registry</div><div class="arrow">→</div>
+<div class="node">statute.search</div><div class="node">case.search</div><div class="node">tax.search</div><div class="node">graph.query</div><div class="node">applicability.eval</div><div class="node">evidence.verify</div>
+</div>
+</div>
+<pre>POST /legal/research
+{
+ "matter_id": "...",
+ "issue_id": "I1",
+ "jurisdiction": "KR",
+ "as_of_date": "2025-03-01",
+ "date_type": "RESOLUTION_DATE",
+ "source_types": ["statute","case","tax_interpretation"],
+ "authority_min": "B2",
+ "include_contrary": true,
+ "top_k": 20
+}
+// tenant_id·권한 범위는 본문으로 받지 않는다 — 인증 컨텍스트(Trust Agent)에서 서버가 주입
+
+POST /legal/applicability/eval
+{ "statute_version_id": "...", "facts": [{"date":"2025-03-01","date_type":"FISCAL_YEAR_START"}] }
+→ { "applies": false, "rule_ids": ["..."], "reason": "부칙 제2조: 시행 후 개시 사업연도분부터" }
+
+POST /legal/evidence/verify
+{
+ "opinion_id": "...",
+ "claims": [{"claim_id":"C1","text":"...","citations":[...]}],
+ "strict": true
+}</pre>
+<p>Agent 사이에는 자연어만 전달하지 않고 JSON Schema를 강제한다. 자유문장은 사용자 인터페이스와 Legal Writer에서만 쓴다. <b>테넌트·권한 범위를 요청 본문 파라미터로 받지 않는다.</b> 본문으로 받으면 호출자가 다른 테넌트 값을 넣을 수 있다.</p>
+</section>
+
+<!-- ───────────────────────── 23 ───────────────────────── -->
+<section id="security" class="card">
+<h2>23. 보안·권한·감사</h2>
+<div class="diagram">
+<div class="diagram-title">Zero-Trust Legal Data Access</div>
+<div class="flow">
+<div class="node">Trust Agent<br><small>신원·착수 판정(권한 세 조각)</small></div><div class="arrow">→</div><div class="node">VA<br><small>지시 자격</small></div><div class="arrow">→</div><div class="node">Tenant·Matter Scope<br><small>RLS</small></div><div class="arrow">→</div><div class="node">Document Classification<br><small>사전필터</small></div><div class="arrow">→</div><div class="node red">Audit Log</div>
+</div>
+</div>
+<h3>23.1 권한</h3>
+<ul>
+<li><span class="chg del">V-16</span> v1.0의 "프로젝트·법인·국가·<s>직급</s>·직무 기준 ABAC"에서 직급을 삭제했다. MyBee는 직책을 권한에서 배제한다. 권한은 <b>동사(열람·작성·승인·발행) × 범위(프로젝트·법인) × 대상(업무코드 — 업무영역 전체 또는 열거된 업무코드)</b>의 3분할로 부여한다(설계지시문 제8.1.1조). 세 조각 보유는 Trust Agent 가 착수 판정에서, 지시 자격(범위·한도·협조 금지쌍·직무분리·기간)은 VA 가 결정론적으로 판정한다(제6.11.1조). 사안 영역·기밀분류는 권한 조각이 아니라 검색 사전필터·파생 데이터 권한 속성으로 적용한다(제8.6.4조). <span class="chg mod">v1.3</span></li>
+<li><span class="chg mod">V-03</span> 기밀분류: <code>LAWYER_SECRET</code>(변호사법 제26조 비밀유지의무 대상 — v1.0 "Attorney-client privilege"를 국내 기준으로 수정), <code>PERSONAL_DATA</code>, <code>TRADE_SECRET</code>, <code>CONFIDENTIAL</code>, <code>INTERNAL</code>.</li>
+<li>RAG 검색 단계에서부터 권한 필터를 적용한다 — 검색 후 마스킹 방식은 금지.</li>
+<li><span class="chg del">V-43</span> v1.0의 "외부 LLM 사용 시 Matter별 데이터 반출정책을 Trust Agent가 확인"은 삭제했다. Local LLM이 기본이고, 외부 모델 호출이 필요하면 VA 반출 규칙 판정 후 TA가 호출한다(반출 규칙은 판정 기준 목록 등재 · 판 승인 · 정책 묶음 게시로만 변경 — 6.1, <span class="chg mod">v1.3</span>). <code>LAWYER_SECRET</code>·<code>PERSONAL_DATA</code> 사안은 외부 모델 호출 규칙에서 기본 거부한다.</li>
+</ul>
+
+<h3>23.2 멀티테넌트 격리 <span class="chg add">V-17</span></h3>
+<table>
+<tr><th style="width:26%">위험</th><th>통제</th></tr>
+<tr><td>테넌트 간 행 참조</td><td>lgmat 모든 테이블 RLS + (tenant_id, id) 복합 FK. 다른 테넌트 행을 FK로 가리키는 것 자체가 불가능하다(21.4장 S7).</td></tr>
+<tr><td>파생 데이터 누출</td><td>청크·임베딩·요약·Evidence Pack·의미 캐시의 권한 = <b>원본 중 가장 좁은 것</b>. 권한이 축소되면 재생성보다 <b>선차단</b>한다. 캐시 키에 권한 범위 해시를 넣는다.</td></tr>
+<tr><td>공용 그래프 오염</td><td>테넌트 고유 노드(회사·계약·프로젝트)를 공용 kg_node에 넣지 않는다(10장).</td></tr>
+<tr><td>커넥션 컨텍스트 누수</td><td>RLS가 정상이어도 초기화 없이 커넥션을 재사용하면 이전 테넌트 값이 남는다(MyBee 통합 검증에서 재현). ① 풀 체크인 시 <code>DISCARD ALL</code> ② 요청 시작 시 테넌트 컨텍스트 재설정 강제 + 미설정 질의 거부 — <b>둘 다</b> 적용한다.</td></tr>
+<tr><td>학습을 통한 누출</td><td>테넌트 자료의 학습 사용은 원칙 금지. 불가피하면 해당 테넌트 전용 · 원본 중 가장 좁은 권한 범위 안에서만 쓰고(제8.6.10조) 동의 근거를 기록하며, 공용 어댑터에는 넣지 않는다(17장). <span class="chg mod">v1.3</span></td></tr>
+</table>
+
+<h3>23.3 감사와 규제 고지</h3>
+<ul>
+<li>프롬프트, Tool call, 검색결과 ID, 적용 조문 버전·부칙 규칙, 원문 스냅샷, 모델 식별자, 확신도, 게이트 규칙 버전, 승인자·승인 해시를 기록한다(<code>agent_step_log</code> 추가 전용 + 원본 오브젝트 보관 → mbaudit 연계).</li>
+<li><span class="chg add">V-02</span> AI 기본법에 따라 서비스 화면·약관에 생성형 AI 기반임을 사전 고지하고, 모든 의견 출력에 AI 생성 표시를 넣는다. 고영향 AI 해당 여부는 출시 전 검토한다(27장 O-02).</li>
+<li>의견 발행·외부 전송은 TA 기록으로, "무엇이 바깥으로 나갔는가"를 한 곳에서 답할 수 있게 한다.</li>
+</ul>
+</section>
+
+<!-- ───────────────────────── 24 ───────────────────────── -->
+<section id="ops" class="card">
+<h2>24. 운영·버전관리</h2>
+<table>
+<tr><th>대상</th><th>버전 예시</th><th>독립 롤백</th><th>변경 시 게이트</th></tr>
+<tr><td>Legal Ontology</td><td>ontology-2.3</td><td>가능</td><td>Issue Recall</td></tr>
+<tr><td>Retrieval Policy</td><td>retrieval-1.8</td><td>가능</td><td>검색 지표</td></tr>
+<tr><td>Skill/Workflow</td><td>legal-skill-4.1</td><td>가능</td><td>전체 회귀</td></tr>
+<tr><td>Gate Rules(G-01~)</td><td>ltg-rules-1.2</td><td>가능</td><td>보류 지표·Unsupported Claim</td></tr>
+<tr><td>Source Snapshot</td><td>kr-law-2026-09-13</td><td>가능</td><td>Temporal Accuracy + 영향 경보 생성</td></tr>
+<tr class="new"><td>Embedding Model + Index <span class="chg add">V-33</span></td><td>emb-x.y / idx-2026-09</td><td>가능(구 색인 보존 기간 내)</td><td>검색 지표, 이중 색인 전환</td></tr>
+<tr class="new"><td>Reranker</td><td>rr-x.y</td><td>가능</td><td>검색 지표</td></tr>
+<tr><td>Model</td><td>qwen-xx / llama-xx</td><td>가능</td><td>전체 회귀(HOLDOUT)</td></tr>
+<tr><td>Post-training Adapter</td><td>legal-sft-0.7</td><td>가능</td><td>전체 회귀, 기반 모델 종속</td></tr>
+</table>
+<p>모델과 지식베이스를 한 릴리스로 묶지 않는다. 법령 개정은 Source Snapshot 갱신으로 처리하고, 모델 업그레이드는 Benchmark Gate를 통과한 경우 독립 배포한다. 배포 상태는 <code>lgeval.component_release</code>에서 CANDIDATE → SHADOW → ACTIVE로 관리한다.</p>
+
+<h3>24.1 원문 갱신 주기</h3>
+<table>
+<tr><th style="width:24%">자료</th><th>갱신</th></tr>
+<tr><td>법령·부칙</td><td>공포 정보 일 단위 수집. 부칙 적용규칙은 DRAFT 적재 → 사람 확정(CONFIRMED)까지 강제하지 않음</td></tr>
+<tr><td>판례·결정례</td><td>공개 주기에 맞춰 수집. 전원합의체·위헌결정은 우선 처리하고 관계(OVERRULES·INVALIDATES)를 즉시 반영</td></tr>
+<tr><td>세법 해석</td><td>해석례·예규 변경 수집, 변경·대체 해석 연결(<code>superseded_by_id</code>)</td></tr>
+</table>
+
+<h3>24.2 재현성</h3>
+<p>과거 의견은 기록된 스냅샷·정책 버전·단계 원본으로 <b>기록 재현</b>한다(보장). 같은 입력의 재실행 결과 일치율은 모델 교체·드리프트 감시용 <b>측정 지표</b>로 둔다(보장하지 않음).</p>
+
+<h3>24.3 법령·판례 변경 영향 재검토 <span class="chg add">V-36</span></h3>
+<div class="diagram">
+<div class="flow">
+<div class="node blue">원문 변경 수집<br><small>개정·위헌·판례변경·해석변경·정정</small></div><div class="arrow">→</div>
+<div class="node">영향 의견 조회<br><small>citation → 변경 대상</small></div><div class="arrow">→</div>
+<div class="node amber">opinion_impact_alert<br><small>OPEN</small></div><div class="arrow">→</div>
+<div class="node">자격자 판단</div><div class="arrow">→</div>
+<div class="node green">NO_IMPACT</div><div class="node red">REOPENED<br><small>사안 재개</small></div>
+</div>
+</div>
+<p>기발행 의견의 인용 근거(조문 버전·판례·해석)가 바뀌면 경보를 만든다. 개정이 사안의 기준일 이후에만 효력이 있어도 경보는 만들고 자격자가 NO_IMPACT로 닫는다. 후속 거래·반복 거래에 영향이 있을 수 있기 때문이다.</p>
+</section>
+
+<!-- ───────────────────────── 25 ───────────────────────── -->
+<section id="roadmap" class="card">
+<h2>25. 구축 로드맵 <span class="chg mod">V-21</span></h2>
+<div class="diagram">
+<div class="diagram-title">단계별 구현 순서</div>
+<div class="flow">
+<div class="node red">Phase 0<br>법적 경계·출처 조건·Golden seed</div><div class="arrow">→</div>
+<div class="node blue">Phase 1<br>원문·Temporal·부칙 DB</div><div class="arrow">→</div>
+<div class="node green">Phase 2<br>Hybrid RAG + Validator 기본형</div><div class="arrow">→</div>
+<div class="node purple">Phase 3<br>Agent Workflow·보류·승인</div><div class="arrow">→</div>
+<div class="node amber">Phase 4<br>Graph + Auditor + Opponent + LTG</div><div class="arrow">→</div>
+<div class="node">Phase 5<br>Benchmark 후 선택적 Training</div>
+</div>
+</div>
+
+<div class="callout">
+<b>성숙도와 구축단계의 관계:</b> Phase 0에서 평가 기준선을 먼저 세운다. Phase 1~2에서 L1~L2, Phase 3에서 L3, Phase 4에서 L4와 L6을 구축한다. 이후 Benchmark 결과에 따라 필요한 경우에만 L5 Post-training을 적용하고, 자격자 승인·전자서명·TA 발행을 연결하면 L7에 도달한다.
+</div>
+<table>
+<tr><th style="width:8%">Phase</th><th>핵심 산출물</th><th style="width:30%">완료 기준</th></tr>
+<tr class="new"><td>0</td><td>외부 법률의견(2장 포지셔닝), 출처 이용조건 검토, 도메인별 Golden Set seed(DEV/HOLDOUT, 보류 기대 사례 포함), 평가 하네스, 기준선 측정(closed-book 포함)</td><td>기준치 승인·등록, 포지셔닝 확정</td></tr>
+<tr><td>1</td><td>Source Registry, 원문 Store(이중시간), 조문 버전 DB, <b>부칙 적용규칙 DB</b>, 판례 구조화(국내 체계), 해석례 구속 범위</td><td>기준일별 적용 조문 조회 가능, 부칙 판정 시험 통과</td></tr>
+<tr><td>2</td><td>OpenSearch, Vector, RRF, Reranker, 권한·기준일 사전필터, Evidence Pack, <b>Citation/Temporal Validator 기본형</b></td><td>Retrieval·Temporal·Citation 지표 달성, 교차 테넌트 누출 0건</td></tr>
+<tr><td>3</td><td>Fact/Issue/Research/Statute/Tax/Contract EA, Legal Writer, 출력 스키마, 사안 상태기계, 보완 질의·보류, 승인(해시)·TA 발행 연결, 계산 도구(mbtool)</td><td>구조화 workflow 안정화, Abstain 지표 달성</td></tr>
+<tr><td>4</td><td>Knowledge Graph(판례변경·심급), Evidence Auditor(Semantic), Opponent(블라인드·이종 모델), Legal Trust Gate 규칙, 영향 경보</td><td>Unsupported claim·Calibration 지표 달성</td></tr>
+<tr><td>5</td><td>모델 비교, 선택적 SFT/DPO, Hot-swap·이중 색인 전환 시험</td><td>모델 교체가 게이트만으로 완료됨을 실증</td></tr>
+</table>
+<div class="callout green"><b>중요:</b> Post-training은 Phase 5이고, Golden Set은 Phase 0이다. 평가 기준 없이 구축하면 각 Phase의 완료 기준을 판정할 수 없다.</div>
+</section>
+
+<!-- ───────────────────────── 26 ───────────────────────── -->
+<section id="kpi" class="card">
+<h2>26. 품질 KPI와 "자격자 수준 초안"의 정의</h2>
+<p>"자문변호사 수준"은 모호한 홍보문구가 아니라 측정 가능한 시스템 요구사항으로 정의한다. 대외 표현은 2장에 따라 "자격자 업무 지원"으로 한다.</p>
+<table>
+<tr><th style="width:22%">KPI</th><th>설계 목표</th><th style="width:26%">측정 위치</th></tr>
+<tr><td>법적 근거 추적성</td><td>발행 의견의 MATERIAL 주장 100%에 원문 span 연결</td><td>evidence_claim(발행 전 차단)</td></tr>
+<tr><td>최신성/시점성</td><td>Temporal Accuracy 게이트 기준 충족, 발행 의견의 DRAFT 부칙 의존 핵심 주장 0건</td><td>benchmark_metric, evidence_claim</td></tr>
+<tr><td>환각 억제</td><td>존재하지 않는 사건번호/조문을 발행 단계에서 100% 차단</td><td>Citation Validator</td></tr>
+<tr><td>반대논리</td><td>HIGH·CRITICAL 사안 Opponent 100% 실행(이종 모델)</td><td>agent_step_log</td></tr>
+<tr><td>불확실성 공개</td><td>Missing facts·상충 근거를 의견의 uncertainties에 100% 명시</td><td>출력 스키마 검사</td></tr>
+<tr class="new"><td>적정 보류</td><td>Abstain Recall·Over-abstain 기준 충족</td><td>benchmark_metric</td></tr>
+<tr class="new"><td>변경 대응</td><td>영향 경보 생성부터 자격자 처리까지의 기간 목표(데이터 등록)</td><td>opinion_impact_alert</td></tr>
+<tr><td>전문가 비교</td><td>변호사/세무사 blind review에서 쟁점·근거·결론 평가</td><td>golden_case 검토 기록</td></tr>
+</table>
+<div class="callout red"><b>주의:</b> AI가 법률·세무 결과의 절대적 정확성을 "보장"하도록 설계해서는 안 된다. 대신 근거·시점·검증·반대논리·감사 가능성을 시스템적으로 보장하고, 고위험 사안은 자격자 승인(Human-in-the-loop)을 정책으로 강제한다.</div>
+</section>
+
+<!-- ───────────────────────── 27 ───────────────────────── -->
+<section id="open" class="card">
+<h2>27. 미결 사항·리스크 <span class="chg add">신설</span></h2>
+<table>
+<tr><th style="width:8%">ID</th><th>사항</th><th style="width:22%">결정 주체</th><th style="width:16%">시한</th></tr>
+<tr><td>O-01</td><td>2장 포지셔닝(사용자·발행 주체·요금 구조)이 변호사법·세무사법에 저촉되지 않는지 외부 법률의견 확보</td><td>발주자(법무) + 외부 변호사</td><td>Phase 0 종료 전</td></tr>
+<tr><td>O-02</td><td>AI 기본법 고영향 AI 해당 여부, 사전고지·표시 방식 확정</td><td>발주자(법무·준법)</td><td>Phase 0 종료 전</td></tr>
+<tr><td>O-03</td><td>판례·해석 출처별 이용조건 확인 — 특히 화면 수집이 필요한 출처와 C등급 자료</td><td>발주자 + 수행자</td><td>Phase 1 착수 전</td></tr>
+<tr><td>O-04</td><td>Golden Set seed 규모·도메인 우선순위와 정답 확정 자격자 확보(내부 인력 vs 외부 위촉). <span class="chg add">v1.3</span> 테넌트 자료가 든 사례(<code>golden_case.contains_tenant_data=true</code>)를 공용 평가 집합에 둘지, 해당 테넌트 전용 평가 집합으로 분리할지(테넌트 사이 파생 데이터 공유 금지, 설계지시문 제8.6.10조)</td><td>발주자</td><td>Phase 0 착수 시</td></tr>
+<tr><td>O-05</td><td>HIGH·CRITICAL 교차검증에 필요한 서로 다른 기반 모델 2종 이상의 Local 운영 용량</td><td>수행자 제안 · 발주자 승인</td><td>Phase 3 착수 전</td></tr>
+<tr><td>O-06</td><td>lgeval과 mbeval, agent_step_log와 mbaudit의 결합 방식(확장 테이블 vs 뷰 vs 이관)</td><td>수행자 제안 · 발주자 승인</td><td>Phase 1 설계 확정 시</td></tr>
+<tr><td>O-07</td><td>21장 스키마 PostgreSQL 실행 검증(DDL·트리거·RLS 음성 시험·커넥션 누수 시험) 실시 여부</td><td>발주자</td><td>Phase 1 착수 전</td></tr>
+<tr><td>O-08</td><td>테넌트에 자격자가 없는 경우(소규모 법인)의 HIGH 사안 처리 — 보류 반환만 할지, 테넌트가 외부 자격자를 직접 등록하게 할지</td><td>발주자(O-01과 연계)</td><td>Phase 3 착수 전</td></tr>
+</table>
+</section>
+
+<!-- ───────────────────────── 28 ───────────────────────── -->
+<section id="sources" class="card">
+<h2>28. 참고 근거</h2>
+<h3>28.1 연구</h3>
+<ol>
+<li><b>LegalGraphRAG: Multi-Agent Graph Retrieval-Augmented Generation for Reliable Legal Reasoning.</b> Proceedings of the 64th Annual Meeting of the ACL (Volume 1: Long Papers), 2026, pp. 37455–37484. arXiv:2605.28120. 계층형 법률 그래프와 Researcher(후보 근거 검색)–Auditor(원문 대조 검증)–Adjudicator(검증된 근거로 판단) 구조를 제시한다. 본 설계의 Research–Evidence Auditor–Legal Trust Gate 분리에 반영했다. <span class="chg mod">V-41</span></li>
+<li><b>E. Y. Lim, J. Park, "Agentic RAG for Legal Question Answering in Civil Law: Evidence From the Korean Bar Examination,"</b> <i>IEEE Access</i>, vol. 14, pp. 124441–124458, 2026, doi:10.1109/ACCESS.2026.3722717. 한국 변호사시험 문항으로 검색·도구사용 설계를 평가하며, 모델에 따라 도구사용 성향과 성능이 다를 수 있음을 다룬다. <span class="chg del">V-40</span> v1.0에 기재된 "300문항, GPT-5.1 High/Medium 95.33%" 수치는 공개 서지·요약에서 확인되지 않아 삭제했다. 원문 확인 후 다시 기재한다.</li>
+</ol>
+<h3>28.2 공식 정보·법령 <span class="chg add">V-42</span></h3>
+<ol start="3">
+<li><b>국세법령정보시스템</b>(국세청). 법령, 세법해석례, 판례·결정례, 조세조약, 기본통칙, 세법집행기준 구분 — Tax 코퍼스 구조에 반영.</li>
+<li><b>국세기본법</b> 제18조의2(국세예규심사위원회), 제21조(납세의무의 성립시기).</li>
+<li><b>상법</b> 제382조의3(이사의 충실의무) — 2025-07-22 시행 개정, 제398조(이사 등과 회사 간의 거래).</li>
+<li><b>변호사법</b> 제26조(비밀유지의무 등), 제34조(변호사가 아닌 자와의 동업 금지 등), 제109조(벌칙).</li>
+<li><b>세무사법</b> — 세무대리 업무 범위.</li>
+<li><b>인공지능 발전과 신뢰 기반 조성 등에 관한 기본법</b> — 2026-01-22 시행, 생성형·고영향 AI 사전고지 등.</li>
+<li>리걸테크 법률문서 자동작성 서비스 사건(2025 대법원 심리불속행 기각으로 확정) — 법률신문·리걸타임즈 보도.</li>
+</ol>
+<h3>28.3 MyBee 내부 기준</h3>
+<ol start="10">
+<li><b>MyBee 설계지시문 v4.6</b> — 제4.7.1조(코드 구성은 데이터), 제4.9조(실행 수단의 3층 구조 — 수치 산출은 등록 도구, 4.9.6·4.9.7), 제6.1.1조(에이전트 6종), 제6.1.5조(TR·TA 약어), 제6.5조(EA), 제6.6조(VA 지시 자격), 제6.7조(TA 외부실행), 제6.11조(Trust Agent 착수 판정), 제8.1.1조(권한 세 조각), 제8.4조(인증 방식), 제8.6조(기억·검색 데이터 권한, 8.6.4·8.6.10), 제8.7조(판정 기준 보호), 제10.1.1조(총계정원장 단독 소유), 제15.1조(골든셋), 제15.3.6조(외부 모델 사용 통제). 인용한 조항 번호는 모두 v4.6 에 있다(v4.3 에서 6.9.11 · 6.9.12 신설 · 6.11.1 개정 — 판정 게이트 한 번 호출 · Trust Agent 2단). v1.1 은 v3.2, v1.2 는 v3.9, v1.3 은 v4.0 으로 대조했다(A.5 · A.6 · A.7). <span class="chg mod">v1.4</span></li>
+<li><b>MyBee DB 테이블설계서 v3.2</b>(33스키마 · 485표 · 공통 컬럼 15개) — mbknow·mbeval·mbaudit·mbtool·mbacct·mbcore 스키마. v1.1 당시 인용 판은 v2.0, v1.3 은 v2.8(473표). <span class="chg mod">v1.4</span></li>
+<li><b>MyBee 코드체계 설계서 v3.2</b> — 업무코드 · 프로젝트 코드의 구성은 code_scheme 데이터(21.1). <span class="chg add">v1.3</span></li>
+</ol>
+<p class="muted">본 문서는 MyBee 플랫폼의 AI/정보시스템 아키텍처 설계서이며 개별 사건에 대한 법률의견서가 아니다. 실제 서비스 제공 방식은 변호사법, 세무사법, AI 기본법, 개인정보·영업비밀 관련 규정 및 조직의 내부통제 정책에 대해 별도 법률 검토를 거쳐 확정해야 한다(27장 O-01·O-02).</p>
+</section>
+
+<!-- ───────────────────────── 29 ───────────────────────── -->
+<section id="final" class="card">
+<h2>29. 최종 권고 아키텍처</h2>
+<div class="diagram">
+<div class="diagram-title">한 장 요약</div>
+<div class="arch">
+<div class="layer"><strong>MyBee PA</strong> — 프로젝트 업무 안에서 법률·세무 과업 생성(업무코드), Trust Agent 착수 판정·VA 지시 자격 판정을 통과한 지시만 수행</div>
+<div class="layer"><strong>Legal Orchestrator</strong> — 사실·기준일·쟁점·관할·검색계획·보완 질의·상태기계</div>
+<div class="layer"><strong>Legal Intelligence</strong> — Ontology + Skill + Workflow + 부칙 적용규칙 + Gate Rules + Output Schema</div>
+<div class="layer"><strong>Knowledge</strong> — 공용 코퍼스(이중시간 Temporal DB + Hybrid Search + Vector + Graph) | 테넌트 사안(RLS)</div>
+<div class="layer"><strong>Reasoning</strong> — 교체 가능한 Local LLM(EA), 계산은 결정론적 도구</div>
+<div class="layer"><strong>Challenge</strong> — Opponent Agent(블라인드 독립 검색, 고위험은 이종 모델)</div>
+<div class="layer"><strong>Verification</strong> — Evidence Auditor + Citation/Temporal Validator + Legal Trust Gate(보류 포함)</div>
+<div class="layer"><strong>Control</strong> — Trust Agent 착수 판정 · VA 지시 자격 · 자격자 승인(내용 해시) · TA 발행 · 감사</div>
+<div class="layer"><strong>Evaluation</strong> — Golden Dataset(DEV/HOLDOUT·만료) + Regression Gate + 영향 경보 + 선택적 Post-training</div>
+</div>
+</div>
+
+<div class="callout green"><b>최종 목표 상태:</b> MyBee Legal/Tax Agent는 <b>L6 고신뢰 Legal Decision Support</b>를 시스템 기본 능력으로 확보하고, 고위험·중요 사안은 <b>L7 자격자 승인</b>을 거쳐 테넌트 명의의 업무 프로세스로 종결한다.</div>
+<p><b>결론:</b> MyBee가 보유해야 할 핵심 자산은 "Legal LLM 하나"가 아니라 <b>Model-independent Legal Intelligence Platform</b>이다. 이 구조라면 Local LLM을 교체해도 법률 DB, 부칙 적용규칙, 검색체계, 지식그래프, Agent workflow, 검증규칙, Golden Dataset을 그대로 재사용할 수 있다. 새 모델은 Benchmark로 평가한 뒤 필요한 능력에 한해서만 재학습한다. v1.1은 여기에 두 가지를 더 고정했다. <b>누가 책임지고 발행하는가</b>(자격자·테넌트)와 <b>어느 시점의 법을 적용하는가</b>(기준일 × 부칙)다.</p>
+</section>
+
+<div class="footer">MyBee Legal/Tax Agent 상세 설계서 v1.4 (v1.4 정합 개정 · 설계지시문 v4.6 기준) · 2026-09-16</div>
+</main>
+
+</body>
+</html>

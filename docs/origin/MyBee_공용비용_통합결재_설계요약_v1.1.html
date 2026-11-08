@@ -1,0 +1,120 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>공용비용 통합결재 설계요약 v1.1</title><style>
+:root{--ink:#16181d;--navy:#12315c;--blue:#1b3a6b;--grey:#5a6b80;--line:#c6d2e2;--head:#e8eef7;--zebra:#f7f9fc;--bg:#ffffff;--ok:#2e8b57;--okbg:#ecf7ee;--warn:#c0392b;--warnbg:#fdeceb;--note:#d9a441;--notebg:#fff8e6;--flow:#f4f6fa}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--ink:#e6e9ef;--navy:#9cc0f0;--blue:#a9c6ee;--grey:#9aa8ba;--line:#34404f;--head:#1d2836;--zebra:#161d27;--bg:#0f141b;--okbg:#11261a;--warnbg:#2a1414;--notebg:#2a2210;--flow:#161d27}}
+:root[data-theme="dark"]{--ink:#e6e9ef;--navy:#9cc0f0;--blue:#a9c6ee;--grey:#9aa8ba;--line:#34404f;--head:#1d2836;--zebra:#161d27;--bg:#0f141b;--okbg:#11261a;--warnbg:#2a1414;--notebg:#2a2210;--flow:#161d27}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Malgun Gothic","맑은 고딕","Apple SD Gothic Neo",sans-serif;font-size:14.5px;line-height:1.72}
+main{max-width:1080px;margin:0 auto;padding:28px 40px 80px}
+h1{font-size:24px;color:var(--navy);border-bottom:2px solid var(--navy);padding-bottom:6px;margin:44px 0 14px}
+h2{font-size:18px;color:var(--blue);margin:30px 0 8px}
+p{margin:0 0 6px}
+.mono,code{font-family:Consolas,"D2Coding",monospace;font-size:.93em}
+.tw{overflow-x:auto}
+table{border-collapse:collapse;width:100%;margin:6px 0 14px;font-size:13px;line-height:1.5}
+th,td{border:1px solid var(--line);padding:5px 8px;vertical-align:top;text-align:left}
+th{background:var(--head);color:var(--navy)}
+tr:nth-child(even) td{background:var(--zebra)}
+.box{border:1.5px solid var(--note);background:var(--notebg);padding:9px 13px;margin:8px 0 14px;border-radius:3px;font-size:13.8px}
+.box.ok{border-color:var(--ok);background:var(--okbg)}.box.warn{border-color:var(--warn);background:var(--warnbg)}
+.cover{padding:8px 0 20px;border-bottom:1px dashed var(--line)}
+.cover .t{font-size:28px;color:var(--navy);font-weight:700}
+.cover .s{color:var(--grey)}
+.flow{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:10px 0 16px}
+.step{background:var(--flow);border:1px solid var(--line);border-radius:6px;padding:8px 10px;font-size:12.8px;line-height:1.45}
+.step b{display:block;color:var(--navy);font-size:13px}
+.step.key{border:2px solid var(--ok)}
+.num{display:inline-block;min-width:22px;color:var(--grey);font-weight:700}
+footer{margin-top:50px;border-top:1px solid var(--line);padding-top:8px;color:var(--grey);font-size:12px;text-align:center}
+@media (max-width:700px){main{padding:18px 16px}}
+</style></head><body><main>
+<div class="cover">
+<div class="t">공용 비용 통합 결재 설계 요약</div>
+<div class="s">MyBee · 문서 v1.1 · 2026-10-28 · 기준 문서: 설계지시문 v5.24 제12.10.8 ~ 12.10.24조 · 부속서 AT · AU / DB 테이블설계서 v3.28 제0AH부 (R41) · 제0AI부 (R42-01 ~ R42-14) · v1.0(공용 부품)에 공용 비용 일반(제6장)을 더했다</div>
+</div>
+
+<h1>1. 결론</h1>
+<div class="box ok"><b>프로젝트가 몇 개든 공용 부품은 발주 한 건으로 사고, 사람 결재는 발주 승인 한 번으로 끝낸다.</b> 프로젝트별 근거(계획 오더 · 구매요청)는 그대로 두고, 발주 한 건이 그 근거들을 <b>라인</b>으로 담는다. 원가 · 예산은 라인의 프로젝트로 정확히 나뉘고, 로트 올림으로 생긴 남는 수량은 발생 프로젝트를 기억하는 재고자산으로 두었다가 불용이 되면 그때 발생 프로젝트의 원가 · 예산으로 넘긴다.</div>
+<div class="tw"><table><thead><tr><th>예시</th><th>v5.22 까지</th><th>v5.23</th></tr></thead><tbody>
+<tr><td>프로젝트 A 40개 · B 60개 · 부품 C</td><td>구매요청 2건(사람 승인 2) + 발주 2건(사람 승인 2) = <b>결재 4회</b>. 발주 헤더가 프로젝트 하나만 담아 묶을 수 없었다</td><td>구매요청 2건(규칙 승인) → 발주 1건 · 라인 2개 → <b>결재 1회</b></td></tr>
+<tr><td>최소 발주량 120개</td><td>계획 오더마다 올림 — 남는 수량이 겹치고 어느 프로젝트 몫인지 불명</td><td>합계 100 → 120 한 번, 남는 20개는 INVENTORY 라인 · 발생 프로젝트 표시</td></tr>
+<tr><td>프로젝트 A · B · C · D …</td><td>프로젝트 수만큼 결재</td><td>프로젝트 N개 → 계획 오더 N(+1) → 구매요청 N(+1) → 발주 1 · 라인 N(+1) → <b>결재 1회</b></td></tr>
+</tbody></table></div>
+
+<h1>2. 흐름</h1>
+<div class="flow">
+<div class="step"><span class="num">①</span><b>MPS 확정</b>FL0006002 — 모든 프로젝트 MPS 확정 뒤 MRP 한 번</div>
+<div class="step"><span class="num">②</span><b>MRP 실행</b>FL0015001 — 프로젝트별 계획 오더 + 남는 수량 줄 0 ~ 1 · 남는 수량 재고 먼저 배분</div>
+<div class="step"><span class="num">③</span><b>구매요청</b>FL0015002 · 003 — 계획 오더마다 1건 · 규칙 승인</div>
+<div class="step"><span class="num">④</span><b>견적 선정</b>FL0015007 — 품목 단위 한 번 · 공급사 하나</div>
+<div class="step"><span class="num">⑤</span><b>발주 생성</b>FL0015009 — 발주 1건 · 라인 N(+1)</div>
+<div class="step key"><span class="num">⑥</span><b>발주 승인 — 사람 결재 1회</b>FL0015010 — 모든 라인을 덮는 가장 가까운 승인권자</div>
+<div class="step"><span class="num">⑦</span><b>검수 확정</b>FL0015017 — 필요일 순 · 남는 수량 라인 마지막</div>
+<div class="step"><span class="num">⑧</span><b>매입 전표</b>FL0015019 — 라인 프로젝트별 원가 · 남는 수량은 재고자산</div>
+<div class="step"><span class="num">⑨</span><b>불용 · 정산</b>FL0016015 후보 → FL0016016 확정 · FL0012025 정산 — 발생 프로젝트 원가 · 예산 차감</div>
+</div>
+
+<h1>3. 확정한 판단 (Q1 ~ Q18)</h1>
+<div class="tw"><table><thead><tr><th>#</th><th>질문</th><th>결정</th></tr></thead><tbody>
+<tr><td>Q1 · Q16</td><td>결재권자</td><td>모든 라인의 프로젝트를 덮는 권한 범위 가운데 가장 좁은 사람. 없으면 법인 전체 범위의 구매 승인권자. 어느 경우나 결재 1회</td></tr>
+<tr><td>Q2</td><td>원가 배분 기준</td><td>페깅 수량 — 발주 라인의 프로젝트로 매입 전표에서 나눈다</td></tr>
+<tr><td>Q3</td><td>MRP 실행 시점</td><td>모든 프로젝트 MPS 를 확정한 뒤 한 번</td></tr>
+<tr><td>Q4 · Q7</td><td>로트 올림 · 남는 수량</td><td>품목 합계로 한 번 올림. 남는 수량은 별도 줄 · 프로젝트 원가가 아닌 재고자산. 불용이 되면 원가 적용</td></tr>
+<tr><td>Q5</td><td>발주 헤더 프로젝트</td><td>헤더 널 허용, 라인에 project_id · cost_target</td></tr>
+<tr><td>Q6</td><td>MRP 구매요청 승인</td><td>규칙 판정(근거 계획 오더 · 예산 한도 · 승인 공급사), 벗어나면 사람</td></tr>
+<tr><td>Q8</td><td>공급사 · 납기</td><td>품목 단위 견적 선정으로 공급사 하나, 납기는 라인별</td></tr>
+<tr><td>Q9</td><td>발생 프로젝트 규칙</td><td>필요일 순으로 채울 때 마지막으로 로트 단위를 넘긴 소요의 프로젝트</td></tr>
+<tr><td>Q10</td><td>표시 위치</td><td>계획 오더 surplus_flag · 구매요청 / 발주 라인 cost_target · 로트 origin_project_id · 남는 수량 재고(정본)</td></tr>
+<tr><td>Q11</td><td>예산</td><td>평소에는 예산 검사 제외 · 불용이 되면 발생 프로젝트 예산에서 차감</td></tr>
+<tr><td>Q12</td><td>불용 손실 부담</td><td>폐기 처리(FL0016016) 시점에 발생 프로젝트 원가로</td></tr>
+<tr><td>Q13</td><td>불용 판정</td><td>후보: 계획 범위 안 소요 없음 6개월 · 대체 없는 단종 · 유효기간 만료. 확정은 사람</td></tr>
+<tr><td>Q14</td><td>발생 프로젝트 종료</td><td>정산 때 남는 수량을 판정. 종료 뒤 불용은 회사 손실</td></tr>
+<tr><td>Q15</td><td>배분 순서</td><td>남는 수량 재고 먼저 · 오래된 것부터, 쓴 프로젝트가 원가 부담</td></tr>
+<tr><td>Q17</td><td>분할 입고</td><td>필요일이 빠른 라인부터, 남는 수량 라인은 마지막</td></tr>
+<tr><td>Q18</td><td>결재 뒤 변경</td><td>감량 · 취소는 허용 오차 안이면 재결재 없음(감량분은 남는 수량), 증가 · 라인 추가 · 단가 · 공급사 · 납기 앞당김은 전체 재결재</td></tr>
+</tbody></table></div>
+
+<h1>4. DB 스키마 변경 (DB 테이블설계서 v3.27)</h1>
+<div class="tw"><table><thead><tr><th>구분</th><th>DB Table · 칸</th><th>내용</th></tr></thead><tbody>
+<tr><td>칸 추가</td><td class="mono">mbpur.mrp_planned_order.surplus_flag</td><td>boolean · 남는 수량 줄. peg_plan_id 는 발생 프로젝트의 MPS 줄</td></tr>
+<tr><td>칸 추가</td><td class="mono">mbpur.purchase_request.cost_target</td><td>PROJECT / INVENTORY</td></tr>
+<tr><td>칸 변경</td><td class="mono">mbpur.purchase_order.project_id</td><td>N → Y. 라인 프로젝트가 하나일 때만 채우는 투영</td></tr>
+<tr><td>칸 추가</td><td class="mono">mbpur.purchase_order_line.project_id · cost_target</td><td>구매요청에서 복사 · 귀속 정본</td></tr>
+<tr><td>칸 추가</td><td class="mono">mbmfg.lot.origin_project_id</td><td>남는 수량 로트의 발생 프로젝트(투영)</td></tr>
+<tr><td>신설</td><td class="mono">mbpur.surplus_stock</td><td>남는 수량 재고 정본 24칸 — 발생 프로젝트 · 발생 구분(올림 / 감량) · 입고 · 사용 누계 · 상태(HELD / CANDIDATE / OBSOLETE / CONSUMED / WRITTEN_OFF) · 후보 사유 · 불용 수량 · 금액 · 손실 귀속 · 원가 전표 · 예산 감액 · 확정자</td></tr>
+</tbody></table></div>
+<p>활성 DB Table 642 → 643 · 모델 컬럼 7,888 → 7,917 · 외래키 1,833 → 1,845 · 업무코드 634 그대로.</p>
+
+<h1>5. 강제 규칙 R41</h1>
+<div class="tw"><table><thead><tr><th>규칙</th><th>내용</th></tr></thead><tbody>
+<tr><td>R41-01</td><td>라인 귀속은 구매요청에서 복사 · 변경 불가</td></tr>
+<tr><td>R41-02</td><td>헤더 프로젝트는 라인의 투영(하나면 그 값, 둘 이상이면 NULL)</td></tr>
+<tr><td>R41-03</td><td>발주 한 건 = 공급사 하나 · 결재 한 번. 프로젝트별로 나누기 금지</td></tr>
+<tr><td>R41-04</td><td>승인자 = 모든 라인 프로젝트를 덮는 가장 좁은 범위, 없으면 법인 전체</td></tr>
+<tr><td>R41-05</td><td>MRP 구매요청은 규칙 승인, 표본 감사 대상</td></tr>
+<tr><td>R41-06</td><td>로트 올림은 품목 합계로 한 번, 남는 수량 줄의 발생 프로젝트 규칙</td></tr>
+<tr><td>R41-07</td><td>남는 수량은 재고자산 · 프로젝트 예산 검사 제외</td></tr>
+<tr><td>R41-08</td><td>분할 입고는 필요일 순, 남는 수량 라인 마지막</td></tr>
+<tr><td>R41-09</td><td>남는 수량 재고 먼저 배분 · 발생 프로젝트 표시 불변</td></tr>
+<tr><td>R41-10</td><td>불용은 사람이 확정, 원가 전표와 예산 감액을 한 트랜잭션으로</td></tr>
+<tr><td>R41-11</td><td>정산은 남는 수량 판정 뒤에 끝남, 종료 뒤 불용은 회사 손실</td></tr>
+<tr><td>R41-12</td><td>결재 뒤 감량은 재결재 없음, 증가 등은 전체 재결재</td></tr>
+</tbody></table></div>
+
+<h1>6. 공용 비용 일반 — 인건비 · 사무실 사용료 · 출장비 · 기타 (v1.1)</h1>
+<div class="box ok"><b>같은 방식을 모든 비용에.</b> 결재 대상 하나 · 사람 결재 한 번 · 귀속은 <b>공용 비용 배분안</b>(mbacct.cost_share_plan)의 줄(cost_share_line). 결재 때는 계획, 정산 때 실적으로 다시 나누고 허용 오차 안이면 다시 결재하지 않는다. 어느 프로젝트에도 배분되지 않은 몫은 상시 업무 프로젝트에 둔다. 업무코드는 늘지 않는다(634).</div>
+<div class="box"><b>배분은 원장에서 자동.</b> 사람은 배분 수치를 적지 않고 자동 산출을 확인만 한다. 공용 부품이 제품 BOM × MPS 로 자동 배분되듯 인건비는 <b>업무 BOM</b>(업무 구성 × 표준시간 × 예정 횟수)으로, 공간 · 라이선스는 <b>사람을 매개로</b> 인건비 비율을 이어받는다. 원천 순서는 실적 원장 → 계획 원장 → 사람 매개 연쇄 → 지정 비율(사유 필수)이고, 모든 줄에 출처를 남긴다(R42-11 ~ R42-14).</div>
+<div class="tw"><table><thead><tr><th>비용</th><th>결재 대상 (결재 1회)</th><th>계획 원천 (결재 때 자동)</th><th>실적 원천 (정산 때 자동)</th></tr></thead><tbody>
+<tr><td>공용 부품</td><td>발주 승인 FL0015010</td><td>제품 BOM × MPS 페깅</td><td>검수 수량 · 남는 수량은 재고(제1 ~ 5장)</td></tr>
+<tr><td>인건비</td><td>인력투입계획 확정 FL0012044 — 한 사람의 여러 프로젝트를 한 번에</td><td>업무 BOM — 업무 구성 × 표준시간 × 예정 횟수</td><td>업무코드 수행 기록. 결재 화면엔 일수 · 비율만</td></tr>
+<tr><td>사무실 · 공간 사용료</td><td>임차 계약 체결 FL0013007 — 매달 지급은 배분안 재사용</td><td>좌석 배정 × 그 사람의 인건비 비율 · 회의실 예약</td><td>좌석 점유 · 예약 실적. 빈 공간은 상시 업무 프로젝트</td></tr>
+<tr><td>출장비</td><td>지급 승인 FL0005005</td><td>출장 일정의 날짜별 방문 목적</td><td>출장 중 소통 · 회의 · 업무 기록</td></tr>
+<tr><td>SW 라이선스 · 클라우드</td><td>지급 승인 FL0005005</td><td>사용자 × 인건비 비율 · 리소스 태그</td><td>사용 로그 · 사용량</td></tr>
+<tr><td>장비 · 설비</td><td>지급 승인 FL0005005(감가상각은 원가 배부만)</td><td>작업지시 × 라우팅 설비 시간</td><td>설비 가동 기록</td></tr>
+<tr><td>용역 · 기타</td><td>지급 승인 FL0005005</td><td>과업 항목 ↔ 업무코드 대응, 없으면 지정 비율 + 사유</td><td>검수 · 산출물 귀속</td></tr>
+</tbody></table></div>
+<p>DB: 신설 mbacct.cost_share_plan(16칸) · cost_share_line(18칸 — 기준 출처 · 출처 기록 · 실적 출처 · 연쇄 원 배분안 포함) · cost_basis_source(10칸 — 비용 구분별 원천 우선순위), mbfin.payment_request +cost_kind · cost_share_plan_no, project_id 널 허용, allocation_rule.basis_kind 4종 추가. 활성 DB Table 646 · 외래키 1,856 · 대응 3,271쌍. 강제 규칙 R42-01 ~ R42-14.</p>
+<h1>7. 남은 일</h1>
+<div class="box ok"><b>함께 고친 문서.</b> 설계지시문 v5.24 · DB 테이블설계서 v3.28 · 부속 표 4종(한글명 v3.10 · 업무코드매핑 v3.11 · 커버리지 v3.11 · 상관관계 v3.10) · 업무스킬설계서 D04 v2.0 · D05 v1.8 · D08 v1.7 · D12 v2.8 · D13 v2.1 · D15 v2.0 · D16 v1.6(기존 단계 안에 반영 — 실행 수단 · 단계 수 · 플로우차트 그대로) · 프로젝트 인건비 예산 · 집행 설계서 v1.7. 불용 후보는 D16 장기 체화 판정(FL0016015)이 올린다.</div>
+<div class="box warn"><b>남은 일.</b> 코드체계 설계서의 스킬 단계 설명 · 업무영역 DB 관계도 · DB 설계방향서 · 전체 문서 정합성 검증 보고서는 아직 이 개정을 담지 않았다. DBMS 실행 검증은 하지 않았다 — 설계지시문 인수 기준 A-50 · A-51 의 시나리오 시험이 그 몫이다.</div>
+<footer>MyBee 공용비용 통합결재 설계요약 v1.1 · 2026-10-28</footer>
+</main></body></html>

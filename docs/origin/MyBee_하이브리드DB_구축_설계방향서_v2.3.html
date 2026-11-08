@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MyBee 하이브리드 DB 구축 설계방향서 v2.3 — PostgreSQL 표준 테이블 + SQL/PGQ 목표</title>
+<style>
+:root { --ink:#1d2733; --sub:#5b6a7a; --line:#d7dee6; --bg:#fff; --soft:#f4f7fa;
+ --acc:#1856a7; --s1:#0b7a5c; --s2:#7a4a0b; --m:#6a2fa0; --e:#555; --q:#a05c0b; --pb:#a02f4e; }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--ink);
+ font-family:"Malgun Gothic", 맑은 고딕, "Apple SD Gothic Neo", sans-serif; line-height:1.62; font-size:15px; }
+.wrap { max-width:1080px; margin:0 auto; padding:32px 16px 80px; }
+h1 { font-size:26px; margin:6px 0 2px; }
+h2 { font-size:20px; margin:44px 0 10px; padding:8px 12px; background:var(--soft); border-left:5px solid var(--acc); }
+h3 { font-size:16.5px; margin:26px 0 8px; color:var(--acc); }
+p { margin:8px 0; }
+table { border-collapse:collapse; width:100%; margin:10px 0 16px; }
+th,td { border:1px solid var(--line); padding:6px 9px; text-align:left; vertical-align:top; }
+th { background:var(--soft); } td.num { text-align:right; }
+.mono { font-family:Consolas,"Malgun Gothic",monospace; font-size:13.2px; white-space:nowrap; }
+.sm { font-size:13px; color:var(--sub); }
+.cover { border:1px solid var(--line); padding:22px 26px; background:var(--soft); }
+.cover .meta { color:var(--sub); font-size:13.5px; margin-top:8px; }
+.box { border:1px solid var(--line); background:var(--soft); padding:12px 16px; margin:12px 0; }
+.box.rule { border-left:5px solid var(--s1); } .box.warn { border-left:5px solid #a33; }
+.bd { display:inline-block; padding:1px 8px; border-radius:10px; font-size:12px; color:#fff; white-space:nowrap; margin:1px 2px 1px 0; }
+.bd.s1 { background:var(--s1); } .bd.s2 { background:var(--s2); } .bd.m { background:var(--m); }
+.bd.e { background:var(--e); } .bd.q { background:var(--q); } .bd.pb { background:var(--pb); } .bd.n { background:#8a97a5; }
+pre { background:#0f1720; color:#dce6f2; padding:12px 14px; overflow-x:auto; border-radius:6px; font-size:13px; }
+#q { width:340px; max-width:100%; padding:6px 10px; border:1px solid var(--line); font-size:14px; }
+figure { margin:16px 0; text-align:center; } figcaption { font-size:13px; color:var(--sub); margin-top:6px; }
+details { border:1px solid var(--line); padding:10px 14px; margin:10px 0; background:var(--soft); }
+summary { cursor:pointer; font-weight:bold; }
+@media (max-width:760px) { table { display:block; overflow-x:auto; } }
+</style>
+</head>
+<body><div class="wrap">
+
+<div class="cover">
+  <div class="sm">MyBee Platform2 — Agent 중심 업무 시스템</div>
+  <h1>하이브리드 DB 구축 설계방향서 <span style="color:var(--acc)">v2.3</span></h1>
+  <div>AI Agent 중심 재설계 · 2026-09-27</div>
+  <div class="meta">근거 문서: MyBee_설계지시문_v5.13 · MyBee_코드체계_설계서_v3.15 · MyBee_DB테이블설계서_v3.17(활성 DB Table 545 · 스키마 35 · 물리 컬럼 14,751 · 제4부 직접 파싱 외래키 1,504 · 상관관계표 FK 1,352)<br>
+  <b>v2.3 확정: 업무 정본은 PostgreSQL 표준 테이블, 구조 조회 목표 인터페이스는 SQL/PGQ.</b> Neo4j·TypeDB·Apache AGE 는 구축 대상에서 제외한다.<br>
+  2026-09-24 PostgreSQL 19 Beta 4에서 SQL/PGQ 지원이 철회되었다. 따라서 현재 구현은 WITH RECURSIVE 등 지원 SQL로 제공하고, SQL/PGQ 는 향후 공식 지원 릴리스가 나온 뒤 호환성·성능·보안 검증을 거쳐 같은 테이블 위에 켠다. 변경된 결정의 정본은 <b>MyBee_하이브리드DB_남은결정_검토확정서_v1.1</b> 이다.</div>
+</div>
+
+<details open>
+<summary>용어 정의</summary>
+<table>
+<tr><th style="width:190px">용어</th><th>뜻</th></tr>
+<tr><td>평면(plane)</td><td>데이터의 성질과 쓰임이 같은 것끼리 묶은 저장 구획. 본 설계는 값·구조·의미·사건의 4개 평면으로 나눈다.</td></tr>
+<tr><td>정본(正本)</td><td>그 데이터의 진짜 값이 있는 유일한 테이블. 값·구조·사건 평면은 논리 구분이며 PostgreSQL 안에 함께 있다. 의미 색인과 게시 스냅샷은 파생본이다.</td></tr>
+<tr><td>저작(著作) 구조</td><td>사람 또는 에이전트가 설계·편집해서 만드는 구조 — 조직도, BOM, 업무코드 체계, 권한 구조. 편집이 곧 업무인 데이터.</td></tr>
+<tr><td>발생(發生) 구조</td><td>업무 실행이 결과로 남기는 관계 — 로트 계보, 수행 선후, 승인 의존, 파생 계보. 트랜잭션과 함께 태어나는 데이터.</td></tr>
+<tr><td>게시(揭示) 스냅샷</td><td>구조 평면에서 편집·검증을 마친 구조를 버전 번호와 함께 값 평면에 옮겨 적은 판정용 사본. 판정은 이것만 읽는다.</td></tr>
+<tr><td>투영(投影)</td><td>정본 테이블에서 만든 조회용 뷰·색인·요약. 원본 행을 다른 DB로 복제하지 않는다.</td></tr>
+<tr><td>SQL/PGQ</td><td>SQL:2023 의 속성 그래프 조회 규격. 관계형 테이블을 그래프로 정의하여 조회한다. MyBee의 확정 목표 인터페이스이며 현재 PostgreSQL 릴리스에서는 활성화하지 않는다.</td></tr>
+<tr><td>중복 실행 방지 키</td><td>같은 요청이 두 번 와도 한 번만 실행되게 하는 열쇠 값.</td></tr>
+<tr><td>RLS(행 수준 보안)</td><td>질의 결과를 행 단위로 걸러 자기 테넌트만 보이게 하는 기능.</td></tr>
+<tr><td>사건 평면</td><td>업무 변경을 추가전용으로 적는 기록. 감사 재현과 파생 색인 재구축의 원천이다.</td></tr>
+<tr><td>도구 계약</td><td>에이전트가 저장소에 닿는 유일한 통로. 에이전트는 SQL·그래프 질의를 직접 쓰지 않고, 평면을 아는 도구를 호출한다.</td></tr>
+</table>
+</details>
+
+<h2 id="s0">0. 요약 — 무엇이 바뀌는가</h2>
+<p>사람 중심 시스템이 관계형 DB 하나로 수렴했던 이유는 사람의 접근 방식 때문이다 — 화면(폼·목록)으로 읽고, 조인으로 묶어 보여주고, 부서 단위 트랜잭션으로 쓴다.
+에이전트는 다르게 일한다. <b>해석하고(뜻으로 찾기), 계획하고(구조를 순회하기), 판정받아 실행하고(원자적으로 쓰기), 기억한다(사건을 남기기).</b>
+v2.3 은 이 네 동작을 PostgreSQL 안의 논리 평면과 도구 경계에 대응시킨다:</p>
+<table>
+<tr><th style="width:130px">에이전트 동작</th><th style="width:150px">평면</th><th style="width:190px">저장 기술(정본)</th><th>담는 것</th><th style="width:80px">DB Table</th></tr>
+<tr><td>해석한다</td><td>의미 평면</td><td>pgvector(값 평면 안 확장)</td><td>임베딩·의도 카드·기억 색인·의미 캐시 — 전부 파생, 원문 정본은 값 평면</td><td class="num">9</td></tr>
+<tr><td>계획한다</td><td><b>구조 평면</b></td><td><b>PostgreSQL 표준 테이블 — SQL/PGQ 조회 목표</b></td><td>조직도 · BOM · 업무코드/스킬/도구 체계 · 권한 구조 · 영향 조회</td><td class="num">34</td></tr>
+<tr><td>계획·분석한다</td><td>구조 조회 참여</td><td>PostgreSQL 값 정본 테이블</td><td>로트 계보 · 수행 선후 · 승인 의존 등 발생 구조. 별도 복제 없음</td><td class="num">22</td></tr>
+<tr><td>판정받아 실행한다</td><td>값 평면</td><td>PostgreSQL + RLS</td><td>원장·트랜잭션·승인·중복 실행 방지 + <b>게시 스냅샷</b>(8) + 큐 인스턴스(3)</td><td class="num">465</td></tr>
+<tr><td>기억한다</td><td>사건 평면</td><td>PostgreSQL 추가전용 파티션(+외부 고정)</td><td>도메인 이벤트·상태 원장·감사 로그 — 동기화·재구축·재현의 단일 원천</td><td class="num">15</td></tr>
+</table>
+<p class="sm">분류 합계: 의미 9 + 구조 저작 34 + 구조 조회 참여 22 + 값·게시·큐 465 + 사건 15 = 활성 545 DB Table.</p>
+<p><b>확정 배치: 34개 저작 구조 테이블 자체가 PostgreSQL 정본이다.</b> 원본 테이블의 기본키·외래키·유효기간·RLS 를 유지한다. 조직도·BOM·업무코드·권한의 경로 조회는 현재 재귀 SQL로 구현하고, 지원되는 릴리스가 확인되면 같은 테이블을 SQL/PGQ 속성 그래프로 노출한다.
+<b>판정은 게시 스냅샷만 읽는다.</b> 편집 완료 구조를 버전으로 고정하여 mbdef·criteria_version 등에 게시하고, 게이트·VA·Trust Agent 는 승인된 버전만 참조한다. 발생 구조 22개도 기존 PostgreSQL 테이블이 정본이며 분석 조회에 함께 참여한다.</p>
+
+<figure>
+<svg viewBox="0 0 1040 560" xmlns="http://www.w3.org/2000/svg" style="max-width:100%;height:auto"
+ font-family="Malgun Gothic, 맑은 고딕, sans-serif">
+ <defs><marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+  <path d="M0,0 L10,5 L0,10 z" fill="#5b6a7a"/></marker></defs>
+ <rect x="20" y="14" width="1000" height="58" fill="#eef3f9" stroke="#d7dee6"/>
+ <text x="520" y="38" text-anchor="middle" font-size="15" font-weight="bold">에이전트 (IA · PA · EA · VA · TR · TA) — 도구 계약으로만 접근, 직접 질의 금지</text>
+ <text x="520" y="58" text-anchor="middle" font-size="12" fill="#5b6a7a">해석 → 계획 → 판정·실행 → 기억</text>
+
+ <rect x="20" y="110" width="235" height="180" fill="#f7f2fb" stroke="#6a2fa0" stroke-width="2"/>
+ <text x="137" y="136" text-anchor="middle" font-size="14" font-weight="bold" fill="#6a2fa0">의미 평면 (해석)</text>
+ <text x="137" y="158" text-anchor="middle" font-size="12">pgvector · 9표</text>
+ <text x="137" y="180" text-anchor="middle" font-size="11.5" fill="#5b6a7a">의도 카드 · 조문 임베딩</text>
+ <text x="137" y="198" text-anchor="middle" font-size="11.5" fill="#5b6a7a">기억 색인 · 의미 캐시</text>
+ <text x="137" y="224" text-anchor="middle" font-size="11.5" fill="#a02f4e">전부 파생 — 사전 필터 필수</text>
+ <text x="137" y="244" text-anchor="middle" font-size="11.5" fill="#5b6a7a">원문 정본은 값 평면</text>
+
+ <rect x="275" y="110" width="235" height="180" fill="#eaf6f1" stroke="#0b7a5c" stroke-width="2"/>
+ <text x="392" y="136" text-anchor="middle" font-size="14" font-weight="bold" fill="#0b7a5c">구조 평면 (계획)</text>
+ <text x="392" y="158" text-anchor="middle" font-size="12">PostgreSQL · 구조 정본 34표</text>
+ <text x="392" y="180" text-anchor="middle" font-size="11.5" fill="#5b6a7a">조직도 · BOM · 업무코드 체계</text>
+ <text x="392" y="198" text-anchor="middle" font-size="11.5" fill="#5b6a7a">권한 구조 · 영향 그래프</text>
+ <text x="392" y="224" text-anchor="middle" font-size="11.5" fill="#5b6a7a">+ 발생 구조 조회 22표</text>
+ <text x="392" y="244" text-anchor="middle" font-size="11.5" fill="#a02f4e">판정은 여기를 읽지 않는다</text>
+
+ <rect x="530" y="110" width="255" height="180" fill="#eef3f9" stroke="#1856a7" stroke-width="2.4"/>
+ <text x="657" y="136" text-anchor="middle" font-size="14" font-weight="bold" fill="#1856a7">값 평면 (판정 · 실행)</text>
+ <text x="657" y="158" text-anchor="middle" font-size="12">PostgreSQL + RLS · 465표</text>
+ <text x="657" y="180" text-anchor="middle" font-size="11.5" fill="#5b6a7a">원장 · 승인 · 중복 실행 방지</text>
+ <rect x="548" y="194" width="219" height="38" fill="#fbeef2" stroke="#a02f4e"/>
+ <text x="657" y="218" text-anchor="middle" font-size="11.5" fill="#a02f4e">게시 스냅샷 8표 — 판정의 유일한 구조 입력</text>
+ <text x="657" y="254" text-anchor="middle" font-size="11.5" fill="#5b6a7a">+ 큐 인스턴스 3표 (물리 분리)</text>
+
+ <rect x="805" y="110" width="215" height="180" fill="#f1f1f1" stroke="#555" stroke-width="2"/>
+ <text x="912" y="136" text-anchor="middle" font-size="14" font-weight="bold" fill="#333">사건 평면 (기억)</text>
+ <text x="912" y="158" text-anchor="middle" font-size="12">추가전용 파티션 · 15표</text>
+ <text x="912" y="180" text-anchor="middle" font-size="11.5" fill="#5b6a7a">도메인 이벤트 · 상태 원장</text>
+ <text x="912" y="198" text-anchor="middle" font-size="11.5" fill="#5b6a7a">감사 로그 · 해시 체인</text>
+ <text x="912" y="224" text-anchor="middle" font-size="11.5" fill="#5b6a7a">동기화 · 재구축 · 재현의</text>
+ <text x="912" y="242" text-anchor="middle" font-size="11.5" fill="#5b6a7a">단일 원천</text>
+
+ <line x1="392" y1="290" x2="600" y2="340" stroke="#a02f4e" stroke-width="2" marker-end="url(#ar2)"/>
+ <text x="452" y="332" font-size="12.5" font-weight="bold" fill="#a02f4e">게시(버전 확정 · 두 사람 규칙)</text>
+ <line x1="700" y1="290" x2="880" y2="336" stroke="#5b6a7a" stroke-width="1.6" marker-end="url(#ar2)"/>
+ <text x="770" y="306" font-size="11.5" fill="#5b6a7a">모든 변경은 사건으로</text>
+ <line x1="870" y1="345" x2="430" y2="298" stroke="#5b6a7a" stroke-width="1.6" stroke-dasharray="6 4" marker-end="url(#ar2)"/>
+ <text x="610" y="368" font-size="11.5" fill="#5b6a7a">사건 재생 → 파생 색인·요약 갱신 · 재구축</text>
+
+ <rect x="20" y="420" width="1000" height="120" fill="#fffdf5" stroke="#c9b26b"/>
+ <text x="520" y="446" text-anchor="middle" font-size="13.5" font-weight="bold" fill="#7a5d00">지키는 큰 원칙 (제1장 — 이 일곱을 깨는 배치는 하지 않는다)</text>
+ <text x="520" y="472" text-anchor="middle" font-size="12">P1 판정은 결정론 · 닫힌 실패     P2 데이터마다 정본 하나     P3 부작용 단일 통로(TA) · 중복 실행 방지     P4 테넌트 격리 · 안전한 실패</text>
+ <text x="520" y="496" text-anchor="middle" font-size="12">P5 기록 재현(당시 버전 조회 · 3선 감사)     P6 운영 중 무변경 확장     P7 에이전트 실행 · 사람 승인</text>
+ <text x="520" y="522" text-anchor="middle" font-size="11.5" fill="#5b6a7a">저장소는 바뀌어도 원칙은 저장소보다 오래 산다</text>
+</svg>
+<figcaption>그림 1. PostgreSQL 내부의 4개 논리 평면 — 구조 정본과 판정용 게시본의 접근 경계</figcaption>
+</figure>
+
+<h2 id="s1">1. 지키는 큰 원칙 — 그리고 새 구성이 각각을 지키는 방법</h2>
+<p>기존 설계의 일곱 원칙을 PostgreSQL 단일 정본 구성에 적용한다.</p>
+<table>
+<tr><th style="width:230px">원칙(지시문 근거)</th><th>v2.3 구성이 지키는 방법</th></tr>
+<tr><td><b>P1 판정은 결정론 · 닫힌 실패</b><br>(P-06 · 6.6.4 · 13.3)</td><td>판정 경로의 구조 입력은 승인된 <b>게시 버전</b>만 허용한다. 초안 조회(SQL/PGQ 포함)·벡터·LLM 결과는 판정 입력이 아니다. 게시본이 없거나 버전이 맞지 않으면 차단한다.</td></tr>
+<tr><td><b>P2 데이터마다 정본 하나</b><br>(원장 소유 12.2)</td><td>구조·값·사건 모두 PostgreSQL 표준 테이블에 정본을 둔다. 각 개체와 관계의 원본 테이블을 하나로 정하고, 게시 스냅샷·SQL/PGQ 정의·요약 인덱스는 파생 조회 계층으로 카탈로그에 명시한다.</td></tr>
+<tr><td><b>P3 부작용 단일 통로 · 중복 실행 방지</b><br>(6.5 · 7.5)</td><td>원장과 게시 기록은 PostgreSQL 트랜잭션으로 확정한다. 게시 실행 기록(policy_publish_run · definition_bundle)에 중복 실행 방지 키와 원본 버전을 묶고, 외부 부작용은 TA 경유 규약을 따른다.</td></tr>
+<tr><td><b>P4 테넌트 격리 · 안전한 실패</b><br>(12.5)</td><td>테넌트 소유 구조 테이블과 간선 테이블에도 tenant_id · RLS 를 적용한다. 복합 FK 와 조회 술어에 tenant_id 를 포함해 테넌트 간 연결을 차단한다. 플랫폼 공통 자료는 별도 권한으로 읽게 한다. SQL/PGQ 활성화 시 원본 테이블 권한·RLS 적용을 음성 시험으로 검증한다.</td></tr>
+<tr><td><b>P5 기록 재현</b><br>(15.3 · 3선 감사)</td><td>판정 재현에는 게시 버전과 입력 해시를 사용한다. 초안·게시·취소의 변경 이력은 사건 평면에 남겨 당시 구조의 결정 근거를 재현한다.</td></tr>
+<tr><td><b>P6 운영 중 무변경 확장</b><br>(12.1.1)</td><td>기존 표의 ext jsonb · mbmeta 카탈로그를 따르며, 새 관계 유형은 정식 테이블·제약 또는 승인된 카탈로그 확장으로 정의한다. SQL/PGQ 그래프 정의 변경도 배포 세대를 기록한다.</td></tr>
+<tr><td><b>P7 에이전트 실행 · 사람 승인</b></td><td>구조 편집도 업무다. 조직 개편·BOM 개정·권한 변경은 에이전트가 초안을 만들 수 있고, 게시 전에 사람이 승인한다(작성자≠승인자, 위험 C 두 사람 규칙).</td></tr>
+</table>
+
+<h2 id="s2">2. 사람 중심 → 에이전트 중심: 저장 구조가 왜 달라지는가</h2>
+<table>
+<tr><th style="width:190px"></th><th>사람 중심(기존 설계의 전제)</th><th>에이전트 중심(v2.3 의 전제)</th></tr>
+<tr><td>주 사용자</td><td>화면을 보는 사람 — 폼 입력·목록 조회·결재</td><td>도구를 호출하는 에이전트 — 해석·계획·판정·실행 루프</td></tr>
+<tr><td>구조 데이터의 쓰임</td><td>화면에 트리로 그려 주는 입력</td><td><b>계획의 입력</b> — 영향 파급·경로·대안 탐색을 반복 조회</td></tr>
+<tr><td>검색</td><td>사람이 코드·이름을 안다 — 정확 일치 검색</td><td>에이전트가 말뜻에서 출발한다 — 의미 검색이 모든 요청의 첫 단계</td></tr>
+<tr><td>이력</td><td>보고용 — 월말에 읽는다</td><td><b>기억이자 동기화 원천</b> — 재현·재구축·학습이 전부 사건에서</td></tr>
+<tr><td>조인</td><td>화면 하나에 여러 표를 묶는 수단</td><td>동일 PostgreSQL 안에서 FK 조인·재귀 SQL·향후 SQL/PGQ 경로 조회를 결합한다</td></tr>
+<tr><td>그래서 저장소는</td><td>관계형 테이블 중심</td><td>PostgreSQL 표준 테이블을 공유하는 4개 논리 평면</td></tr>
+</table>
+<p>요컨대 관계형 단일 구성은 틀린 설계가 아니라 <b>사람이라는 사용자에 맞춘 설계</b>였다.
+사용자가 에이전트로 바뀌면 가장 뜨거운 질의가 「폼 저장·목록 조회」에서 「의미 검색 → 구조 순회 → 게이트 판정」으로 바뀐다. 이 세 동작은 동일 PostgreSQL 의 서로 다른 조회 경계로 제공한다.
+바뀌지 않는 것도 분명하다 — <b>돈·재고·승인·실행의 원자성</b>은 사용자가 누구든 관계형 트랜잭션이 최적이다.</p>
+
+<h2 id="s3">3. 평면별 설계</h2>
+
+<h3>3.1 값 평면 — PostgreSQL: 원장·판정·게시 스냅샷 (462표 + 큐 3표)</h3>
+<p>전표·토큰·재고·급여·수행 원장·승인·중복 실행 방지·신원 — 값과 사건의 원자적 기록 전부.
+RLS 전면, 큐만 SECURITY DEFINER 함수(별도 인스턴스), 시각 내장 식별자와 범위 파티션 유지.
+여기에 구조 저작본으로부터 확정한 <b>게시 스냅샷을 받는 역할</b>이 더해진다.
+mbdef 의 6표(정의 배포 묶음·업무코드/실행 단계/스킬 단위/판정 기준 버전)와 mbauth.criteria_version · policy_publish_run 이 그 그릇이며 — <b>기존 설계에 이미 있던 표들이다.</b>
+구조 저작 행과 판정용 게시본은 같은 PostgreSQL 안에서 역할·상태·버전으로 분리한다. 게시본 생성과 게시 포인터 변경은 원자적으로 처리한다.</p>
+
+<h3>3.2 구조 평면 — PostgreSQL 표준 테이블 정본 (34표)</h3>
+<p>조직도(<span class="mono">mbcore.org_unit</span> · <span class="mono">employee_org_assignment</span>), BOM(<span class="mono">mbdev.bom_master</span> · <span class="mono">bom</span>), 업무코드·스킬·도구, 권한·위임, 메타데이터 상관관계의 기존 34표를 그대로 정본으로 둔다. 개체 행과 관계 행은 명시적 PK·FK·유효기간·승인 상태를 가지며, 임직원·품목·회사 속성도 기존 값 테이블이 소유한다. 다형 관계(<span class="mono">entity_link</span> 등)는 대상 종류와 식별자의 존재·테넌트 일치를 게시 전 검증한다.</p>
+<div class="box rule"><b>조회 인터페이스가 두 단계로 교체된다.</b><br>
+현재 지원 PostgreSQL: 업무별 FK 조인, <span class="mono">WITH RECURSIVE</span> 및 <span class="mono">CYCLE</span> 로 조직·BOM·위임 경로를 조회한다. 대규모 역방향 파급은 승인 버전별 요약 또는 폐쇄 관계 인덱스를 파생해 성능을 맞춘다. 향후 공식 SQL/PGQ 지원 릴리스: 동일한 34표와 참조 개체 표를 <span class="mono">CREATE PROPERTY GRAPH</span> 에 등록하고 <span class="mono">GRAPH_TABLE</span> 조회를 도구 내부에 도입한다. 그래프 정의 자체에는 업무 데이터가 저장되지 않는다.</div>
+<p><b>게시 절차:</b> ① 초안을 업무별 정본 테이블·개정 이력에 기록하고 판정에서는 숨김 ② FK·테넌트·유효기간·고아·순환·SoD·파급 검증 ③ 작성자와 다른 사람의 승인 ④ 동일 트랜잭션에서 스냅샷·게시 실행 기록·현재 버전 포인터·사건 기록을 확정 ⑤ 시행일부터 새 버전 조회. 실패하면 전체 롤백한다. 되돌림은 이전 버전의 새 게시 기록으로 남긴다.</p>
+<pre>-- candidate_edges: 선택한 초안 BOM + 기준 시각에 유효한 다른 품목 BOM 의
+-- (tenant_id, parent_item_code, child_item_code) 읽기 전용 관계 집합
+WITH RECURSIVE walk(tenant_id, root_code, item_code, depth) AS (
+  SELECT tenant_id, parent_item_code, child_item_code, 1 FROM candidate_edges
+  UNION ALL
+  SELECT w.tenant_id, w.root_code, e.child_item_code, w.depth + 1
+  FROM walk w JOIN candidate_edges e
+    ON e.tenant_id = w.tenant_id AND e.parent_item_code = w.item_code
+  WHERE w.depth &lt; :depth_limit
+) CYCLE item_code SET is_cycle USING path
+SELECT 1 FROM walk WHERE is_cycle LIMIT 1;</pre>
+<p class="sm"><span class="mono">candidate_edges</span> 는 현행 <span class="mono">mbdev.bom_master</span> 의 <span class="mono">bom_no</span>·<span class="mono">parent_item_code</span>·<span class="mono">revision</span>·<span class="mono">status</span> 와 <span class="mono">mbdev.bom</span> 의 <span class="mono">bom_no</span>·<span class="mono">child_item_code</span> 를 조인해 만든 질의용 관계 집합이다. 초안 선택·유효기간·여러 품목의 개정 충돌 해소 규칙을 먼저 확정해야 한다. 깊이 한도 초과는 안전한 성공이 아니므로 게시를 차단한다. SQL/PGQ 도입 전에 같은 선택 집합으로 재귀 SQL과 결과가 일치해야 한다.</p>
+
+<h3>3.3 구조 평면의 조회 구역 — 발생 구조 (22표, 정본은 값 평면)</h3>
+<p>로트 계보·파생 계보·수행 선후·승인 의존·프로젝트 계층·연결결산 구조·추적성은 <b>트랜잭션이 낳는 관계</b>다.
+생산 실적과 로트 계보는 같은 PostgreSQL 트랜잭션에서 확정된다. 리콜 파급·SoD 위반 경로 탐지·승인 무효화 반경은 이 원본 표를 재귀 SQL로 조회하며, 필요하면 파생 요약을 만든다. SQL/PGQ 지원 시 같은 표를 그래프 정의에 추가한다.</p>
+
+<h3>3.4 의미 평면 — pgvector (9표): 원문 정본과 같은 집</h3>
+<p>의도 카드·발화 예문·조문 임베딩·기억 색인·의미 캐시. 전부 파생 데이터이며 원문 정본은 값 평면에 있다.
+전용 벡터 DB 를 두지 않는 이유는 v1.0 그대로 — 권한 사전 필터(8.6.5)를 임베딩과 같은 행에서 RLS+WHERE 로 걸어야 하기 때문.
+법규 저장소도 기존 벡터 DB 전제를 걷어내고 여기서 신규 구축한다(키워드 tsvector/pg_bigm + 벡터 HNSW 의 RRF 합산 + 교차 인코더 재순위, 판정 입력은 조문 식별자 결정론 조회만 — v1.0 2.3a 결론 승계).
+에이전트 기억 3층(개인·조직·규칙)은 벡터 색인(찾기) + 값 평면 원문(읽기) + 사건 평면(언제 무엇을 배웠나)의 3평면 합작으로 구현된다.</p>
+
+<h3>3.5 사건 평면 — 추가전용 파티션 (15표): 동기화·재구축·재현의 단일 원천</h3>
+<p>v1.0 에서 「이력 파티션」이라 불렀던 것을 1급 평면으로 승격한다. mbaudit.domain_event 가 중심이다 —
+값 평면의 모든 업무 변경, 구조 평면의 모든 게시, 의미 평면의 모든 재색인이 사건으로 남고,
+<b>의미 색인·파생 요약의 재구축은 사건 재생으로 이뤄진다.</b> 정본 관계 행은 업무 트랜잭션이 소유한다. 시각 내장 식별자 + 범위 파티션 + 해시 체인 + 외부 고정 그대로.
+에이전트 중심 시스템에서 이 평면의 무게가 커지는 이유: 에이전트의 학습·평가·판정 재현이 전부 「그때 무슨 일이 있었나」를 다시 읽는 일이기 때문이다.</p>
+
+<h2 id="s4">4. 판정 경로 — 바뀌지 않는 한 가지</h2>
+<div class="box warn"><b>판정(Trust Agent · VA · 착수 게이트 · 준비 조건)은 게시 버전의 값 평면만 읽고 값 평면에만 쓴다.</b><br>
+SQL/PGQ 는 구조 편집·분석용 조회 인터페이스다. 판정의 구조 입력은 게시 스냅샷이다. 이렇게 가르면:
+① 같은 입력·같은 정책 묶음이면 같은 답(P1) — 편집 중 구조가 판정에 새어들 수 없다
+② 판정 재현(P5)은 게시 버전 원장과 입력 해시로 가능하다
+③ 그래프 조회 기능이나 벡터 검색 장애 시에도 <b>이미 게시된 구조로 업무 실행은 계속된다</b>. 다만 원본 PostgreSQL 장애는 공통 장애이므로 HA·복구 목표를 별도로 충족해야 한다.</div>
+
+<h2 id="s5">5. 545개 DB Table 재배치표</h2>
+<p>표시 없는 DB Table 은 「값」(값 평면 정본). <span class="bd s1">구조·저작</span>은 PostgreSQL 원본 34표,
+<span class="bd pb">게시 스냅샷</span>은 판정용 승인 버전 8표, <span class="bd s2">구조·투영</span>은 값 평면 정본이면서 구조 조회에 참여하는 22표(별도 복제 없음),
+<span class="bd m">의미</span>·<span class="bd e">사건</span>·<span class="bd q">큐</span>는 해당 평면.</p>
+<h3>5.1 스키마별 요약</h3>
+<table>
+<tr><th>스키마</th><th>영역</th><th>DB Table</th><th>평면 구성</th></tr>
+<tr><td class="mono">mbproj</td><td>프로젝트</td><td class="num">50</td><td class="sm">값 47, 구조·투영 3</td></tr>
+<tr><td class="mono">mbacct</td><td>회계</td><td class="num">38</td><td class="sm">값 35, 구조·투영 3</td></tr>
+<tr><td class="mono">mbiaud</td><td>내부감사</td><td class="num">34</td><td class="sm">값 34</td></tr>
+<tr><td class="mono">mbhr</td><td>인사·급여</td><td class="num">30</td><td class="sm">값 30</td></tr>
+<tr><td class="mono">mbcore</td><td>공통 마스터</td><td class="num">27</td><td class="sm">값 18, 구조·저작 4, 구조·투영 3, 의미 2</td></tr>
+<tr><td class="mono">mbqua</td><td>품질</td><td class="num">21</td><td class="sm">값 21</td></tr>
+<tr><td class="mono">mbpur</td><td>구매·재고</td><td class="num">19</td><td class="sm">값 19</td></tr>
+<tr><td class="mono">mbga</td><td>총무·법무</td><td class="num">19</td><td class="sm">값 19</td></tr>
+<tr><td class="mono">mbauth</td><td>권한·판정 기준</td><td class="num">18</td><td class="sm">구조·저작 11, 값 4, 게시 스냅샷 2, 사건 1</td></tr>
+<tr><td class="mono">mbir</td><td>홍보·IR</td><td class="num">18</td><td class="sm">값 18</td></tr>
+<tr><td class="mono">mbnvt</td><td>NVT 토큰·보상</td><td class="num">17</td><td class="sm">값 17</td></tr>
+<tr><td class="mono">mbagent</td><td>에이전트</td><td class="num">17</td><td class="sm">값 11, 구조·저작 2, 사건 2, 구조·투영 1, 의미 1</td></tr>
+<tr><td class="mono">mbsal</td><td>영업</td><td class="num">17</td><td class="sm">값 17</td></tr>
+<tr><td class="mono">mbcode</td><td>코드체계·스킬</td><td class="num">16</td><td class="sm">구조·저작 10, 값 5, 사건 1</td></tr>
+<tr><td class="mono">mbdev</td><td>개발</td><td class="num">16</td><td class="sm">값 11, 구조·투영 3, 구조·저작 2</td></tr>
+<tr><td class="mono">mbmfg</td><td>제조</td><td class="num">16</td><td class="sm">값 14, 구조·투영 2</td></tr>
+<tr><td class="mono">mbtrust</td><td>신원·인증(Trust)</td><td class="num">14</td><td class="sm">값 13, 사건 1</td></tr>
+<tr><td class="mono">mbrun</td><td>실행 원장(수행)</td><td class="num">14</td><td class="sm">값 7, 큐 3, 구조·투영 2, 사건 2</td></tr>
+<tr><td class="mono">mbknow</td><td>지식·법규</td><td class="num">13</td><td class="sm">값 7, 의미 3, 구조·투영 2, 사건 1</td></tr>
+<tr><td class="mono">mbops</td><td>운영</td><td class="num">13</td><td class="sm">값 13</td></tr>
+<tr><td class="mono">mbfin</td><td>재무</td><td class="num">11</td><td class="sm">값 11</td></tr>
+<tr><td class="mono">mbeval</td><td>평가·모델</td><td class="num">11</td><td class="sm">값 10, 사건 1</td></tr>
+<tr><td class="mono">mbtxn</td><td>트랜잭션·승인</td><td class="num">10</td><td class="sm">값 8, 구조·투영 2</td></tr>
+<tr><td class="mono">mbmeta</td><td>무변경 확장 메타</td><td class="num">10</td><td class="sm">값 7, 구조·저작 3</td></tr>
+<tr><td class="mono">mbintent</td><td>의도 해석</td><td class="num">10</td><td class="sm">값 7, 의미 3</td></tr>
+<tr><td class="mono">mbmq</td><td>메시지 큐</td><td class="num">9</td><td class="sm">값 8, 사건 1</td></tr>
+<tr><td class="mono">mbcomm</td><td>소통 채널</td><td class="num">9</td><td class="sm">값 9</td></tr>
+<tr><td class="mono">mbship</td><td>출하·물류</td><td class="num">9</td><td class="sm">값 9</td></tr>
+<tr><td class="mono">mba2a</td><td>A2A 통신</td><td class="num">7</td><td class="sm">값 5, 구조·투영 1, 사건 1</td></tr>
+<tr><td class="mono">mbexec</td><td>실행 통제</td><td class="num">7</td><td class="sm">값 6, 사건 1</td></tr>
+<tr><td class="mono">mbsafe</td><td>비상 정지·자율</td><td class="num">7</td><td class="sm">값 7</td></tr>
+<tr><td class="mono">mbaudit</td><td>시스템 감사</td><td class="num">6</td><td class="sm">사건 3, 값 3</td></tr>
+<tr><td class="mono">mbdef</td><td>실행 정의(게시)</td><td class="num">6</td><td class="sm">게시 스냅샷 6</td></tr>
+<tr><td class="mono">mbcoop</td><td>협조</td><td class="num">4</td><td class="sm">값 4</td></tr>
+<tr><td class="mono">mbtool</td><td>도구</td><td class="num">2</td><td class="sm">구조·저작 2</td></tr>
+</table>
+<h3>5.2 전체 재배치표 (545)</h3>
+<p><input id="q" type="search" placeholder="검색 — 예: mbcode, BOM, 구조·저작, 게시"></p>
+<table id="ptab">
+<tr><th style="width:250px">DB Table</th><th style="width:170px">한글 이름</th><th style="width:160px">평면</th><th>비고</th></tr>
+<tr><td class="mono">mba2a.artifact</td><td>과업 산출물</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mba2a.message</td><td>메시지</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mba2a.message_part</td><td>메시지 파트</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mba2a.protocol_error</td><td>프로토콜 오류</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mba2a.push_subscription</td><td>푸시 구독</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mba2a.task</td><td>과업</td><td><span class="bd s2">구조·투영</span></td><td class="sm">과업 노드(부모·재개 연쇄)</td></tr>
+<tr><td class="mono">mba2a.task_state_history</td><td>과업 상태 이력</td><td><span class="bd e">사건</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbacct.account</td><td>계정과목</td><td><span class="bd s2">구조·투영</span></td><td class="sm">계정과목 노드(계층)</td></tr>
+<tr><td class="mono">mbacct.accounting_policy</td><td>사내 회계규정</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbacct.allocation_rule</td><td>배부 규칙</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbacct.bank_account</td><td>계좌</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbacct.bank_transaction</td><td>계좌 거래</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbacct.budget</td><td>편성 예산</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbacct.budget_balance</td><td>예산 잔액</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbacct.budget_execution_line</td><td>예산 집행 라인</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbacct.budget_revision</td><td>예산 변경</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbacct.classification</td><td>전표 분류 판정</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbacct.closing_checklist</td><td>결산 점검표</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbacct.closing_run</td><td>결산 실행</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbacct.closing_schedule</td><td>결산 부속명세</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbacct.consolidation_entry</td><td>연결 조정 분개</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbacct.consolidation_scope</td><td>연결 범위</td><td><span class="bd s2">구조·투영</span></td><td class="sm">간선: 연결 범위</td></tr>
+<tr><td class="mono">mbacct.cost_allocation</td><td>원가 배부 결과</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbacct.depreciation_line</td><td>감가상각 명세</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbacct.disclosure_filing</td><td>공시 제출</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbacct.disclosure_item</td><td>공시 항목</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbacct.evidence</td><td>증빙</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbacct.filing_calendar</td><td>신고·공시 일정</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbacct.financial_statement</td><td>재무제표</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbacct.financial_statement_line</td><td>재무제표 값</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbacct.intercompany_transaction</td><td>내부거래</td><td><span class="bd s2">구조·투영</span></td><td class="sm">간선: 내부거래(미상계 고리 탐지)</td></tr>
+<tr><td class="mono">mbacct.inventory_valuation_line</td><td>재고 자산 평가 명세</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbacct.journal</td><td>전표</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbacct.journal_inbox</td><td>전표 제안함</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbacct.journal_inbox_line</td><td>전표 제안 라인</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbacct.journal_line</td><td>전표 라인</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbacct.kifrs_rule</td><td>K-IFRS 규칙</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbacct.ledger_balance</td><td>계정 잔액</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbacct.posting_rule</td><td>분개 규칙</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbacct.provision_line</td><td>충당부채 명세</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbacct.statement_line</td><td>재무제표 항목</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbacct.statement_note</td><td>재무제표 주석</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbacct.tax_adjustment</td><td>세무조정</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbacct.tax_return</td><td>세무신고</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbacct.tax_schedule</td><td>신고 부속서류</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbagent.agent</td><td>에이전트</td><td><span class="bd s2">구조·투영</span></td><td class="sm">에이전트 참조 노드</td></tr>
+<tr><td class="mono">mbagent.agent_card</td><td>에이전트 카드</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbagent.agent_evaluation</td><td>에이전트 평가</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbagent.agent_lifecycle_event</td><td>에이전트 생애 이벤트</td><td><span class="bd e">사건</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbagent.agent_memory</td><td>에이전트 학습 기억</td><td><span class="bd m">의미</span></td><td class="sm">에이전트 기억 3층</td></tr>
+<tr><td class="mono">mbagent.agent_plan</td><td>실행 계획</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbagent.agent_plan_step</td><td>계획 단계 실행</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbagent.agent_run</td><td>에이전트 실행</td><td><span class="bd e">사건</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbagent.agent_skill_binding</td><td>에이전트 보유 스킬</td><td><span class="bd s1">구조·저작</span></td><td class="sm">간선: 에이전트-스킬</td></tr>
+<tr><td class="mono">mbagent.ea_profile</td><td>전문가 에이전트 프로파일</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbagent.evaluator_load</td><td>판정기 기준 적재</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbagent.intent_catalog</td><td>의도 카탈로그</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbagent.item_class_map</td><td>품목 분류 대응표</td><td><span class="bd s1">구조·저작</span></td><td class="sm">간선: 품목 분류 대응</td></tr>
+<tr><td class="mono">mbagent.research_source</td><td>조사 자료원</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbagent.ta_connector</td><td>외부실행 커넥터</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbagent.va_rule</td><td>검증 규칙</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbagent.va_verdict</td><td>검증 판정</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbaudit.ai_use_assessment</td><td>AI 용도 규제 판정</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbaudit.audit_log</td><td>감사 로그</td><td><span class="bd e">사건</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbaudit.compliance_check</td><td>준법 점검</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbaudit.data_access_log</td><td>조회 로그</td><td><span class="bd e">사건</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbaudit.domain_event</td><td>도메인 이벤트</td><td><span class="bd e">사건</span></td><td class="sm">평면 간 동기화의 단일 원천</td></tr>
+<tr><td class="mono">mbaudit.retention_policy</td><td>보존 정책</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbauth.capability_token</td><td>능력 토큰</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbauth.criteria_version</td><td>판정 baseline version</td><td><span class="bd pb">게시 스냅샷</span></td><td class="sm">판정 기준 버전(게시 산출물 · 피참조 16)</td></tr>
+<tr><td class="mono">mbauth.decision_criteria</td><td>판정 기준 목록</td><td><span class="bd s1">구조·저작</span></td><td class="sm">판정 기준 목록 노드</td></tr>
+<tr><td class="mono">mbauth.integrity_anchor</td><td>무결성 외부 고정</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbauth.integrity_check</td><td>무결성 대조</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbauth.permission_decision_log</td><td>권한 판정 로그</td><td><span class="bd e">사건</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbauth.permission_delegation</td><td>권한 위임</td><td><span class="bd s1">구조·저작</span></td><td class="sm">간선: 권한 위임 연쇄</td></tr>
+<tr><td class="mono">mbauth.permission_exception</td><td>권한 예외 승인</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbauth.permission_grant</td><td>권한 부여</td><td><span class="bd s1">구조·저작</span></td><td class="sm">간선: 사람-권한 부여</td></tr>
+<tr><td class="mono">mbauth.permission_scope</td><td>권한 범위(목적어)</td><td><span class="bd s1">구조·저작</span></td><td class="sm">권한 범위 타입</td></tr>
+<tr><td class="mono">mbauth.permission_scope_project</td><td>범위-프로젝트 열거</td><td><span class="bd s1">구조·저작</span></td><td class="sm">간선: 범위-프로젝트</td></tr>
+<tr><td class="mono">mbauth.permission_target</td><td>권한 대상(업무코드 집합)</td><td><span class="bd s1">구조·저작</span></td><td class="sm">권한 대상 타입</td></tr>
+<tr><td class="mono">mbauth.permission_target_code</td><td>대상-업무코드 열거</td><td><span class="bd s1">구조·저작</span></td><td class="sm">간선: 대상-업무코드</td></tr>
+<tr><td class="mono">mbauth.permission_verb</td><td>권한 종류(동사)</td><td><span class="bd s1">구조·저작</span></td><td class="sm">권한 동사 타입</td></tr>
+<tr><td class="mono">mbauth.policy_bundle</td><td>정책 묶음</td><td><span class="bd s1">구조·저작</span></td><td class="sm">정책 묶음 노드</td></tr>
+<tr><td class="mono">mbauth.policy_bundle_item</td><td>정책 묶음 구성</td><td><span class="bd s1">구조·저작</span></td><td class="sm">간선: 묶음 구성</td></tr>
+<tr><td class="mono">mbauth.policy_publish_run</td><td>정책 게시 실행</td><td><span class="bd pb">게시 스냅샷</span></td><td class="sm">게시 실행 기록</td></tr>
+<tr><td class="mono">mbauth.separation_of_duty</td><td>직무분리 규칙</td><td><span class="bd s1">구조·저작</span></td><td class="sm">간선: 직무분리 금지쌍</td></tr>
+<tr><td class="mono">mbcode.code_scheme</td><td>코드체계</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbcode.code_segment</td><td>코드세그먼트</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbcode.code_segment_value</td><td>세그먼트 값</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbcode.employee_work_code</td><td>임직원 업무코드 배정</td><td><span class="bd s1">구조·저작</span></td><td class="sm">간선: 임직원-업무코드 배정</td></tr>
+<tr><td class="mono">mbcode.skill</td><td>스킬</td><td><span class="bd s1">구조·저작</span></td><td class="sm">스킬 노드</td></tr>
+<tr><td class="mono">mbcode.skill_design_decision</td><td>스킬 단계 수단 판단</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbcode.skill_step</td><td>스킬 단계</td><td><span class="bd s1">구조·저작</span></td><td class="sm">스킬 단계 노드</td></tr>
+<tr><td class="mono">mbcode.skill_unit</td><td>스킬 단위</td><td><span class="bd s1">구조·저작</span></td><td class="sm">스킬 단위 노드(756)</td></tr>
+<tr><td class="mono">mbcode.work_category</td><td>업무 중분류</td><td><span class="bd s1">구조·저작</span></td><td class="sm">중분류 타입 노드</td></tr>
+<tr><td class="mono">mbcode.work_code</td><td>업무코드</td><td><span class="bd s1">구조·저작</span></td><td class="sm">업무코드 노드(574) — 실행 참조는 게시 스냅샷</td></tr>
+<tr><td class="mono">mbcode.work_code_dependency</td><td>업무코드 의존</td><td><span class="bd s1">구조·저작</span></td><td class="sm">간선: 업무코드 의존</td></tr>
+<tr><td class="mono">mbcode.work_code_exec_step</td><td>업무코드 실행 순서</td><td><span class="bd s1">구조·저작</span></td><td class="sm">간선: 실행 순서(스킬 단위·도구)</td></tr>
+<tr><td class="mono">mbcode.work_code_history</td><td>업무코드 변경이력</td><td><span class="bd e">사건</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbcode.work_code_kpi</td><td>업무코드 성과지표</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbcode.work_code_skill</td><td>업무코드-스킬 연결</td><td><span class="bd s1">구조·저작</span></td><td class="sm">간선: 업무코드-스킬</td></tr>
+<tr><td class="mono">mbcode.work_domain</td><td>업무영역(대분류)</td><td><span class="bd s1">구조·저작</span></td><td class="sm">업무영역 타입 노드</td></tr>
+<tr><td class="mono">mbcomm.board_post</td><td>게시판 글</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbcomm.channel</td><td>채널</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbcomm.dashboard_layout</td><td>대시보드 레이아웃</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbcomm.inbound_call</td><td>수신 전화</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbcomm.inbound_email</td><td>수신 이메일</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbcomm.inbound_message</td><td>수신 메시지</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbcomm.notification</td><td>알림</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbcomm.outbound_message</td><td>발신 메시지</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbcomm.prompt_history</td><td>프롬프트 이력</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbcoop.cooperation_blacklist</td><td>협조 블랙리스트</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbcoop.cooperation_log</td><td>협조 처리 로그</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbcoop.cooperation_request</td><td>협조 요청</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbcoop.cooperation_stat</td><td>협조 통계</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbcore.attachment</td><td>첨부파일</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbcore.calendar_period</td><td>회계·업무 기간</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbcore.code_group</td><td>코드그룹</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbcore.code_item</td><td>코드값</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbcore.company</td><td>회사(법인)</td><td><span class="bd s2">구조·투영</span></td><td class="sm">회사 계층 조회에 참여하는 값 정본</td></tr>
+<tr><td class="mono">mbcore.currency_rate</td><td>환율</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbcore.employee</td><td>임직원</td><td><span class="bd s2">구조·투영</span></td><td class="sm">임직원 참조 노드(값 정본 RDB · 피참조 230)</td></tr>
+<tr><td class="mono">mbcore.employee_org_assignment</td><td>임직원 조직 소속 이력</td><td><span class="bd s1">구조·저작</span></td><td class="sm">간선: 소속(기간 속성)</td></tr>
+<tr><td class="mono">mbcore.employee_position</td><td>임직원 직책 배정</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbcore.entity_link</td><td>다형 연결</td><td><span class="bd s1">구조·저작</span></td><td class="sm">간선: 다형 연결</td></tr>
+<tr><td class="mono">mbcore.external_party</td><td>외부 당사자</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbcore.external_party_qualification</td><td>외부 당사자 자격 심사</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbcore.holiday</td><td>휴일</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbcore.item</td><td>품목</td><td><span class="bd s2">구조·투영</span></td><td class="sm">품목 참조 노드(값 정본 RDB)</td></tr>
+<tr><td class="mono">mbcore.org_unit</td><td>조직단위</td><td><span class="bd s1">구조·저작</span></td><td class="sm">조직단위 노드 — 조직도의 저작 정본</td></tr>
+<tr><td class="mono">mbcore.org_unit_revision</td><td>조직 개편 이력</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbcore.party</td><td>거래처</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbcore.platform_asset</td><td>플랫폼 공통 자산 등재</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbcore.position_code</td><td>직책코드</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbcore.query_example</td><td>질의예시</td><td><span class="bd m">의미</span></td><td class="sm">질의예시</td></tr>
+<tr><td class="mono">mbcore.site</td><td>사업장</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbcore.tag</td><td>태그</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbcore.tenant</td><td>테넌트</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbcore.term_glossary</td><td>용어사전</td><td><span class="bd m">의미</span></td><td class="sm">용어사전</td></tr>
+<tr><td class="mono">mbcore.uom</td><td>단위</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbcore.uom_conversion</td><td>단위환산</td><td><span class="bd s1">구조·저작</span></td><td class="sm">단위 간 환산 관계 정본</td></tr>
+<tr><td class="mono">mbcore.user_account</td><td>사용자 계정</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbdef.bundle_member</td><td>묶음 구성원</td><td><span class="bd pb">게시 스냅샷</span></td><td class="sm">게시 구성</td></tr>
+<tr><td class="mono">mbdef.definition_bundle</td><td>정의 배포 묶음</td><td><span class="bd pb">게시 스냅샷</span></td><td class="sm">게시 묶음 원장</td></tr>
+<tr><td class="mono">mbdef.exec_step_version</td><td>실행 단계 버전</td><td><span class="bd pb">게시 스냅샷</span></td><td class="sm">실행 단계 게시 버전</td></tr>
+<tr><td class="mono">mbdef.judgment_basis_version</td><td>판정 기준 버전</td><td><span class="bd pb">게시 스냅샷</span></td><td class="sm">판정 기준 게시 버전</td></tr>
+<tr><td class="mono">mbdef.skill_unit_version</td><td>스킬 단위 버전</td><td><span class="bd pb">게시 스냅샷</span></td><td class="sm">스킬 단위 게시 버전</td></tr>
+<tr><td class="mono">mbdef.work_code_version</td><td>업무코드 버전</td><td><span class="bd pb">게시 스냅샷</span></td><td class="sm">업무코드 게시 버전</td></tr>
+<tr><td class="mono">mbdev.baseline</td><td>형상 기준선</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbdev.bom</td><td>BOM 구성</td><td><span class="bd s1">구조·저작</span></td><td class="sm">간선: BOM 구성(수량·유효기간 속성)</td></tr>
+<tr><td class="mono">mbdev.bom_master</td><td>BOM 마스터</td><td><span class="bd s1">구조·저작</span></td><td class="sm">BOM 마스터 노드 — 개정 저작</td></tr>
+<tr><td class="mono">mbdev.build_release</td><td>빌드·릴리스</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbdev.change_request</td><td>설계 변경 요청</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbdev.defect</td><td>결함</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbdev.design_artifact</td><td>설계 산출물</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbdev.dev_project_profile</td><td>개발 프로젝트 속성</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbdev.field_update_campaign</td><td>현장 업데이트 배포 캠페인</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbdev.field_update_delivery</td><td>단말 배포 시도</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbdev.license_obligation</td><td>라이선스 의무 이행</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbdev.requirement</td><td>요구사항</td><td><span class="bd s2">구조·투영</span></td><td class="sm">요구사항 노드(자기참조)</td></tr>
+<tr><td class="mono">mbdev.sw_component</td><td>SW 구성요소(SBOM)</td><td><span class="bd s2">구조·투영</span></td><td class="sm">SBOM 의존 노드</td></tr>
+<tr><td class="mono">mbdev.test_case</td><td>시험 항목</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbdev.test_result</td><td>시험 결과</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbdev.traceability</td><td>추적성</td><td><span class="bd s2">구조·투영</span></td><td class="sm">간선: 요구→설계→시험 추적</td></tr>
+<tr><td class="mono">mbeval.drift_observation</td><td>드리프트 관측</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbeval.evaluation_case</td><td>평가 사례</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbeval.evaluation_result</td><td>사례별 평가 결과</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbeval.evaluation_run</td><td>평가 실행</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbeval.evaluation_set</td><td>평가 사례 집합</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbeval.judgment_record</td><td>판정 기록</td><td><span class="bd e">사건</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbeval.model_change</td><td>모델 교체</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbeval.model_identity_check</td><td>모델 식별 점검</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbeval.model_registry</td><td>모델 등록</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbeval.quality_threshold</td><td>품질 기준치</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbeval.replay_sample</td><td>운영 재실행 표본</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbexec.effect_reconciliation</td><td>불확실 부작용 확정</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbexec.event_rule_evaluation</td><td>이벤트 규칙 평가 기록</td><td><span class="bd e">사건</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbexec.external_effect</td><td>외부 부작용</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbexec.idempotency_record</td><td>idempotency record</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbexec.run_checkpoint</td><td>checkpoint</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbexec.run_interruption</td><td>실행 중단</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbexec.run_resumption</td><td>재개 결정</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbfin.borrowing</td><td>차입</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbfin.borrowing_repayment</td><td>차입 상환 명세</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbfin.cash_plan</td><td>자금 계획</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbfin.covenant_check</td><td>약정 준수 점검</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbfin.fx_position</td><td>외환 포지션</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbfin.hedge_contract</td><td>환헤지 계약</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbfin.hedge_designation</td><td>헤지 지정 관계</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbfin.investment</td><td>투자</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbfin.payable</td><td>매입채무</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbfin.payment_request</td><td>지급 요청</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbfin.receivable</td><td>매출채권</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbga.asset_count_line</td><td>자산 실사 라인</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbga.asset_inventory_count</td><td>자산 실사 회차</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbga.energy_usage</td><td>에너지 사용</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbga.facility_hazard</td><td>점검 위험 요인</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbga.facility_inspection</td><td>시설 안전 점검</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbga.facility_request</td><td>시설 요청</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbga.fixed_asset</td><td>고정자산</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbga.general_contract</td><td>일반 계약</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbga.governance_agenda</td><td>의안</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbga.governance_meeting</td><td>지배구조 회의</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbga.governance_notice</td><td>소집 통지 · 공고</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbga.governance_participant</td><td>참석 · 의결권 행사</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbga.governance_resolution</td><td>의결</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbga.ip_action</td><td>지식재산 조치</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbga.ip_right</td><td>지식재산권</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbga.legal_case</td><td>법무 사건</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbga.security_access</td><td>출입·접근 권한</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbga.vehicle</td><td>차량</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbga.vehicle_log</td><td>차량 이력</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbhr.applicant</td><td>지원자</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbhr.attendance</td><td>근태</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbhr.disciplinary_case</td><td>징계</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbhr.disciplinary_step</td><td>징계 절차 단계</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbhr.employee_cost_component</td><td>인건비 구성 항목</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbhr.employee_cost_estimate</td><td>임직원 연간 인건비 버전</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbhr.employee_dependent</td><td>부양가족</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbhr.employee_workday_estimate</td><td>임직원 예상 실근무일수</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbhr.labor_cost_actual_close</td><td>연말 인건비 확정</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbhr.labor_day_rate</td><td>일당 인건비 단가</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbhr.leave_balance</td><td>휴가 잔여</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbhr.leave_request</td><td>휴가 신청</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbhr.payroll_run</td><td>급여 계산 회차</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbhr.payslip</td><td>급여 명세</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbhr.payslip_item</td><td>급여 항목 내역</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbhr.payslip_project_cost</td><td>급여 프로젝트 귀속</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbhr.performance_review</td><td>평가</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbhr.personnel_action</td><td>인사 발령</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbhr.personnel_action_item</td><td>발령 반영 내역</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbhr.recruitment</td><td>채용</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbhr.safety_incident</td><td>안전 사고</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbhr.safety_inspection</td><td>안전보건 점검</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbhr.safety_inspection_finding</td><td>점검 지적사항</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbhr.severance_calculation</td><td>퇴직급여 산정</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbhr.training</td><td>교육</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbhr.training_plan</td><td>교육 계획</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbhr.training_plan_item</td><td>교육 계획 과정</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbhr.withholding</td><td>원천징수</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbhr.workday_baseline</td><td>소정근무일 기준판</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbhr.year_end_deduction</td><td>연말정산 공제 명세</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbiaud.agent_decision_sample</td><td>에이전트 판정 표본 감사</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbiaud.audit_committee_meeting</td><td>감사위원회 회의</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbiaud.audit_cycle_policy</td><td>정기 감사 주기</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbiaud.audit_engagement</td><td>감사건</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbiaud.audit_finding</td><td>감사 발견사항</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbiaud.audit_plan</td><td>연간 감사 계획</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbiaud.audit_procedure</td><td>감사 절차</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbiaud.audit_project_role</td><td>감사 프로젝트 역할</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbiaud.audit_report</td><td>감사보고서</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbiaud.audit_request</td><td>감사 자료 요청</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbiaud.audit_risk_assessment</td><td>감사 대상 위험 평가</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbiaud.audit_sample</td><td>감사 표본</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbiaud.audit_trigger_event</td><td>감사 기동 이벤트</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbiaud.audit_trigger_rule</td><td>감사 기동 규칙</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbiaud.audit_universe</td><td>감사 대상</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbiaud.auditor_consultation</td><td>외부감사인 협의</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbiaud.automated_control_test</td><td>자동 통제 테스트</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbiaud.confirmation_request</td><td>조회서</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbiaud.corrective_action</td><td>시정조치</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbiaud.decision_replay</td><td>판정 재현 감사</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbiaud.external_auditor</td><td>외부감사인</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbiaud.icfr_assessment</td><td>내부회계관리제도 운영실태 평가</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbiaud.icfr_control</td><td>내부회계관리 통제</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbiaud.independence_declaration</td><td>감사인 독립성 선언</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbiaud.investigation</td><td>조사건</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbiaud.investigation_evidence</td><td>조사 증거</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbiaud.investigation_interview</td><td>조사 면담</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbiaud.key_audit_matter</td><td>핵심감사사항</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbiaud.monitoring_hit</td><td>상시 모니터링 탐지</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbiaud.monitoring_rule</td><td>상시 모니터링 규칙</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbiaud.monitoring_rule_version</td><td>상시 모니터링 규칙 버전</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbiaud.pbc_request</td><td>외부감사인 요청 자료</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbiaud.whistleblower_report</td><td>제보</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbiaud.workpaper</td><td>감사 조서</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbintent.calibration_profile</td><td>확신도 보정 프로파일</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbintent.correction</td><td>해석 정정</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbintent.inference_pool</td><td>추론 풀</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbintent.intent_card</td><td>의도 카드</td><td><span class="bd m">의미</span></td><td class="sm">의도 카드 후보 검색</td></tr>
+<tr><td class="mono">mbintent.model_adapter</td><td>모델 어댑터</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbintent.promotion_proposal</td><td>기억 승격 안건</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbintent.resolution</td><td>의도 해석 기록</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbintent.resolution_part</td><td>복합 의도 조각</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbintent.term_alias</td><td>용어 · 별칭</td><td><span class="bd m">의미</span></td><td class="sm">용어·별칭</td></tr>
+<tr><td class="mono">mbintent.utterance_example</td><td>발화 예문</td><td><span class="bd m">의미</span></td><td class="sm">발화 예문</td></tr>
+<tr><td class="mono">mbir.consensus_estimate</td><td>애널리스트 추정치</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbir.disclosure_case</td><td>공시 사안</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbir.esg_report</td><td>지속가능경영보고서</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbir.fair_disclosure_check</td><td>공정공시 선행 확인</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbir.ir_material</td><td>IR 자료</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbir.ir_meeting</td><td>기업설명회 · 투자자 미팅</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbir.ir_plan</td><td>연간 IR 계획</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbir.ir_plan_item</td><td>IR 계획 일정</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbir.market_consensus</td><td>시장 컨센서스 집계</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbir.media_coverage</td><td>보도 기록</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbir.mnpi_holder</td><td>미공개중요정보 보유자</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbir.mnpi_register</td><td>미공개중요정보 등재</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbir.pr_ir_event</td><td>홍보·IR 이벤트</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbir.pr_ir_event_rule</td><td>홍보·IR 이벤트 발생 규칙</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbir.press_release</td><td>보도자료</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbir.quiet_period</td><td>조용한 기간</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbir.shareholder_snapshot</td><td>주주 구성 스냅숏</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbir.stakeholder_inquiry</td><td>투자자 · 언론 문의</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbknow.acl_change_event</td><td>원본 권한 변경</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbknow.change_watch</td><td>변경 감시</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbknow.clause</td><td>조문</td><td><span class="bd s2">구조·투영</span></td><td class="sm">조문 노드(대체 연쇄)</td></tr>
+<tr><td class="mono">mbknow.clause_embedding</td><td>조문 임베딩</td><td><span class="bd m">의미</span></td><td class="sm">조문 임베딩</td></tr>
+<tr><td class="mono">mbknow.corpus</td><td>말뭉치</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbknow.corpus_version</td><td>말뭉치 버전</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbknow.derivation_lineage</td><td>파생 계보</td><td><span class="bd s2">구조·투영</span></td><td class="sm">간선: 파생 계보</td></tr>
+<tr><td class="mono">mbknow.impact_analysis</td><td>개정 영향 분석</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbknow.internal_regulation</td><td>사내 규정</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbknow.retrieval_item</td><td>검색 항목</td><td><span class="bd m">의미</span></td><td class="sm">검색 항목(사전 필터)</td></tr>
+<tr><td class="mono">mbknow.retrieval_log</td><td>검색 로그</td><td><span class="bd e">사건</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbknow.semantic_cache_entry</td><td>의미 캐시</td><td><span class="bd m">의미</span></td><td class="sm">의미 캐시(권한 범위 해시 키)</td></tr>
+<tr><td class="mono">mbknow.update_run</td><td>갱신 실행</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbmeta.column_catalog</td><td>컬럼 카탈로그</td><td><span class="bd s1">구조·저작</span></td><td class="sm">컬럼 카탈로그 노드</td></tr>
+<tr><td class="mono">mbmeta.custom_object</td><td>사용자 정의 객체</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbmeta.custom_record</td><td>사용자 정의 레코드</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbmeta.field_definition</td><td>항목 정의</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbmeta.field_option</td><td>항목 선택지</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbmeta.layout_definition</td><td>화면 배치 정의</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbmeta.relation_matrix</td><td>상관관계 분석표</td><td><span class="bd s1">구조·저작</span></td><td class="sm">상관관계·변경 영향 조회의 원본</td></tr>
+<tr><td class="mono">mbmeta.schema_generation</td><td>스키마 세대</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbmeta.table_catalog</td><td>테이블 카탈로그</td><td><span class="bd s1">구조·저작</span></td><td class="sm">DB Table 카탈로그 노드</td></tr>
+<tr><td class="mono">mbmeta.validation_rule</td><td>검증 규칙</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbmfg.equipment</td><td>설비</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbmfg.equipment_downtime</td><td>설비 비가동</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbmfg.line_material_issue</td><td>라인 자재 출고</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbmfg.line_material_return</td><td>라인 자재 반납</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbmfg.lot</td><td>로트</td><td><span class="bd s2">구조·투영</span></td><td class="sm">로트 노드</td></tr>
+<tr><td class="mono">mbmfg.lot_genealogy</td><td>로트 계보</td><td><span class="bd s2">구조·투영</span></td><td class="sm">간선: 로트 계보(리콜 파급)</td></tr>
+<tr><td class="mono">mbmfg.production_plan</td><td>생산 계획</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbmfg.production_result</td><td>생산 실적</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbmfg.routing</td><td>공정 순서</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbmfg.routing_operation</td><td>공정</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbmfg.safety_finding</td><td>안전 점검 지적</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbmfg.safety_inspection</td><td>작업 안전 점검</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbmfg.work_center</td><td>작업장</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbmfg.work_order</td><td>작업지시</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbmfg.work_order_cost</td><td>작업지시 원가 집계</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbmfg.work_order_cost_line</td><td>작업지시 원가 라인</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbmq.dead_letter</td><td>데드레터</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbmq.inbox</td><td>inbox</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbmq.outbox</td><td>outbox</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbmq.queue_metric</td><td>큐 지표</td><td><span class="bd e">사건</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbmq.routing_rule</td><td>라우팅 규칙</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbmq.saga</td><td>saga</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbmq.saga_step</td><td>saga 단계</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbmq.subscription</td><td>구독</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbmq.topic</td><td>토픽</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbnvt.adoption_reward</td><td>채택 보상금 v3.8 신설 · v3.10 개칭 · 개정</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbnvt.annual_salary</td><td>연봉 결정</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbnvt.commercial_reward_plan</td><td>사업화 성과 보상 계획</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbnvt.commercial_reward_year</td><td>사업화 보상 연차 지분 · 지급</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbnvt.committee</td><td>NVT위원회</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbnvt.committee_decision</td><td>위원회 의결</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbnvt.committee_meeting</td><td>위원회 회의</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbnvt.committee_member</td><td>위원</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbnvt.incentive_calculation</td><td>인센티브 산정</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbnvt.incentive_detail</td><td>인센티브 내역</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbnvt.proposal_share</td><td>제안자 지분 v3.8 신설 · v3.10 개칭 · 개정</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbnvt.salary_formula</td><td>연봉 산식</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbnvt.token_adjustment</td><td>토큰 조정</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbnvt.token_earning</td><td>토큰 획득</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbnvt.token_issue</td><td>토큰 총발행</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbnvt.token_ledger</td><td>토큰 원장</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbnvt.token_unit_price</td><td>토큰 단가</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbops.break_glass_access</td><td>비상 접근</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbops.budget_limit</td><td>비용·실행 상한</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbops.connection_context_policy</td><td>커넥션 컨텍스트 규약</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbops.context_violation</td><td>컨텍스트 위반</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbops.cost_record</td><td>비용 기록</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbops.incident</td><td>장애·사고</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbops.limit_breach</td><td>상한 초과</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbops.provisioning_run</td><td>프로비저닝 실행</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbops.resource_quota</td><td>자원 한도</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbops.system_health</td><td>시스템 상태</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbops.tenant_backup</td><td>테넌트 백업</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbops.tenant_purge</td><td>테넌트 파기</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbops.unit_cost_baseline</td><td>업무 단위 비용 기준</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbproj.external_intake_policy</td><td>회사별 외부 개방 설정</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbproj.external_proposal_intake</td><td>외부 제안 접수 · 1차 심사</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbproj.idea</td><td>아이디어</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbproj.opportunity_candidate</td><td>기회 후보</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbproj.planning_retro</td><td>기획 회고</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbproj.poc_approval</td><td>개념 검증 승인</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbproj.problem_statement</td><td>문제 정의서</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbproj.project</td><td>프로젝트</td><td><span class="bd s2">구조·투영</span></td><td class="sm">프로젝트 노드(부모·뿌리)</td></tr>
+<tr><td class="mono">mbproj.project_benefit</td><td>프로젝트 편익</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbproj.project_benefit_year</td><td>프로젝트 편익 연차별 계획 · 실현</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbproj.project_budget</td><td>프로젝트 예산</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbproj.project_budget_change</td><td>예산 변경</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbproj.project_closure</td><td>프로젝트 종료</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbproj.project_deliverable</td><td>산출물</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbproj.project_issue</td><td>프로젝트 이슈</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbproj.project_kpi</td><td>프로젝트 정량 지표</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbproj.project_labor_plan</td><td>프로젝트 인력투입계획</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbproj.project_labor_plan_line</td><td>인력투입계획 라인</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbproj.project_labor_plan_month</td><td>인력투입 월 분해</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbproj.project_member</td><td>프로젝트 참여자</td><td><span class="bd s2">구조·투영</span></td><td class="sm">간선: 참여</td></tr>
+<tr><td class="mono">mbproj.project_milestone</td><td>마일스톤</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbproj.project_nvt_allocation</td><td>프로젝트 NVT 배정</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbproj.project_progress_snapshot</td><td>진행 snapshot</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbproj.project_request</td><td>프로젝트 생성 신청 v3.6 개정 · 기대 가치 → 편익 줄 · 3칸 추가</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbproj.project_request_attachment</td><td>신청 첨부</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbproj.project_request_benchmark</td><td>유사 실적 후보</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbproj.project_request_benefit</td><td>신청 편익 줄 v3.6 신설 ·</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbproj.project_request_budget</td><td>신청 비인건비 예산</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbproj.project_request_check</td><td>신청 사전 점검 결과</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbproj.project_request_competitor</td><td>신청 경쟁 동향</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbproj.project_request_cost_estimate</td><td>신청 소요 비용 조사</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbproj.project_request_economics</td><td>신청 경제성 평가 결과</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbproj.project_request_kpi</td><td>신청 정량 지표</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbproj.project_request_market</td><td>신청 시장 조사 수치 v3.7 신설 ·</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbproj.project_request_milestone</td><td>신청 마일스톤</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbproj.project_request_research</td><td>신청 사전 조사</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbproj.project_request_research_query</td><td>사전 조사 조회 기록</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbproj.project_request_revision</td><td>신청 보완 요청과 응답</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbproj.project_request_risk</td><td>신청 리스크</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbproj.project_request_role</td><td>신청 역할 · PM 후보 v3.5 신설 ·</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbproj.project_request_work</td><td>신청 업무 라인</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbproj.project_risk</td><td>프로젝트 리스크</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbproj.project_schedule</td><td>일정</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbproj.project_schedule_attendee</td><td>일정 참석자</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbproj.project_work_assignment</td><td>프로젝트 업무 배정</td><td><span class="bd s2">구조·투영</span></td><td class="sm">간선: 업무 배정</td></tr>
+<tr><td class="mono">mbproj.proposal_agreement</td><td>제안 조건 동의 · 비밀유지</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbproj.proposal_background_ip</td><td>배경 IP 신고</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbproj.proposal_call</td><td>공모 주제 공고</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbproj.request_risk_screen</td><td>사전 위험 스크리닝</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbproj.service_engagement</td><td>용역 조건</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbpur.issue_document</td><td>출고 문서</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbpur.issue_document_line</td><td>출고 라인</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbpur.purchase_order</td><td>발주</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbpur.purchase_order_line</td><td>발주 라인</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbpur.purchase_request</td><td>구매요청</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbpur.receipt_document</td><td>입고 문서</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbpur.receipt_line</td><td>입고 라인</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbpur.rfq</td><td>구매 견적 요청</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbpur.rfq_quote</td><td>공급사 견적 응답</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbpur.stock_balance</td><td>재고 잔량</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbpur.stock_count</td><td>재고 실사</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbpur.stock_count_line</td><td>실사 카운트 줄</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbpur.stock_movement</td><td>재고 수불</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbpur.stock_policy</td><td>재고 기준값</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbpur.storage_location</td><td>보관 위치</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbpur.three_way_match</td><td>3자 대사</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbpur.vendor_buying_terms</td><td>공급사 거래조건</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbpur.vendor_evaluation</td><td>공급사 평가</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbpur.warehouse</td><td>창고</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbqua.certification</td><td>제품 인증</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbqua.certification_finding</td><td>인증 보완 요구</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbqua.certification_impact</td><td>인증 영향 판정</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbqua.certification_requirement</td><td>인증 대상 판정</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbqua.certification_submission</td><td>인증 제출 서류</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbqua.control_chart</td><td>공정 관리도</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbqua.control_chart_signal</td><td>관리도 이탈 신호</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbqua.corrective_action</td><td>시정조치</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbqua.customer_claim</td><td>고객 클레임</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbqua.equipment_calibration</td><td>설비 교정</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbqua.fmea</td><td>FMEA</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbqua.fmea_item</td><td>FMEA 항목</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbqua.inspection</td><td>검사</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbqua.inspection_detail</td><td>검사 상세</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbqua.inspection_plan</td><td>검사 계획</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbqua.measurement_inbox</td><td>측정값 접수함</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbqua.nonconformance</td><td>부적합</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbqua.quality_audit</td><td>품질 감사</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbqua.quality_characteristic</td><td>품질 특성</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbqua.recall</td><td>리콜</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbqua.recall_lot</td><td>리콜 대상 로트</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbrun.concurrency_limit</td><td>동시 실행 상한과 몫</td><td><span class="bd q">큐</span></td><td class="sm">큐 인스턴스</td></tr>
+<tr><td class="mono">mbrun.fairness_state</td><td>공정 배분 상태</td><td><span class="bd q">큐</span></td><td class="sm">큐 인스턴스</td></tr>
+<tr><td class="mono">mbrun.launch_gate_check</td><td>착수 판정(게이트) 한 행</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbrun.obligation_fulfillment</td><td>판정 의무 이행</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbrun.precondition_check</td><td>준비 조건 판정</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbrun.priority_rule</td><td>우선순위 도출 규칙(버전) v3.4 정정</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbrun.ready_queue</td><td>실행 대기열</td><td><span class="bd q">큐</span></td><td class="sm">큐 인스턴스</td></tr>
+<tr><td class="mono">mbrun.role_activation</td><td>역할 활성화 기록</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbrun.work_item</td><td>업무 수행(인스턴스) — 정본 v3.4 정정</td><td><span class="bd s2">구조·투영</span></td><td class="sm">수행 노드(정본 RDB)</td></tr>
+<tr><td class="mono">mbrun.work_item_archive</td><td>종료 수행 보관</td><td><span class="bd e">사건</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbrun.work_item_edge</td><td>수행 간 선후</td><td><span class="bd s2">구조·투영</span></td><td class="sm">간선: 수행 선후</td></tr>
+<tr><td class="mono">mbrun.work_item_rank</td><td>선후 파생값(폐쇄표 · 위상 순위 · 임계 경로)</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbrun.work_item_state_log</td><td>수행 상태 전이 원장</td><td><span class="bd e">사건</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbrun.work_item_step</td><td>수행 단계 진행</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbsafe.autonomy_change</td><td>자율 변경</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbsafe.autonomy_policy</td><td>자율 정책</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbsafe.autonomy_state</td><td>자율 상태</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbsafe.emergency_stop</td><td>비상 정지</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbsafe.rollout_stage</td><td>단계적 확대</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbsafe.stop_drill</td><td>정지 시험</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbsafe.stop_task_disposition</td><td>정지 시 과업 처분</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbsal.agency</td><td>대리점</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbsal.agency_settlement</td><td>대리점 실적 정산</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbsal.collection_activity</td><td>수금 독려 이력</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbsal.credit_exposure</td><td>여신 잔액</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbsal.demand_forecast</td><td>판매 예측</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbsal.discount_approval_tier</td><td>할인 승인 구간</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbsal.discount_policy</td><td>할인 정책</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbsal.field_service</td><td>현장 CS</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbsal.opportunity</td><td>영업 기회</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbsal.price_book</td><td>판매 가격표</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbsal.price_book_line</td><td>판매 기준가 라인</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbsal.quotation</td><td>견적</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbsal.quotation_line</td><td>견적 라인</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbsal.sales_contract</td><td>판매 계약</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbsal.sales_invoice</td><td>매출 청구</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbsal.sales_order</td><td>수주</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbsal.sales_order_line</td><td>수주 라인</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbship.customs_declaration</td><td>통관 신고</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbship.customs_declaration_line</td><td>통관 신고 품목</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbship.delivery_confirmation</td><td>인도 확인</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbship.packing</td><td>포장</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbship.return_line</td><td>반품 라인</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbship.return_receipt</td><td>반품 입고</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbship.shipment</td><td>출하</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbship.shipment_line</td><td>출하 라인</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbship.transport</td><td>운송</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbtool.tool</td><td>도구</td><td><span class="bd s1">구조·저작</span></td><td class="sm">도구 노드(744)</td></tr>
+<tr><td class="mono">mbtool.tool_version</td><td>도구 버전</td><td><span class="bd s1">구조·저작</span></td><td class="sm">도구 버전 노드</td></tr>
+<tr><td class="mono">mbtrust.access_request</td><td>접근 요청 판정</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbtrust.attestation</td><td>무결성 증명</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbtrust.auth_challenge</td><td>인증 요구</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbtrust.auth_policy</td><td>인증 정책</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbtrust.auth_session</td><td>인증 세션</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbtrust.credential</td><td>자격증명</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbtrust.device</td><td>기기</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbtrust.identity</td><td>신원</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbtrust.prompt_guard_log</td><td>프롬프트 방어 로그</td><td><span class="bd e">사건</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbtrust.revocation_list</td><td>폐기 목록</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbtrust.risk_signal</td><td>위험 신호</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbtrust.signature_credential</td><td>서명 수단</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbtrust.signature_use</td><td>서명 사용</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbtrust.trust_score</td><td>신뢰 점수</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbtxn.approval_dependency</td><td>승인 의존</td><td><span class="bd s2">구조·투영</span></td><td class="sm">간선: 승인 의존(무효화 파급)</td></tr>
+<tr><td class="mono">mbtxn.approval_invalidation</td><td>승인 무효화</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbtxn.approval_request</td><td>승인 요청</td><td><span class="bd s2">구조·투영</span></td><td class="sm">승인 노드</td></tr>
+<tr><td class="mono">mbtxn.approval_snapshot</td><td>승인 snapshot</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbtxn.approval_step</td><td>승인 단계</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbtxn.execution_guard</td><td>실행 직전 대조</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbtxn.project_transaction</td><td>프로젝트 트랜잭션</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbtxn.transaction_detail</td><td>트랜잭션 상세</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbtxn.txn_daily_rollup</td><td>트랜잭션 일별 집계</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+<tr><td class="mono">mbtxn.work_state_change</td><td>업무 상태 변경</td><td><span class="bd n">값</span></td><td class="sm"></td></tr>
+</table>
+
+<h2 id="s6">6. PostgreSQL 내부의 무결성·게시 규약</h2>
+<p>값·구조·사건의 원본 테이블이 같은 PostgreSQL 안에 있으므로 가능한 관계는 FK 로 강제한다. 다형 참조와 버전 게시에는 다음 규약을 더한다:</p>
+<table>
+<tr><th style="width:190px">규약</th><th>내용</th></tr>
+<tr><td>식별자·참조</td><td>기존 UUIDv7/식별자 규약을 유지한다. 가능한 관계는 FK 로 강제하고 테넌트 소유 간선은 양 끝의 tenant_id 일치를 보장한다. 다형 관계는 종류별 검증 함수와 게시 게이트에서 존재·권한을 확인한다.</td></tr>
+<tr><td>게시 규약</td><td>저작 상태와 승인 상태를 분리한다. 게시 실행 기록의 중복 실행 방지 키, 원본 버전, 게시 해시, 승인자, 시행시각을 묶는다. 게시본과 현재 버전 포인터의 갱신은 한 트랜잭션이어야 한다. 게시 없는 초안은 판정에서 보이지 않는다.</td></tr>
+<tr><td>사건 규약</td><td>정본 변경·게시·재색인을 사건으로 기록한다. 의미 색인과 선택적 경로 요약만 사건으로 갱신하며, 원본 관계를 별도 DB에 재생하지 않는다. 파생본 지연과 기준 시각을 도구 응답에 표시한다.</td></tr>
+<tr><td>대사 규약</td><td>일 1회 게시 해시·버전·원본 관계 수·파생 요약을 대조한다. 어긋나면 판정에는 마지막 유효 게시본을 유지하고 파생본을 원본에서 재생성한다.</td></tr>
+</table>
+
+<h2 id="s7">7. 에이전트 접근 계층 — 도구 계약</h2>
+<p>에이전트는 SQL·그래프 질의를 직접 쓰지 않는다. 도구 계약은 유지하며 내부 구현을 재귀 SQL에서 SQL/PGQ로 바꾸더라도 응답 형식·권한·버전 의미는 고정한다:</p>
+<table>
+<tr><th style="width:210px">도구 묶음</th><th>평면</th><th>예</th><th>비고</th></tr>
+<tr><td>search.* (의미 검색)</td><td>의미</td><td>의도 후보 · 조문 후보 · 기억 회상</td><td>후보 탐색까지만 — 판정 입력 금지(P1)</td></tr>
+<tr><td>structure.read / structure.draft</td><td>구조</td><td>파급 조회 · 경로 탐색 · 초안 편집 · 대안 비교</td><td>초안은 게시 전까지 실행에 영향 없음</td></tr>
+<tr><td>structure.publish</td><td>구조→값</td><td>검증 → 사람 승인 → 버전 게시</td><td>P7 승인 지점 · 중복 실행 방지</td></tr>
+<tr><td>ledger.* (기록·조회)</td><td>값</td><td>원장 기록 · 판정 요청 · 승인 · 실행</td><td>부작용은 TA 경유(P3) 그대로</td></tr>
+<tr><td>event.replay (재현·학습)</td><td>사건</td><td>판정 재현 · 기간 사건 조회</td><td>읽기 전용 · 3선 감사 공용</td></tr>
+</table>
+
+<h2 id="s8">8. 확정 기술과 SQL/PGQ 도입 조건</h2>
+<div class="box rule"><b>확정:</b> 업무 데이터 정본은 PostgreSQL 표준 테이블이다. 구조 조회의 목표 문법은 SQL:2023 SQL/PGQ 이다. Neo4j·TypeDB·Apache AGE 는 배치·동기화·운영 계획에서 제외한다. SQL/PGQ 는 별도 저장 엔진이 아니라 테이블 위의 읽기 전용 속성 그래프 정의·조회 계층으로 채택한다.</div>
+<p><b>2026-09-27 현재 구현 상태:</b> PostgreSQL 19 Beta 1 의 SQL/PGQ 발표는 19 Beta 4(2026-09-24)에서 공식 철회되었다. 따라서 PostgreSQL 19 GA에서 제공된다고 전제하지 않는다. 현재 릴리스에서 <span class="mono">CREATE PROPERTY GRAPH</span> · <span class="mono">GRAPH_TABLE</span> 을 쓰는 DDL·운영 코드는 배포할 수 없다. 이 문서의 SQL/PGQ 구문은 목표 인터페이스이며, 지원 릴리스가 확정되기 전까지 재귀 SQL을 운영 구현으로 쓴다.</p>
+<table>
+<tr><th style="width:190px">항목</th><th>현재 운영 구현</th><th>SQL/PGQ 지원 확인 후</th></tr>
+<tr><td>저장·쓰기</td><td>기존 545개 PostgreSQL 테이블, PK/FK/RLS, 트랜잭션</td><td>동일 테이블·쓰기 규약 유지</td></tr>
+<tr><td>계층·BOM·위임 탐색</td><td>재귀 CTE + CYCLE + 필요한 경로 요약</td><td>승인된 도구의 읽기 경로에서 GRAPH_TABLE 사용</td></tr>
+<tr><td>초안 검증·게시</td><td>PostgreSQL 함수·제약·승인·버전 게시</td><td>동일. PGQ 조회 결과는 검증 보조로 교차 검사</td></tr>
+<tr><td>판정</td><td>승인된 게시 스냅샷만</td><td>동일</td></tr>
+</table>
+<p><b>전환 게이트:</b> ① PostgreSQL 공식 안정 릴리스 및 사용 중인 관리형 서비스의 지원 확인 ② 원본 PK/FK·RLS·테넌트 간선 분리·다형 참조를 담는 그래프 정의 검증 ③ 재귀 SQL과 결과·버전 일치 ④ 대표 부하의 p95 및 실행 계획 검증 ⑤ 백업·복구 및 롤백 리허설. 통과 후 도구 내부 조회 구현만 전환한다. <a href="https://www.postgresql.org/about/news/postgresql-19-beta-4-released-3386/">공식 19 Beta 4 발표</a> · <a href="https://www.postgresql.org/docs/18/queries-with.html">지원 버전 재귀 SQL 문서</a>.</p>
+
+<h2 id="s9">9. 이행 경로 — PostgreSQL 정본을 먼저 구축한다</h2>
+<table>
+<tr><th style="width:70px">단계</th><th>내용</th><th>되돌림</th></tr>
+<tr><td>1단계</td><td>기존 545개 표를 PostgreSQL 정본으로 구현한다. 34개 저작 구조와 22개 발생 구조에 FK/RLS·버전·초안/게시 경계를 점검한다. pgvector·사건·큐 구성은 유지한다.</td><td>동일 원본에서 재배포</td></tr>
+<tr><td>2단계</td><td>구조 도구에 재귀 SQL 탐색·순환 차단·영향 분석을 구현하고, 게시 스냅샷을 원자적으로 확정한다. 대표 데이터로 깊이·팬아웃·다중 부모 경로를 측정한다.</td><td>도구 조회 경로를 이전 SQL로 복귀</td></tr>
+<tr><td>3단계</td><td>SQL/PGQ 가 공식 지원되는 안정 릴리스가 나온 경우에만 제8장 전환 게이트를 실행한다. 통과 시 속성 그래프 정의와 GRAPH_TABLE 을 구조 조회 도구에 적용한다.</td><td>속성 그래프 정의를 비활성화하고 재귀 SQL 조회 유지</td></tr>
+</table>
+<p class="sm">1·2단계는 현재 지원 PostgreSQL로 완결 가능한 운영 설계다. 3단계의 출시 시점은 미정이며, 미도입 상태에서도 기능 요구를 충족해야 한다.</p>
+
+<h2 id="s10">10. 위험과 남은 결정</h2>
+<table>
+<tr><th style="width:280px">위험</th><th>대응</th></tr>
+<tr><td>PostgreSQL 공통 장애</td><td>값·구조·사건 원본이 함께 멈춘다. 고가용성·PITR·복구 목표를 인수 시험으로 검증한다. 게시본은 장애 복구 후 버전·해시를 확인한다.</td></tr>
+<tr><td>게시 지연이 업무를 막는 경우(긴급 권한 부여 등)</td><td>비상 게시 경로(두 사람·녹화·감사 기동 — break_glass 규약 준용)를 게시 규약에 포함</td></tr>
+<tr><td>구조 경로의 테넌트 교차</td><td>원본 관계 양 끝의 tenant_id FK/RLS, 도구 권한, SQL/PGQ 활성화 시 음성 시험으로 차단한다.</td></tr>
+<tr><td>깊은 BOM·고팬아웃 탐색의 지연</td><td>재귀 CTE 실행 계획과 인덱스를 실측하고, 승인 버전별 역방향 요약을 파생한다. 요약은 정본이 아니며 재생성할 수 있어야 한다.</td></tr>
+<tr><td>SQL/PGQ 출시·지원 불확실성</td><td>현재 지원 SQL이 전체 기능을 담당한다. SQL/PGQ 는 출시·서비스 지원·교차 검증이 완료될 때만 조회 도구에 활성화한다.</td></tr>
+</table>
+<p><b>결정 변경 이력:</b> 남은결정 검토확정서 v1.0 은 당시 판단의 기록으로 보존한다. 현재 확정 결정은 v1.1 이며, 제품 배치(Q-1·Q-2)와 그래프 이행 절차를 대체한다. Q-3의 게시 규약, Q-4의 카탈로그 칸, Q-5의 검색 평가 요구는 PostgreSQL 배치에 맞춰 계승한다.</p>
+<table>
+<tr><th style="width:60px">번호</th><th>결정</th><th style="width:90px">결과</th><th>확정 내용(요지)</th></tr>
+<tr><td>Q-1</td><td>Neo4j Enterprise/Aura 시점</td><td><b>대체</b></td><td>Neo4j 를 도입하지 않는다. PostgreSQL 백업·복구·HA 검증으로 변경한다.</td></tr>
+<tr><td>Q-2</td><td>TypeDB 병행 검증 실행 여부</td><td><b>대체</b></td><td>TypeDB·Apache AGE 를 도입하지 않는다. SQL/PGQ 전환 게이트만 남긴다.</td></tr>
+<tr><td>Q-3</td><td>게시 규약의 지시문 반영</td><td><b>계승</b></td><td>작성자≠승인자, 게시 버전·해시·시행시각·캐시 폐기·역방향 파급 검증을 PostgreSQL 트랜잭션 규약으로 반영한다.</td></tr>
+<tr><td>Q-4</td><td>DB테이블설계서 「평면」 칸</td><td><b>v3.17 반영</b></td><td>545표 분류 수는 유지한다. STRUCTURE_AUTHORING 은 PostgreSQL 정본, STRUCTURE_PROJECTION 은 원본 테이블의 구조 조회 참여로 의미를 변경한다. 분류 정본은 본 문서 배치표다.</td></tr>
+<tr><td>Q-5</td><td>법규 임베딩·한국어 색인</td><td><b>확정</b></td><td>임베딩 1차 후보 KURE-v1(BGE-M3 한국어 미세조정, 법률 포함 도메인 공개 실측 우위) + 대조군 2종을 자체 골든셋으로 실측 선정. 골든셋은 KBL(EMNLP 2024, 법령·판례 15만 건 공개 말뭉치) 기반 질의 300건. 색인은 형태소(mecab 계열) 기본·pg_bigm 은 보조 강등. 융합 RRF k=60(SIGIR 2009) 시작 후 실측 보정. pgvector 0.8 이상 필수(반복 색인 스캔 — 사전 필터 결합의 결과 부족 문제 해결)</td></tr>
+</table>
+
+<p class="sm">본 문서는 배치 설계방향서로서 DDL·실행 검증을 포함하지 않는다(DB 실행 검증 제외 지시 유지).
+545표의 구조 명세 정본은 MyBee_DB테이블설계서_v3.17. 제품 선택 결정의 정본은 남은결정 검토확정서 v1.1 이다. 이전 v2.2·v3.16·검토확정서 v1.0 은 변경 이력으로 보존한다.</p>
+
+<script>
+(function() {
+  var q = document.getElementById('q'), tab = document.getElementById('ptab');
+  if (!q) return;
+  q.addEventListener('input', function() {
+    var v = q.value.trim().toLowerCase();
+    var rows = tab.querySelectorAll('tr');
+    for (var i = 1; i < rows.length; i++) {
+      var t = rows[i].textContent.toLowerCase();
+      rows[i].style.display = (!v || t.indexOf(v) >= 0) ? '' : 'none';
+    }
+  });
+})();
+</script>
+</div></body></html>

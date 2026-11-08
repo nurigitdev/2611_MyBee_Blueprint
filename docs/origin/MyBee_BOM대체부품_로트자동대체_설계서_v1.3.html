@@ -1,0 +1,858 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MyBee BOM 대체부품 · 로트 단위 자동 대체 설계서 v1.3</title><style>
+:root{--bg:#fbfcfe;--fg:#16181d;--mut:#5a6b80;--line:#c6d2e2;--navy:#12315c;--blue:#2d6cb5;--ok:#2e7d5b;--warn:#b8860b;
+--bad:#c0392b;--soft:#f4f7fc;--code:#0f1b2d}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:'Malgun Gothic','맑은 고딕',system-ui,sans-serif;font-size:14.5px;line-height:1.75}
+.hero{background:linear-gradient(135deg,#12315c,#2d6cb5);color:#fff;padding:34px 20px 28px}
+.hero .in{max-width:1120px;margin:0 auto}.hero h1{margin:0 0 8px;font-size:27px}.hero p{margin:4px 0;opacity:.95}
+.hero .meta{margin-top:14px;font-size:12.5px;opacity:.9;line-height:1.7;border-top:1px solid rgba(255,255,255,.3);padding-top:10px}
+.wrap{max-width:1120px;margin:0 auto;padding:6px 20px 60px}
+h2{margin:36px 0 10px;font-size:20px;color:var(--navy);border-bottom:2px solid var(--navy);padding-bottom:6px}
+h3{margin:22px 0 8px;font-size:16px;color:var(--navy)}
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse;margin:10px 0;font-size:13px;background:#fff}
+th,td{border:1px solid var(--line);padding:6px 8px;vertical-align:top;text-align:left}
+th{background:var(--soft);color:var(--navy);font-weight:600}
+.mono,code{font-family:Consolas,'D2Coding',monospace;font-size:12.5px}
+.kv{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0}
+.kv>div{flex:1 1 150px;background:#fff;border:1px solid var(--line);border-top:4px solid var(--blue);border-radius:6px;padding:10px 12px}
+.kv .k{font-size:11.5px;color:var(--mut)}.kv .v{font-size:20px;font-weight:700;color:var(--navy)}
+.note,.ok,.warn{padding:10px 14px;margin:12px 0;border-radius:0 6px 6px 0;background:#fff}
+.note{border-left:4px solid var(--blue)}.ok{border-left:4px solid var(--ok);background:#f3faf5}.warn{border-left:4px solid var(--warn);background:#fdf8ec}
+figure.code{margin:12px 0;border:1px solid #243b5e;border-radius:6px;overflow:hidden}
+figure.code figcaption{background:#1c3355;color:#dbe7f7;font-size:12.5px;padding:6px 12px}
+figure.code pre{margin:0;background:var(--code);color:#e6edf6;padding:12px 14px;overflow-x:auto;font-family:Consolas,'D2Coding',monospace;
+font-size:12.3px;line-height:1.55}
+figure.code .c{color:#8fb3d9}figure.code .k{color:#ffcf70;font-weight:600}
+figure.svg{margin:14px 0;background:#fff;border:1px solid var(--line);border-radius:6px;padding:8px}
+figure.svg figcaption{font-size:12.5px;color:var(--mut);padding:4px 6px}
+.hl{background:#fff3d6}
+.tag{display:inline-block;font-size:11px;padding:0 6px;border-radius:8px;border:1px solid var(--line);color:var(--mut)}
+footer{margin-top:40px;padding-top:12px;border-top:1.5px solid var(--navy);font-size:12px;color:var(--mut)}
+@media(max-width:700px){.hero h1{font-size:21px}body{font-size:14px}}
+
+.gloss{border:1px solid #c6d2e2;border-radius:8px;background:#fbfcfe;padding:14px 16px;margin:18px 0}
+.gloss h3{margin:0 0 8px;font-size:15px;color:#12315c}
+.gloss table{width:100%;border-collapse:collapse;font-size:12.5px}
+.gloss td{border-top:1px solid #e6ecf4;padding:6px 8px;vertical-align:top}
+.gloss td:first-child{width:22%;font-weight:700;color:#12315c;white-space:nowrap}
+.gloss td:last-child{width:34%;color:#5a6b80}
+@media(max-width:760px){.gloss td:first-child{white-space:normal}}
+</style></head><body>
+<div class="hero"><div class="in"><h1>BOM 대체부품 · 로트 단위 자동 대체 설계서</h1>
+<p>EBOM · MBOM · 원본 부품 · 대체 부품을 <b>재고 · 미입고 발주 · 납기</b>와 함께 <b>WITH RECURSIVE</b> 로 한 번에 조회하고,</p>
+<p>원본이 <b>단종</b>되거나 <b>납기가 길어질 때</b> 미리 승인된 대체 부품으로 <b>생산 로트 단위</b>로 자동 전환한다.</p>
+<div class="meta">버전 v1.3 · 2026-09-30 · 산출물 S-22(설계지시문 v5.16 19.1.3)<br>근거 MyBee_설계지시문 v5.15 <b>제12.9조 · 제12.10조</b> · MyBee_DB테이블설계서 v3.19(제0Z부 · R35) · <b>v3.21(제0AB부 · MRP 실행 · 계획 오더 · R36)</b> · MyBee_DB설계방향서 v2.6 · MyBee_코드체계_설계서 v3.17<br>반영 문서 — 업무스킬설계서 D01 v1.5 · <b>D06 v1.6</b> · D10 v1.5 · <b>D15 v1.8</b> · D16 v1.5 · 실행순서 v2.9 · 부속 표 4종(한글명매핑 v3.3 · 업무코드매핑 v3.4 · 커버리지검토 v3.4 · 상관관계분석표 v3.3) · 업무영역 · DB 관계도 v2.2<br>DB Table 547 → 549 · 모델 컬럼 6,680 · 물리 컬럼 14,900 · 외래키 1,533 · 신설 업무코드 없음 · PostgreSQL 14 이상(재귀 CTE 의 CYCLE 절 · PL/pgSQL) · DBMS 실행 검증 제외</div></div></div><div class="wrap">
+<div class="note"><b>v1.3 에서 바뀐 것 — 용어 규칙을 다시 걸었다.</b> 설계지시문 v5.16 에서 업무영역 D20 지식관리업무가 생겨, 용어 정의의 업무영역 설명을 「D01 HW개발 … D18 감사 · D19 프로젝트기획·생성 · D20 지식관리 — 모두 20개」로 고쳤다(v1.2 는 「그리고 이 문서의 D19」라는 작성 당시 문장이었다). 본문 · SQL · 강제 규칙 · 수치는 v1.2 와 같다. 표지의 「근거」 줄은 이 설계의 근거 문서이므로 그대로 두었다.</div>
+<div class="note"><b>v1.2 에서 바뀐 것 — 판정을 MRP 안으로 옮겼다.</b> 생산계획을 표준 순서(수요 · 수주 → <b>MPS 수립</b> → 능력 부하 검토 → <b>MPS 확정</b> → <b>MRP 실행</b> → 구매요청 · 작업지시)로 바로잡으면서, v1.1 이 작업지시 발행 때 따로 돌리던 로트 단위 대체 판정(Q3)을 <b>MRP 실행(FL0015001) 한 곳</b>으로 옮겼다 — BOM 전개 · 재고 차감을 두 번 하지 않기 위해서다. 판정 규칙(R35)은 그대로이고, MRP 가 대체를 <b>계획</b>(PLANNED · PROPOSED)으로 남기면 작업지시 발행(FL0006004)이 <b>확인 · 고정</b>(APPLIED)만 한다(R36-06). Q3 · Q4 는 MRP 함수(6.2) · 부족 예외(6.3)로 바뀌고, 작업지시 확정 SQL(6.5) · MRP 원장 두 DB Table(3.4) · 규칙 R36(4장)을 더했다. Q1 · Q2 · Q5 조회는 그대로다. v1.1 의 「같은 대체 재고 경합 → 되풀이 실행」은 MRP 가 필요일 순으로 대체 재고를 배분하므로 없어졌다.</div>
+<h2 id="t0">0. 용어 정의</h2>
+<div class="gloss"><h3>이 문서에서 쓰는 말</h3><table><thead><tr><th style="width:20%">말</th><th style="width:46%">뜻</th><th>왜 · 어떻게 읽나</th></tr></thead><tbody>
+<tr><td><b>EBOM (설계 BOM)</b></td><td>설계가 정한 부품 구성. 「이 제품은 무엇으로 이루어지는가」.</td><td>bom_master.bom_kind = EBOM 인 행. 이 문서에서 <b>원본 BOM</b> 이라 부르는 것.</td></tr>
+<tr><td><b>MBOM (제조 BOM)</b></td><td>EBOM 을 제조 현장에 맞게 옮긴 구성 — 공정 자재 · 포장재가 더해지고 조립 단위가 바뀐다.</td><td>작업지시가 가리키는 것은 MBOM 이다. v3.19 부터 어느 EBOM 에서 왔는지(source_bom_no)를 적는다.</td></tr>
+<tr><td><b>BOM 자리</b></td><td>BOM 구성 한 줄(mbdev.bom 한 행). 「이 상위 품목에 이 부품이 이만큼」.</td><td>대체는 품목 전체가 아니라 <b>자리마다</b> 승인한다 — 같은 부품이라도 전원부 자리와 신호부 자리의 허용 범위가 다르다.</td></tr>
+<tr><td><b>원본 부품</b></td><td>BOM 자리에 설계가 처음 지정한 부품(bom.child_item_code).</td><td>대체의 기준. 원본이 문제없으면 언제나 원본을 쓴다.</td></tr>
+<tr><td><b>대체 부품</b></td><td>원본 대신 써도 된다고 설계가 승인한 부품(mbdev.bom_substitute).</td><td>승인되지 않은 부품은 규격이 같아 보여도 자동으로 쓰지 않는다.</td></tr>
+<tr><td><b>로트 단위 대체</b></td><td>작업지시 하나(= 생산 로트 하나)의 한 자리를 <b>전량</b> 대체 부품으로 바꾸는 것.</td><td>로트 안에서 원본과 대체를 섞지 않는다 — 섞으면 리콜 때 어느 제품에 무엇이 들어갔는지 가를 수 없다.</td></tr>
+<tr><td><b>필요일</b></td><td>부품이 라인에 있어야 하는 날 = 상위 제조 계획 오더(작업지시가 될 것)의 계획 착수일. 완제품은 MPS 기간의 시작일.</td><td>확보 예정일과 비교하는 기준.</td></tr>
+<tr><td><b>확보 예정일</b></td><td>이 작업지시 몫까지 부품을 손에 넣을 수 있는 날. 재고 → 미입고 발주(납기) → 새 발주(조달 기간) 순으로 계산.</td><td>더 살 수 없는 부품(단종 · 최종 구매일 경과)은 확보 예정일이 없다(NULL).</td></tr>
+<tr><td><b>누적 순소요</b></td><td>같은 부품을 여러 작업지시가 원할 때 필요일이 빠른 작업지시부터 재고와 발주를 채워 가며 계산하는 방식.</td><td>「재고 1,000개」가 작업지시 셋에게 각각 1,000개로 보이는 착시를 막는다.</td></tr>
+<tr><td><b>조달 기간</b></td><td>지금 발주하면 들어오기까지의 일수(vendor_buying_terms.lead_time_days, 승인 공급사 중 가장 짧은 것).</td><td>재고 · 발주로 못 채울 때 확보 예정일 = 오늘 + 조달 기간.</td></tr>
+<tr><td><b>재귀 쿼리 (WITH RECURSIVE)</b></td><td>자기 자신을 다시 부르는 SQL. BOM 처럼 「부품 안에 부품」이 몇 단인지 모를 때 끝까지 내려간다.</td><td>PostgreSQL 표준 기능. 별도 그래프 DB 없이 원본 DB Table 에서 바로 전개한다(설계방향서 v2.4).</td></tr>
+<tr><td><b>CYCLE 절</b></td><td>재귀 중 같은 품목이 한 경로에 두 번 나오면 표시하고 그 가지를 멈추게 하는 PostgreSQL 14 문법.</td><td>BOM 을 잘못 입력해 A → B → A 가 되어도 쿼리가 끝없이 돌지 않는다(R35-12).</td></tr>
+<tr><td><b>가상 구성 (phantom)</b></td><td>재고로 두지 않고 상위 조립에 바로 녹아드는 중간 구성(bom.is_phantom).</td><td>판정에서는 가상 구성을 통과해 그 아래 부품을 같은 작업지시의 소요로 센다.</td></tr>
+<tr><td><b>MPS (기준생산계획)</b></td><td>완제품을 언제 얼마나 만들지 정한 계획. 수요 · 수주에서 완제품 재고 · 생산 중 잔량 · 안전재고를 빼 기간별 생산량을 정한다(FL0006001 수립 → FL0006003 능력 부하 검토 → FL0006002 확정).</td><td><b>부품은 보지 않는다</b> — 부품이 모자라는지는 확정된 MPS 로 MRP 가 본다. mbmfg.production_plan 의 확정(CONFIRMED) 버전.</td></tr>
+<tr><td><b>MRP (자재소요계획)</b></td><td>확정 MPS 를 BOM 으로 끝까지 전개해 부품마다 무엇을 얼마나 언제까지 사거나 만들지 계산하는 일(FL0015001).</td><td>BOM 전개 · 재고 차감은 <b>MRP 한 곳에서 한 번</b>만 한다(R36-01). 로트 단위 대체 판정도 여기서 한다.</td></tr>
+<tr><td><b>하위 단계 번호 (LLC)</b></td><td>모든 BOM 에서 한 품목이 나오는 가장 깊은 단계(완제품 0).</td><td>같은 부품을 여러 제품이 쓰면 그 소요를 한 단계에 모아 <b>한 번에</b> 차감하려는 순서. 이 순서로 풀어야 재고가 두 번 잡히지 않는다.</td></tr>
+<tr><td><b>계획 오더</b></td><td>MRP 가 낸 「이 품목을 이만큼 이날까지」 한 줄(mbpur.mrp_planned_order). 구매 · 제조 · 외주로 나뉜다.</td><td>구매요청 · 작업지시는 계획 오더를 근거로 <b>한 번만</b> 전환된다(R36-05). 제조 계획 오더 하나가 생산 로트 하나다.</td></tr>
+<tr><td><b>페깅 (pegging)</b></td><td>계획 오더마다 그 소요를 낳은 MPS 줄 · 상위 계획 오더를 적어 두는 것.</td><td>「이 부품을 왜 사나?」를 완제품 계획까지 거슬러 찾는다(R36-08).</td></tr>
+<tr><td><b>부족 예외</b></td><td>MRP 가 필요일 안에 채울 수 없다고 낸 표시 — SHORTAGE · EOL · NO_SOURCE · RESCHEDULE. 대체로 흡수하면 LATE.</td><td>예외가 남은 MPS 줄은 작업지시를 내지 않고 MPS 확정으로 돌아가 고친다(R36-07).</td></tr>
+<tr><td><b>버전 (version)</b></td><td>문서 · 기준 · 정의가 고쳐질 때마다 매기는 번호. v1.0 → v1.1 처럼 올라간다. 예전 문서에서 「버전」이라고 부르던 것을 이 문서부터 <b>버전</b>으로 부른다.</td><td>옛 버전은 고치지 않고 그대로 두고 새 버전을 따로 낸다. 그래야 그때 무엇을 보고 결정했는지 나중에 되살릴 수 있다.</td></tr>
+<tr><td><b>DB Table</b></td><td>데이터베이스에 실제로 만들어지는 표. 예) <span class="mono">mbproj.project_request</span>. 예전 문서에서 그냥 「표」라고 부르던 것을 <b>DB Table</b> 로 부른다.</td><td>문서 안에서 읽으라고 그린 표(비교표 · 목록표)는 그대로 「표」라고 부른다. 둘을 섞지 않는다.</td></tr>
+<tr><td><b>중복 실행 방지 (idempotency)</b></td><td>같은 요청이 두 번, 세 번 들어와도 <b>결과가 한 번 처리한 것과 똑같게</b> 만드는 성질. 예를 들어 신청서 제출 버튼을 두 번 눌러도 신청은 하나만 생기고, 통신이 끊겨 시스템이 같은 요청을 다시 보내도 돈이 두 번 나가지 않는다.</td><td>왜 필요한가 — 네트워크는 끊기고, 시스템은 답이 없으면 다시 보내고, 사람은 버튼을 두 번 누른다. 이 세 가지는 막을 수 없으므로 <b>두 번 와도 안전하게</b> 만든다.</td></tr>
+<tr><td><b>중복 실행 방지 키 (중복 실행 방지 키)</b></td><td>같은 요청인지 가리는 열쇠. 이 열쇠가 같으면 새로 처리하지 않고 <b>먼저 처리한 결과를 그대로 돌려준다</b>. 예) 프로젝트 신청의 열쇠는 「회사 + 신청번호 + 개정차수」다 — 같은 신청서를 두 번 보내도 신청은 하나다.</td><td>열쇠는 <b>업무적으로 뜻이 있는 값</b>으로 만든다. 시각 · 난수 · 재시도 횟수 · 서버 이름처럼 매번 달라지는 값은 넣지 않는다. 넣으면 두 번째 요청이 「다른 요청」이 되어 중복이 생긴다.</td></tr>
+<tr><td><b>되돌릴 수 없는 일 (non-idempotent)</b></td><td>이체 · 발송 · 신고처럼 한 번 나가면 되돌리기 어려운 일. 이런 단계는 중복 실행 방지 키를 반드시 두고, 답이 없으면 다시 보내지 않고 <b>조회해서 결과를 확인</b>한다.</td><td>답이 없는 상태를 「모름」으로 두고 사람이 확인하게 한다. 다시 보내는 것이 가장 위험하다.</td></tr>
+<tr><td><b>업무코드</b></td><td>회사의 일을 더 쪼갤 수 없는 단위로 나눠 붙인 코드. 예) <span class="mono">FL0012001</span> 프로젝트 신청. 사람이 하든 에이전트가 하든 같은 코드로 부른다.</td><td>모든 일은 업무코드로 수행되고, 보상 · 원가 · 기록이 모두 이 코드에 붙는다.</td></tr>
+<tr><td><b>업무영역</b></td><td>업무코드를 묶는 큰 분류. D01 HW개발 … D18 감사 · D19 프로젝트기획·생성 · <b>D20 지식관리</b>(2026-09-29 신설) — 모두 20개.</td><td>코드 안의 두 자리(FL00<b>19</b>001)가 업무영역이다.</td></tr>
+<tr><td><b>스킬 · 도구 · 규칙</b></td><td>업무코드를 수행하는 세 가지 수단. <b>스킬</b>은 AI 가 문장을 읽고 쓰는 일, <b>도구</b>는 계산 · 서식 · 외부 연결처럼 정해진 대로 도는 프로그램, <b>규칙</b>은 조건과 결론을 표로 적어 둔 판정.</td><td>수치와 판정은 도구와 규칙이 한다. AI 는 수치를 만들지 않는다.</td></tr>
+<tr><td><b>PA · IA · EA · TA · VA</b></td><td>PA 는 프로젝트를 맡는 에이전트(프로젝트 1개에 1개), IA 는 사람의 말을 알아듣고 업무로 잇는 에이전트, EA 는 법무 · 회계 같은 전문가 의견을 내는 에이전트, TA 는 외부 시스템을 부르는 에이전트, VA 는 결과를 검증하는 에이전트.</td><td>외부로 나가는 일은 TA 만 한다.</td></tr>
+<tr><td><b>자율 수준 L1 · L2 · L3</b></td><td>에이전트가 사람 없이 어디까지 갈 수 있는지. <b>L1</b> 은 사람이 결정, <b>L2</b> 는 에이전트가 하되 사람이 승인, <b>L3</b> 는 에이전트가 하고 사람은 나중에 본다.</td><td>위험이 큰 업무일수록 낮은 수준을 쓴다.</td></tr>
+<tr><td><b>NVT 토큰</b></td><td>업무를 수행하면 쌓이는 회사 안의 점수. 연말에 단가를 곱해 인센티브 · 연봉에 반영된다.</td><td>직책이 아니라 <b>수행한 업무</b>에 붙는다.</td></tr>
+<tr><td><b>채택 보상금</b></td><td>제안이 채택되었을 때 제안자에게 한 번 주는 보상. 직원은 토큰으로, 외부 제안자는 현금으로 받는다. 상한 500만 원.</td><td>가결(직원) 또는 용역 계약 체결(외부) 때 지급한다.</td></tr>
+<tr><td><b>사업화 성과 보상</b></td><td>제품 · 서비스가 실제로 팔린 뒤 해마다 나누는 보상. 연간 순매출의 0 ~ 3% 안에서 위원회가 정한다.</td><td>제안 20% · 원 기여 30% · 진행 기여 50% 로 나눈다. 진행 기여는 해마다 다시 계산한다.</td></tr>
+<tr><td><b>판정 기준 버전</b></td><td>문턱 값 · 요율 · 가중치처럼 나중에 바뀔 수 있는 숫자를 화면이나 규칙 본문에 박지 않고 따로 모아 둔 것. 예) PRJ-ECON(경제성) · PRJ-RESEARCH(조사) · PRJ-REWARD(보상).</td><td>값이 바뀌면 새 버전을 게시하고, 지난 판정은 그때 버전으로 다시 볼 수 있다.</td></tr>
+<tr><td><b>개정차수</b></td><td>한 신청서를 고쳐 다시 낼 때 올라가는 번호. 제출한 개정차수는 고치지 않고 새 개정차수를 만든다.</td><td>중복 실행 방지 키의 한 조각이기도 하다.</td></tr>
+<tr><td><b>관리 최소집합</b></td><td>모든 프로젝트에 반드시 담기는 D12 업무코드 5건(개설 · 업무 구성 확정 · PM 지정 · 진행 보고 집계 · 종결).</td><td>빼거나 바꿀 수 없다.</td></tr>
+<tr><td><b>게이트</b></td><td>다음 단계로 넘어가려면 통과해야 하는 관문. 이 문서에서는 G-1 등재 · G0 아이디어 · G1 기획 · G2 신청 · G3 심의 · G4 착수.</td><td>게이트마다 무엇을 확인하는지 정해 둔다.</td></tr>
+<tr><td><b>사전 조사</b></td><td>신청 전에 에이전트가 하는 조사. <b>시장 조사</b>(시장 규모 · 경쟁 동향)와 <b>소요 비용 조사</b>(개발 기간 · 단계별 비용) 두 가지다.</td><td>조사는 에이전트가 하고, 채택은 사람이 승인한다.</td></tr>
+<tr><td><b>TAM · SAM · SOM</b></td><td>시장 크기를 세 겹으로 본 것. <b>TAM</b> 은 품목 전체 시장, <b>SAM</b> 은 우리가 닿을 수 있는 시장, <b>SOM</b> 은 실제로 가져올 수 있는 몫(하단 · 상단).</td><td>편익의 판매 수량은 SOM 하단을 기본으로 쓴다.</td></tr>
+<tr><td><b>위험 조정 편익 현재가치</b></td><td>앞으로 생길 편익을 <b>확신도</b>로 깎고(H 100% · M 70% · L 40%), 먼 미래의 돈을 <b>할인율</b>로 줄여 오늘 값으로 바꾼 금액.</td><td>이 값이 프로젝트의 「기대 가치」가 된다.</td></tr>
+<tr><td><b>NPV · 편익/비용 · 회수 기간 · 민감도</b></td><td><b>NPV</b> 는 편익 현재가치에서 비용 현재가치를 뺀 값, <b>편익/비용</b> 은 그 둘의 비율, <b>회수 기간</b> 은 들인 돈을 되찾는 데 걸리는 햇수, <b>민감도</b> 는 편익이 20% 줄고 비용이 20% 늘어도 견디는지 본 것.</td><td>네 숫자를 함께 보아야 한 쪽으로 치우치지 않는다.</td></tr>
+<tr><td><b>배경 IP</b></td><td>제안자가 <b>이 제안 이전부터 가지고 있던</b> 기술 · 저작물. 채택되어도 회사가 가져가지 않고 쓸 권리(통상실시권)만 받는다.</td><td>이것을 빼지 않으면 좋은 외부 제안자가 참여하지 않는다.</td></tr>
+<tr><td><b>순매출</b></td><td>매출액에서 반품 · 에누리 · 할인을 뺀 금액. 사업화 성과 보상의 기준이 된다.</td><td>회계 원장에서 자동으로 뽑는다.</td></tr>
+</tbody></table></div>
+<h2 id="t1">1. 요구와 결정</h2>
+<div class="tw"><table class=""><colgroup><col style="width:36%"><col style="width:64%"></colgroup><thead><tr><th>요구</th><th>결정</th></tr></thead><tbody>
+<tr><td>WITH RECURSIVE 로 EBOM · MBOM · 원본 부품 · 대체 부품까지 재고 수량 · 부품 발주 수량 · 납기를 조회</td><td><b>Q1</b> 한 쿼리로 다단 전개 + 자리마다 원본 줄과 대체 줄 + 가용 재고 · 미입고 발주 잔량 · 가장 이른/늦은 납기 · 조달 기간 · 미충족 수량. MBOM 을 전개하면 줄마다 <b>원본 EBOM 줄</b>도 함께 나온다. EBOM ↔ MBOM 줄 대조는 <b>Q2</b>, 대체 부품이 들어간 완성품 로트 추적은 <b>Q5</b></td></tr>
+<tr><td>원본 부품이 단종되거나 납기가 길어질 때 자동으로 로트 단위로 대체품 사용</td><td><b>MRP 실행 안에서 판정</b>(v1.2) — MRP 함수 <span class="mono">mbpur.run_mrp</span> 가 확정 MPS 를 하위 단계 순서로 전개하며 부품마다 누적 순소요로 원본 확보 예정일을 계산하고, 단종(EOL) 또는 납기 지연(LEAD_TIME)이면 <b>승인된 대체 중 필요일 안에 확보되는 가장 앞 순위</b>를 골라 <span class="mono">mbmfg.lot_substitution</span> 에 <b>계획</b>으로 남긴다 — 자동이 허용된 자리는 PLANNED, 아니면 PROPOSED(사람). 작업지시 발행이 PLANNED 를 APPLIED 로 확정한다. 못 고른 자리는 계획 오더의 <b>부족 예외</b>로 MPS 확정에 돌아간다</td></tr>
+</tbody></table></div>
+<div class="kv"><div><div class="k">신설 DB Table</div><div class="v">2 + 2</div></div><div><div class="k">기존 DB Table 칸 추가</div><div class="v">2 + 8</div></div><div><div class="k">강제 규칙</div><div class="v">R35 × 12 · R36 × 8</div></div><div><div class="k">재귀 쿼리 · SQL</div><div class="v">Q1 · Q2 · Q5 · MRP</div></div><div><div class="k">신설 업무코드</div><div class="v">0</div></div></div><p style="font-size:12.5px;color:#5a6b80">「2 + 2」 = v3.19 대체 2 DB Table + v3.21 MRP 원장 2 DB Table · 「2 + 8」 = v3.19 의 BOM 칸 2 + v3.21 의 칸 8(생산계획 4 · 로트 단위 대체 2 · 작업지시 1 · 구매요청 1)</p>
+<div class="note"><b>세 가지 설계 판단.</b> ① <b>대체는 품목이 아니라 BOM 자리에 승인한다</b> — 같은 MCU 라도 어느 제품 · 어느 자리냐에 따라 인증 · 펌웨어 영향이 다르다. 품목 묶음(alternate_group_code)은 후보를 찾는 범위로만 남긴다. ② <b>자동의 범위는 설계가 미리 정한다</b> — 설계가 자리마다 「단종이면 자동 · 납기면 자동 · 둘 다 · 자동 불가」를 정해 두면, 에이전트는 그 범위 안에서만 사람 확인 없이 적용한다. 승인은 편집 단계(작성자 ≠ 승인자)에서 한 번 하고 판정은 게시본만 읽는다(설계방향서 v2.4 P7). ③ <b>로트 안에서 섞지 않는다</b> — 원본 재고가 일부 있어도 이번 작업지시 몫을 다 못 채우면 그 로트는 전량 대체로 간다. 남은 원본 재고는 뒤 작업지시(수리 · 보수용 포함)가 쓴다.</div>
+<h2 id="t2">2. v3.18 에 있던 것과 모자란 것</h2>
+<div class="tw"><table class=""><colgroup><col style="width:16%"><col style="width:46%"><col style="width:38%"></colgroup><thead><tr><th>있던 것</th><th>어디</th><th>모자란 것</th></tr></thead><tbody>
+<tr><td>BOM 머리 · 구성</td><td><span class='mono'>mbdev.bom_master</span> (bom_kind EBOM/MBOM · 개정 · 유효기간 · 상태) · <span class='mono'>mbdev.bom</span></td><td>MBOM 이 어느 EBOM 에서 이관됐는지 없음 → <b>source_bom_no · source_line_no</b> 추가</td></tr>
+<tr><td>자리 대체 정책</td><td><span class='mono'>bom.substitution_policy</span> NONE / APPROVED_ONLY / ANY</td><td>「승인된 대체품」 목록이 없음 → <b>mbdev.bom_substitute</b> 신설</td></tr>
+<tr><td>품목 수급 위험</td><td><span class='mono'>item.lifecycle_status · supply_risk_grade · eol_notice_date · last_time_buy_date · alternate_group_code</span></td><td>그대로 판정 입력으로 쓴다</td></tr>
+<tr><td>재고</td><td><span class='mono'>mbpur.stock_balance</span> (on_hand · allocated · available · 로트) · <span class='mono'>mbpur.warehouse</span> (판정 대기 · 격리)</td><td>그대로. 판정 대기 · 격리 · 폐기 창고는 가용에서 뺀다</td></tr>
+<tr><td>발주 · 납기</td><td><span class='mono'>mbpur.purchase_order · purchase_order_line</span> (발주 · 입고 누계 · 라인 납기)</td><td>그대로. 미입고 잔량 = order_qty − received_qty</td></tr>
+<tr><td>조달 기간</td><td><span class='mono'>mbpur.vendor_buying_terms.lead_time_days</span> (승인 공급사 · 유효기간)</td><td>그대로</td></tr>
+<tr><td>작업지시 · 로트</td><td><span class='mono'>mbmfg.work_order</span> (bom_no · planned_start · status) · <span class='mono'>mbmfg.lot · lot_genealogy</span></td><td>어느 로트에 대체가 들어갔는지 없음 → <b>mbmfg.lot_substitution</b> 신설</td></tr>
+</tbody></table></div>
+<h2 id="t3">3. 데이터 모델</h2>
+<figure class="svg"><svg viewBox="0 0 1060 470" width="100%" role="img" aria-label="BOM 대체 데이터 모델">
+<defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0L10,5L0,10z" fill="#5a6b80"/></marker></defs>
+<style>.bx{fill:#fff;stroke:#12315c;stroke-width:1.4}.nw{fill:#eef6ff;stroke:#2d6cb5;stroke-width:2}.hd{font:600 13px 'Malgun Gothic',sans-serif;fill:#12315c}
+.sm{font:11.5px Consolas,monospace;fill:#34495e}.ln{stroke:#5a6b80;stroke-width:1.3;fill:none;marker-end:url(#ar)}.lb{font:11px 'Malgun Gothic',sans-serif;fill:#5a6b80}
+.ad{fill:#8a5a12}</style>
+<rect class="bx" x="20" y="30" width="262" height="110" rx="6"/><text class="hd" x="32" y="52">mbdev.bom_master · BOM 머리</text>
+<text class="sm" x="32" y="74">bom_no (UK) · parent_item_code</text><text class="sm" x="32" y="92">bom_kind EBOM | MBOM · revision</text>
+<text class="sm ad" x="32" y="110">+ source_bom_no → 원본 EBOM</text><text class="sm" x="32" y="128">effective_from/to · status</text>
+<path class="ln" d="M90,30 C90,6 190,6 190,28"/><text class="lb" x="198" y="16">MBOM → 원본 EBOM</text>
+<rect class="bx" x="20" y="200" width="262" height="110" rx="6"/><text class="hd" x="32" y="222">mbdev.bom · BOM 자리</text>
+<text class="sm" x="32" y="244">bom_no · line_no · child_item_code</text><text class="sm" x="32" y="262">quantity · scrap_rate · is_phantom</text>
+<text class="sm" x="32" y="280">substitution_policy</text><text class="sm ad" x="32" y="298">+ source_line_no → 원본 EBOM 줄</text>
+<path class="ln" d="M135,200 L135,142"/><text class="lb" x="142" y="176">N : 1</text>
+<rect class="nw" x="330" y="200" width="270" height="130" rx="6"/><text class="hd" x="342" y="222">mbdev.bom_substitute · 신설</text>
+<text class="sm" x="342" y="244">bom_line_id → BOM 자리</text><text class="sm" x="342" y="262">original / substitute_item_code</text>
+<text class="sm" x="342" y="280">priority · qty_ratio</text><text class="sm" x="342" y="298">auto_trigger · lead_time_gap_days</text>
+<text class="sm" x="342" y="316">status APPROVED · 승인자 ≠ 작성자</text>
+<path class="ln" d="M330,255 L284,255"/><text class="lb" x="292" y="248">N : 1</text>
+<rect class="bx" x="330" y="30" width="270" height="110" rx="6"/><text class="hd" x="342" y="52">mbcore.item · 품목</text>
+<text class="sm" x="342" y="74">lifecycle_status · supply_risk_grade</text><text class="sm" x="342" y="92">last_time_buy_date</text>
+<text class="sm" x="342" y="110">alternate_group_code(후보 범위)</text>
+<path class="ln" d="M465,200 L465,142"/>
+<rect class="bx" x="700" y="30" width="330" height="110" rx="6"/><text class="hd" x="712" y="52">공급 — 재고 · 발주 · 조달 기간</text>
+<text class="sm" x="712" y="74">mbpur.stock_balance available_qty</text><text class="sm" x="712" y="92">mbpur.purchase_order(_line) 잔량 · 납기</text>
+<text class="sm" x="712" y="110">mbpur.vendor_buying_terms lead_time_days</text><text class="sm" x="712" y="128">mbpur.warehouse 판정 대기 · 격리 제외</text>
+<path class="ln" d="M700,85 L602,85"/><text class="lb" x="615" y="78">item_code</text>
+<rect class="nw" x="700" y="200" width="330" height="150" rx="6"/><text class="hd" x="712" y="222">mbmfg.lot_substitution · 신설</text>
+<text class="sm" x="712" y="244">wo_no → 작업지시 = 생산 로트 하나</text><text class="sm" x="712" y="262">bom_line_id · bom_substitute_id</text>
+<text class="sm" x="712" y="280">original_qty · substitute_qty</text><text class="sm" x="712" y="298">required_date · 두 확보 예정일</text>
+<text class="sm" x="712" y="316">substitution_reason · decision_basis</text><text class="sm" x="712" y="334">status PROPOSED | APPLIED | …</text>
+<path class="ln" d="M700,270 L602,270"/><text class="lb" x="615" y="263">근거 지정</text>
+<rect class="bx" x="700" y="390" width="160" height="60" rx="6"/><text class="hd" x="712" y="412">mbmfg.work_order</text><text class="sm" x="712" y="432">bom_no(MBOM) · 착수일</text>
+<rect class="bx" x="870" y="390" width="160" height="60" rx="6"/><text class="hd" x="882" y="412">mbmfg.lot · 계보</text><text class="sm" x="882" y="432">lot_no · lot_genealogy</text>
+<path class="ln" d="M780,352 L780,388"/><path class="ln" d="M950,352 L950,388"/><text class="lb" x="958" y="376">로트 생성 때 lot_no</text>
+<path class="ln" d="M700,420 C300,420 140,420 135,312"/><text class="lb" x="330" y="412">작업지시 → 적용 MBOM</text>
+</svg><figcaption>파란 테두리 = v3.19 신설 · 갈색 글자 = 기존 DB Table 에 더한 칸. 화살표는 참조 방향(자식 → 부모).</figcaption></figure>
+<h3 id="t31">3.1 mbdev.bom_substitute — BOM 자리별 승인 대체품 <span class="tag">구조·저작</span> <span class="tag">D01 HW개발업무</span></h3>
+<p>BOM 한 자리(구성 한 줄)에서 원본 부품 대신 써도 되는 대체 부품 한 건. 설계가 승인한 것만 자동 대체의 후보가 된다. 품목 묶음(mbcore.item.alternate_group_code)은 후보를 찾는 범위일 뿐이고, 실제로 쓸 수 있는 대체는 이 DB Table 에 BOM 자리마다 승인해 둔 것뿐이다. (컬럼 17개 + 공통 15 = 32)</p>
+<p style="font-size:13px"><b>관련 업무코드</b> <span class="mono">FL0001022</span> 부품 단종 대응<span style="color:#2e7d5b">(만든다)</span> &nbsp;<span class="mono">FL0001006</span> 부품 선정<span style="color:#2e7d5b">(만든다)</span> &nbsp;<span class="mono">FL0001023</span> 제조 BOM 이관<span style="color:#2e7d5b">(만든다)</span> &nbsp;<span class="mono">FL0001021</span> 설계 변경 실행<span style="color:#8a5a12">(바꾼다)</span> &nbsp;<span class="mono">FL0006004</span> 작업지시 발행<span style="color:#2d6cb5">(읽는다)</span> &nbsp;<span class="mono">FL0006005</span> 작업지시 변경<span style="color:#2d6cb5">(읽는다)</span> &nbsp;<span class="mono">FL0015001</span> 자재소요계획(MRP) 실행<span style="color:#2d6cb5">(읽는다)</span> &nbsp;<span class="mono">FL0016007</span> 라인 출고 실행<span style="color:#2d6cb5">(읽는다)</span></p>
+<div class="tw"><table class=""><colgroup><col style="width:15%"><col style="width:13%"><col style="width:11%"><col style="width:4%"><col style="width:17%"><col style="width:40%"></colgroup><thead><tr><th>컬럼</th><th>한글 이름</th><th>타입</th><th>N</th><th>키</th><th>설명</th></tr></thead><tbody>
+<tr><td><span class='mono'>id</span></td><td>식별자</td><td><span class='mono'>uuid</span></td><td>N</td><td><span class='mono'>PK</span></td><td>대리키(UUIDv7). 시간 순 단조 증가하도록 마이크로초까지 채운다.</td></tr>
+<tr><td><span class='mono'>substitute_no</span></td><td>대체 지정 번호</td><td><span class='mono'>varchar(40)</span></td><td>N</td><td><span class='mono'>UK</span></td><td>대체 지정 한 건의 번호. 설계 변경 · 승인 기록에서 이 번호로 가리킨다.</td></tr>
+<tr><td><span class='mono'>bom_line_id</span></td><td>BOM 라인 ID</td><td><span class='mono'>uuid</span></td><td>N</td><td><span class='mono'>FK→mbdev.bom(id)</span></td><td>대체를 허용한 BOM 자리. 개정 차수가 바뀌면 새 BOM 의 라인에 다시 지정한다(개정 사이에 자동으로 옮겨 가지 않는다).</td></tr>
+<tr><td><span class='mono'>original_item_code</span></td><td>원본 부품 코드</td><td><span class='mono'>varchar(40)</span></td><td>N</td><td><span class='mono'>FK→mbcore.item(item_code)</span></td><td>원본 부품. bom_line_id 가 가리키는 라인의 child_item_code 와 같아야 한다(R35-01). 조회 · 판정에서 조인을 줄이려 둔다.</td></tr>
+<tr><td><span class='mono'>substitute_item_code</span></td><td>대체 부품 코드</td><td><span class='mono'>varchar(40)</span></td><td>N</td><td><span class='mono'>FK→mbcore.item(item_code)</span></td><td>대체 부품. 원본 부품과 달라야 한다(R35-01).</td></tr>
+<tr><td><span class='mono'>priority</span></td><td>대체 순위</td><td><span class='mono'>smallint</span></td><td>N</td><td><span class='mono'></span></td><td>같은 자리에 대체 부품이 여럿이면 작은 수가 먼저다. 1부터. 한 자리 안에서 겹칠 수 없다.</td></tr>
+<tr><td><span class='mono'>qty_ratio</span></td><td>대체 수량 비율</td><td><span class='mono'>numeric(24,8)</span></td><td>N</td><td><span class='mono'></span></td><td>원본 1 단위를 대신할 때 드는 대체 부품 수량. 보통 1. 예) 4.7kΩ 1개를 2.2kΩ+2.5kΩ 로 바꾸면 자리를 둘로 나누지 말고 별도 설계 변경으로 한다.</td></tr>
+<tr><td><span class='mono'>uom_code</span></td><td>단위 코드</td><td><span class='mono'>varchar(20)</span></td><td>N</td><td><span class='mono'>FK→mbcore.uom(uom_code)</span></td><td>qty_ratio 의 단위. BOM 라인 단위와 다르면 mbcore.uom_con버전으로 환산한다.</td></tr>
+<tr><td><span class='mono'>auto_trigger</span></td><td>자동 대체 사유</td><td><span class='mono'>varchar(20)</span></td><td>N</td><td><span class='mono'></span></td><td>사람 확인 없이 에이전트가 로트 단위로 적용해도 되는 사유. NONE(자동 불가 — 제안만)/EOL(원본 단종)/LEAD_TIME(원본 납기 지연)/BOTH.</td></tr>
+<tr><td><span class='mono'>lead_time_gap_days</span></td><td>납기 허용 지연 일수</td><td><span class='mono'>integer</span></td><td>Y</td><td><span class='mono'></span></td><td>원본 확보 예정일이 필요일보다 이 일수를 넘게 늦으면 납기 사유가 선다. auto_trigger 가 LEAD_TIME · BOTH 이면 필수(0 이상).</td></tr>
+<tr><td><span class='mono'>ecr_no</span></td><td>설계 변경 요청 번호</td><td><span class='mono'>varchar(40)</span></td><td>Y</td><td><span class='mono'>FK→mbdev.change_request(ecr_no)</span></td><td>이 대체를 승인한 설계 변경 요청. 단종 대응(FL0001022)으로 생긴 지정은 필수다.</td></tr>
+<tr><td><span class='mono'>approved_by</span></td><td>승인자</td><td><span class='mono'>uuid</span></td><td>Y</td><td><span class='mono'>FK→mbcore.employee(id)</span></td><td>승인한 사람. status 가 APPROVED 이면 필수이고 작성자(created_by)와 달라야 한다(R35-03).</td></tr>
+<tr><td><span class='mono'>approved_at</span></td><td>승인 시각</td><td><span class='mono'>timestamptz</span></td><td>Y</td><td><span class='mono'></span></td><td>승인 시각.</td></tr>
+<tr><td><span class='mono'>valid_from</span></td><td>유효 시작일</td><td><span class='mono'>date</span></td><td>N</td><td><span class='mono'></span></td><td>이 대체를 쓸 수 있는 첫날. 판정은 작업지시 필요일이 유효기간 안인 행만 읽는다.</td></tr>
+<tr><td><span class='mono'>valid_to</span></td><td>유효 종료일</td><td><span class='mono'>date</span></td><td>Y</td><td><span class='mono'></span></td><td>이 대체를 쓸 수 있는 마지막 날. 비우면 끝이 없다.</td></tr>
+<tr><td><span class='mono'>status</span></td><td>상태</td><td><span class='mono'>varchar(20)</span></td><td>N</td><td><span class='mono'></span></td><td>상태. DRAFT(초안)/APPROVED(게시 — 판정이 읽는다)/SUSPENDED(일시 정지)/REVOKED(취소). 판정은 APPROVED 만 읽는다(R35-10).</td></tr>
+<tr><td><span class='mono'>equivalence_note</span></td><td>동등성 근거</td><td><span class='mono'>varchar(400)</span></td><td>Y</td><td><span class='mono'></span></td><td>대체해도 된다고 본 근거 요약 — 규격 비교 · 신뢰성 시험 번호 · 인증 영향. 첨부는 mbcore.attachment 로 잇는다.</td></tr>
+</tbody></table></div>
+<h3 id="t32">3.2 mbmfg.lot_substitution — 로트 단위 대체 적용 <span class="tag">값</span> <span class="tag">D06 제조업무</span></h3>
+<p>작업지시 하나(= 생산 로트 하나)의 한 BOM 자리에서 원본 부품 대신 대체 부품을 쓰기로 한 결정 한 건. 로트 안에서 원본과 대체를 섞지 않으므로 이 행이 APPLIED 이면 그 작업지시의 그 자리는 전량 대체 부품이다. 판정에 쓴 재고 · 발주 · 납기 값을 그대로 남겨 나중에 같은 판정을 되살린다. <b>v1.2</b> — MRP 가 계획할 때 만들고(PLANNED · PROPOSED, 계획 오더 번호 · MRP 실행 번호), 작업지시 발행이 작업지시 번호를 채워 APPLIED 로 확정한다. (컬럼 25개 + 공통 15 = 40)</p>
+<p style="font-size:13px"><b>관련 업무코드</b> <span class="mono">FL0006004</span> 작업지시 발행<span style="color:#2e7d5b">(만든다)</span> &nbsp;<span class="mono">FL0006005</span> 작업지시 변경<span style="color:#8a5a12">(바꾼다)</span> &nbsp;<span class="mono">FL0006006</span> 작업지시 취소<span style="color:#8a5a12">(바꾼다)</span> &nbsp;<span class="mono">FL0006011</span> 로트 생성<span style="color:#8a5a12">(바꾼다)</span> &nbsp;<span class="mono">FL0006007</span> 라인 자재 청구<span style="color:#2d6cb5">(읽는다)</span> &nbsp;<span class="mono">FL0016007</span> 라인 출고 실행<span style="color:#2d6cb5">(읽는다)</span> &nbsp;<span class="mono">FL0010020</span> 로트 계보 추적<span style="color:#2d6cb5">(읽는다)</span> &nbsp;<span class="mono">FL0015001</span> 자재소요계획(MRP) 실행<span style="color:#2d6cb5">(읽는다)</span> &nbsp;<span class="mono">FL0015014</span> 납기 관리<span style="color:#2d6cb5">(읽는다)</span> &nbsp;<span class="mono">FL0015001</span> 자재소요계획(MRP) 실행<span style="color:#2e7d5b">(만든다)</span></p>
+<div class="tw"><table class=""><colgroup><col style="width:15%"><col style="width:13%"><col style="width:11%"><col style="width:4%"><col style="width:17%"><col style="width:40%"></colgroup><thead><tr><th>컬럼</th><th>한글 이름</th><th>타입</th><th>N</th><th>키</th><th>설명</th></tr></thead><tbody>
+<tr><td><span class='mono'>id</span></td><td>식별자</td><td><span class='mono'>uuid</span></td><td>N</td><td><span class='mono'>PK</span></td><td>대리키(UUIDv7). 시간 순 단조 증가하도록 마이크로초까지 채운다.</td></tr>
+<tr><td><span class='mono'>lot_sub_no</span></td><td>로트 대체 번호</td><td><span class='mono'>varchar(60)</span></td><td>N</td><td><span class='mono'>UK</span></td><td>판정 한 건의 번호. LS-작업지시번호-라인번호-판정시각 으로 만든다.</td></tr>
+<tr><td><span class='mono'>wo_no</span></td><td>작업지시 번호</td><td><span class='mono'>varchar(40)</span></td><td>Y</td><td><span class='mono'>FK→mbmfg.work_order(wo_no)</span></td><td>대체를 적용한 작업지시. MRP 가 계획할 때는 비어 있고 작업지시 발행(FL0006004)이 채운다. 작업지시 하나가 생산 로트 하나다.</td></tr>
+<tr><td><span class='mono'>planned_order_no</span></td><td>계획 오더 번호</td><td><span class='mono'>varchar(40)</span></td><td>Y</td><td><span class='mono'>FK→mbpur.mrp_planned_order(planned_order_no)</span></td><td>대체를 쓰는 생산 로트의 제조 계획 오더. MRP 가 대체를 계획할 때 채운다(사람이 직접 정한 MANUAL 이면 비울 수 있다).</td></tr>
+<tr><td><span class='mono'>run_no</span></td><td>MRP 실행 번호</td><td><span class='mono'>varchar(40)</span></td><td>Y</td><td><span class='mono'>FK→mbpur.mrp_run(run_no)</span></td><td>대체를 판정한 MRP 실행.</td></tr>
+<tr><td><span class='mono'>lot_no</span></td><td>생산 로트 번호</td><td><span class='mono'>varchar(60)</span></td><td>Y</td><td><span class='mono'>FK→mbmfg.lot(lot_no)</span></td><td>대체 부품이 들어간 생산 로트. 작업지시 발행 때는 로트가 아직 없으므로 비워 두고 로트 생성(FL0006011)이 채운다.</td></tr>
+<tr><td><span class='mono'>bom_line_id</span></td><td>BOM 라인 ID</td><td><span class='mono'>uuid</span></td><td>N</td><td><span class='mono'>FK→mbdev.bom(id)</span></td><td>대체한 BOM 자리. 작업지시가 가리키는 제조 BOM(또는 그 가상 구성 아래)의 라인이어야 한다.</td></tr>
+<tr><td><span class='mono'>bom_substitute_id</span></td><td>대체 지정 ID</td><td><span class='mono'>uuid</span></td><td>N</td><td><span class='mono'>FK→mbdev.bom_substitute(id)</span></td><td>근거가 된 승인 대체 지정. 판정 시점에 APPROVED 이고 필요일이 유효기간 안이어야 한다.</td></tr>
+<tr><td><span class='mono'>original_item_code</span></td><td>원본 부품 코드</td><td><span class='mono'>varchar(40)</span></td><td>N</td><td><span class='mono'>FK→mbcore.item(item_code)</span></td><td>쓰지 않게 된 원본 부품.</td></tr>
+<tr><td><span class='mono'>substitute_item_code</span></td><td>대체 부품 코드</td><td><span class='mono'>varchar(40)</span></td><td>N</td><td><span class='mono'>FK→mbcore.item(item_code)</span></td><td>대신 쓰는 대체 부품. 라인 출고는 이 품목만 허용한다(R35-06).</td></tr>
+<tr><td><span class='mono'>original_qty</span></td><td>원본 기준 소요량</td><td><span class='mono'>numeric(24,8)</span></td><td>N</td><td><span class='mono'></span></td><td>원본 부품 기준 소요량 = 작업지시 수량 × 누적 구성 수량 × (1 + 공손율).</td></tr>
+<tr><td><span class='mono'>substitute_qty</span></td><td>대체 부품 소요량</td><td><span class='mono'>numeric(24,8)</span></td><td>N</td><td><span class='mono'></span></td><td>대체 부품 소요량 = original_qty × 대체 수량 비율.</td></tr>
+<tr><td><span class='mono'>uom_code</span></td><td>단위 코드</td><td><span class='mono'>varchar(20)</span></td><td>N</td><td><span class='mono'>FK→mbcore.uom(uom_code)</span></td><td>두 소요량의 단위.</td></tr>
+<tr><td><span class='mono'>required_date</span></td><td>필요일</td><td><span class='mono'>date</span></td><td>N</td><td><span class='mono'></span></td><td>부품이 있어야 하는 날. 작업지시 계획 착수일(planned_start)의 날짜.</td></tr>
+<tr><td><span class='mono'>original_ready_date</span></td><td>원본 확보 예정일</td><td><span class='mono'>date</span></td><td>Y</td><td><span class='mono'></span></td><td>원본을 이 작업지시 몫까지 확보할 수 있는 날. 재고 → 미입고 발주 → 새 발주(조달 기간) 순으로 계산한다. 더 살 수 없으면 NULL.</td></tr>
+<tr><td><span class='mono'>substitute_ready_date</span></td><td>대체 확보 예정일</td><td><span class='mono'>date</span></td><td>N</td><td><span class='mono'></span></td><td>대체 부품을 같은 방식으로 계산한 확보 예정일. 필요일 이하여야 자동 적용된다.</td></tr>
+<tr><td><span class='mono'>substitution_reason</span></td><td>대체 사유</td><td><span class='mono'>varchar(20)</span></td><td>N</td><td><span class='mono'></span></td><td>대체 사유. EOL(원본 단종)/LEAD_TIME(원본 납기 지연)/MANUAL(사람이 직접).</td></tr>
+<tr><td><span class='mono'>decision_basis</span></td><td>판정 입력값 원본</td><td><span class='mono'>jsonb</span></td><td>N</td><td><span class='mono'></span></td><td>판정에 쓴 값 전부 — 기준 시각 · 원본과 대체의 가용 재고 · 누적 수요 · 미입고 발주 · 납기 · 조달 기간 · 규칙 번호. 뒤에 재고가 바뀌어도 이 값으로 같은 판정을 되살린다(R35-09).</td></tr>
+<tr><td><span class='mono'>decided_by_kind</span></td><td>판정 주체</td><td><span class='mono'>varchar(10)</span></td><td>N</td><td><span class='mono'></span></td><td>AGENT(자동 판정)/HUMAN(사람 확정).</td></tr>
+<tr><td><span class='mono'>agent_run_id</span></td><td>에이전트 실행 ID</td><td><span class='mono'>uuid</span></td><td>Y</td><td><span class='mono'>FK→mbagent.agent_run(id)</span></td><td>자동 판정한 에이전트 실행(MRP 실행의 에이전트). decided_by_kind 가 AGENT 이면 필수.</td></tr>
+<tr><td><span class='mono'>approved_by</span></td><td>확정자</td><td><span class='mono'>uuid</span></td><td>Y</td><td><span class='mono'>FK→mbcore.employee(id)</span></td><td>제안(PROPOSED)을 사람이 확정한 경우의 확정자. decided_by_kind 가 HUMAN 이면 필수.</td></tr>
+<tr><td><span class='mono'>status</span></td><td>상태</td><td><span class='mono'>varchar(20)</span></td><td>N</td><td><span class='mono'></span></td><td>상태. PLANNED(MRP 계획 — 자동 사유가 맞는 것)/PROPOSED(사람 확인 대기)/APPLIED(작업지시 발행으로 확정 — 청구 · 출고가 따른다)/REVERTED(착수 전 되돌림)/CANCELLED(작업지시 취소 · 새 MRP 실행으로 대체).</td></tr>
+<tr><td><span class='mono'>applied_at</span></td><td>적용 시각</td><td><span class='mono'>timestamptz</span></td><td>Y</td><td><span class='mono'></span></td><td>APPLIED 가 된 시각.</td></tr>
+<tr><td><span class='mono'>reverted_at</span></td><td>되돌린 시각</td><td><span class='mono'>timestamptz</span></td><td>Y</td><td><span class='mono'></span></td><td>REVERTED 가 된 시각. 작업지시가 착수된 뒤에는 되돌릴 수 없다(R35-08).</td></tr>
+<tr><td><span class='mono'>revert_reason</span></td><td>되돌린 사유</td><td><span class='mono'>varchar(400)</span></td><td>Y</td><td><span class='mono'></span></td><td>되돌린 사유. 예) 원본 조기 입고로 필요일 안에 확보됨.</td></tr>
+</tbody></table></div>
+<h3 id="t33">3.3 기존 DB Table 에 더한 칸 · 고친 설명</h3>
+<div class="tw"><table class=""><colgroup><col style="width:15%"><col style="width:13%"><col style="width:12%"><col style="width:10%"><col style="width:4%"><col style="width:17%"><col style="width:29%"></colgroup><thead><tr><th>DB Table</th><th>컬럼</th><th>한글 이름</th><th>타입</th><th>N</th><th>키</th><th>설명</th></tr></thead><tbody>
+<tr><td><span class='mono'>mbdev.bom_master</span></td><td><span class='mono'>source_bom_no</span></td><td>원본 설계 BOM 번호</td><td><span class='mono'>varchar(40)</span></td><td>Y</td><td><span class='mono'>FK→mbdev.bom_master(bom_no)</span></td><td>제조 BOM(MBOM)이 이관된 원본 설계 BOM(EBOM). bom_kind 가 MBOM 이면 필수이고 가리키는 행은 같은 상위 품목의 EBOM 이어야 한다. EBOM 이면 NULL(R35-05).</td></tr>
+<tr><td><span class='mono'>mbdev.bom</span></td><td><span class='mono'>source_line_no</span></td><td>원본 설계 라인 번호</td><td><span class='mono'>smallint</span></td><td>Y</td><td><span class='mono'></span></td><td>이 제조 BOM 라인이 이어받은 원본 설계 BOM 의 라인 번호. 제조에서 새로 더한 라인(공정 자재 · 포장재)은 NULL. EBOM 라인은 NULL.</td></tr>
+</tbody></table></div>
+<div class="tw"><table class=""><colgroup><col style="width:30%"><col style="width:70%"></colgroup><thead><tr><th>DB Table.컬럼</th><th>고친 설명(뒷부분)</th></tr></thead><tbody>
+<tr><td><span class='mono'>mbcore.item.alternate_group_code</span></td><td>대체 후보를 찾는 범위일 뿐이다 — 실제로 쓸 수 있는 대체는 BOM 자리마다 mbdev.bom_substitute 에 승인해 둔 것뿐이다(v3.19 · R35-10).</td></tr>
+<tr><td><span class='mono'>mbdev.bom.substitution_policy</span></td><td>구매와 제조가 임의로 바꾸지 못하게 설계가 정한다. 승인된 대체 부품은 mbdev.bom_substitute 에 둔다(v3.19). NONE 자리에는 승인 대체를 둘 수 없다(R35-02).</td></tr>
+</tbody></table></div>
+<div class="note">공통 컬럼 15개(tenant_id · created_at · created_by · … · ext)는 두 신설 DB Table 에도 붙는다. 새 컬럼의 한글 이름은 같은 영문 컬럼이 다른 DB Table 에서 쓰는 한글 이름을 따랐다(제7부 규칙 — 예 priority 우선순위 · lot_no 로트 번호).</div>
+<h3 id="t34">3.4 MRP 원장 — v3.21 신설 · 칸 추가</h3>
+<p>MRP 실행 한 번과 그 결과(계획 오더)를 원장에 남긴다. 입력 해시가 같으면 새로 계산하지 않고(R36-03), 새 실행이 끝나면 앞선 실행의 미확정 계획은 취소된다(R36-04). 두 DB Table 모두 <b>값</b> 평면이다(설계방향서 v2.6).</p>
+<p style="margin-top:14px"><b class="mono">mbpur.mrp_run</b> — MRP 실행 <span class="tag">값</span> <span class="tag">D15 부품·반제품 구매업무</span><br>확정 MPS 한 버전으로 돌린 자재소요계획(MRP) 한 번. 무엇을 입력으로 어느 시각에 계산했는지를 고정해, 계획 오더 · 대체 계획 · 부족 예외가 어느 계산에서 나왔는지 되짚게 한다. BOM 전개 · 재고 차감은 이 실행에서만 한다. (컬럼 14개 + 공통 15)</p>
+<p style="font-size:13px"><b>관련 업무코드</b> <span class="mono">FL0015001</span> 자재소요계획(MRP) 실행<span style="color:#2e7d5b">(만든다)</span> &nbsp;<span class="mono">FL0015001</span> 자재소요계획(MRP) 실행<span style="color:#8a5a12">(바꾼다)</span> &nbsp;<span class="mono">FL0006002</span> 기준생산계획(MPS) 확정<span style="color:#2d6cb5">(읽는다)</span> &nbsp;<span class="mono">FL0015002</span> 구매요청 등록<span style="color:#2d6cb5">(읽는다)</span> &nbsp;<span class="mono">FL0006004</span> 작업지시 발행<span style="color:#2d6cb5">(읽는다)</span> &nbsp;<span class="mono">FL0015014</span> 납기 관리<span style="color:#2d6cb5">(읽는다)</span></p>
+<div class="tw"><table class=""><colgroup><col style="width:15%"><col style="width:13%"><col style="width:11%"><col style="width:4%"><col style="width:17%"><col style="width:40%"></colgroup><thead><tr><th>컬럼</th><th>한글 이름</th><th>타입</th><th>N</th><th>키</th><th>설명</th></tr></thead><tbody>
+<tr><td><span class='mono'>id</span></td><td>식별자</td><td><span class='mono'>uuid</span></td><td>N</td><td><span class='mono'>PK</span></td><td>대리키(UUIDv7). 시간 순 단조 증가하도록 마이크로초까지 채운다.</td></tr>
+<tr><td><span class='mono'>run_no</span></td><td>MRP 실행 번호</td><td><span class='mono'>varchar(40)</span></td><td>N</td><td><span class='mono'>UK</span></td><td>MRP 실행 번호. MRP-MPS 버전-기준 시각 으로 만든다.</td></tr>
+<tr><td><span class='mono'>mps_plan_version</span></td><td>MPS 확정 버전</td><td><span class='mono'>integer</span></td><td>N</td><td><span class='mono'></span></td><td>입력으로 쓴 확정 MPS 계획 차수(mbmfg.production_plan.plan_version). 확정(CONFIRMED) 전 차수로는 실행하지 않는다(R36-02).</td></tr>
+<tr><td><span class='mono'>plan_period</span></td><td>계획 기간</td><td><span class='mono'>varchar(20)</span></td><td>N</td><td><span class='mono'></span></td><td>MPS 의 계획 기간.</td></tr>
+<tr><td><span class='mono'>as_of</span></td><td>기준 시각</td><td><span class='mono'>timestamptz</span></td><td>N</td><td><span class='mono'></span></td><td>재고 · 미입고 발주 · 생산 중 잔량을 읽은 시각. 모든 입력을 같은 시각으로 읽는다.</td></tr>
+<tr><td><span class='mono'>horizon_days</span></td><td>계획 범위 일수</td><td><span class='mono'>integer</span></td><td>N</td><td><span class='mono'></span></td><td>계획 오더를 만드는 범위(일). 이보다 먼 필요일은 다음 실행으로 넘긴다.</td></tr>
+<tr><td><span class='mono'>input_hash</span></td><td>입력 해시</td><td><span class='mono'>varchar(64)</span></td><td>N</td><td><span class='mono'></span></td><td>MPS 버전 · 재고 · 미입고 발주 · 유효 BOM · 승인 대체 지정 · 조달 기간을 모은 해시. 같은 해시면 새로 계산하지 않고 앞선 실행을 돌려준다(R36-03).</td></tr>
+<tr><td><span class='mono'>input_summary</span></td><td>입력 요약 원본</td><td><span class='mono'>jsonb</span></td><td>N</td><td><span class='mono'></span></td><td>품목 수 · 재고 합 · 미입고 발주 합 · 쓴 BOM 번호 · 대체 지정 수 — 뒤에 입력이 바뀌어도 이 실행을 되짚는다.</td></tr>
+<tr><td><span class='mono'>agent_run_id</span></td><td>에이전트 실행 ID</td><td><span class='mono'>uuid</span></td><td>Y</td><td><span class='mono'>FK→mbagent.agent_run(id)</span></td><td>MRP 를 돌린 에이전트 실행.</td></tr>
+<tr><td><span class='mono'>planned_order_count</span></td><td>계획 오더 수</td><td><span class='mono'>integer</span></td><td>N</td><td><span class='mono'></span></td><td>이 실행이 만든 계획 오더 수.</td></tr>
+<tr><td><span class='mono'>exception_count</span></td><td>부족 예외 수</td><td><span class='mono'>integer</span></td><td>N</td><td><span class='mono'></span></td><td>예외 구분이 NONE 이 아닌 계획 오더 수. 0 이 아니면 MPS 확정(FL0006002)에 조정 요청이 간다.</td></tr>
+<tr><td><span class='mono'>status</span></td><td>상태</td><td><span class='mono'>varchar(20)</span></td><td>N</td><td><span class='mono'></span></td><td>상태. RUNNING/COMPLETED/SUPERSEDED(새 실행으로 대체)/FAILED.</td></tr>
+<tr><td><span class='mono'>superseded_by_run_no</span></td><td>대체한 실행 번호</td><td><span class='mono'>varchar(40)</span></td><td>Y</td><td><span class='mono'>FK→mbpur.mrp_run(run_no)</span></td><td>이 실행을 대체한 새 실행. 새 실행이 끝나면 이 실행의 미확정 계획 오더는 취소된다(R36-04).</td></tr>
+<tr><td><span class='mono'>completed_at</span></td><td>완료 시각</td><td><span class='mono'>timestamptz</span></td><td>Y</td><td><span class='mono'></span></td><td>계산 · 기록이 끝난 시각.</td></tr>
+</tbody></table></div>
+<p style="margin-top:14px"><b class="mono">mbpur.mrp_planned_order</b> — MRP 계획 오더 <span class="tag">값</span> <span class="tag">D15 부품·반제품 구매업무 · D06 제조업무</span><br>MRP 한 번이 낸 계획 오더 한 줄 — 무엇을 얼마나 언제까지 사거나(구매) 만들지(제조 · 외주). 총소요에서 배분한 재고 · 입고 예정을 빼고 로트 크기로 올리고 조달 기간만큼 앞당겼다. 구매요청 · 작업지시는 이 줄을 근거로 한 번만 전환된다. (컬럼 25개 + 공통 15)</p>
+<p style="font-size:13px"><b>관련 업무코드</b> <span class="mono">FL0015001</span> 자재소요계획(MRP) 실행<span style="color:#2e7d5b">(만든다)</span> &nbsp;<span class="mono">FL0015002</span> 구매요청 등록<span style="color:#8a5a12">(바꾼다)</span> &nbsp;<span class="mono">FL0006004</span> 작업지시 발행<span style="color:#8a5a12">(바꾼다)</span> &nbsp;<span class="mono">FL0006002</span> 기준생산계획(MPS) 확정<span style="color:#2d6cb5">(읽는다)</span> &nbsp;<span class="mono">FL0015014</span> 납기 관리<span style="color:#2d6cb5">(읽는다)</span> &nbsp;<span class="mono">FL0006030</span> 외주 가공 의뢰<span style="color:#2d6cb5">(읽는다)</span></p>
+<div class="tw"><table class=""><colgroup><col style="width:15%"><col style="width:13%"><col style="width:11%"><col style="width:4%"><col style="width:17%"><col style="width:40%"></colgroup><thead><tr><th>컬럼</th><th>한글 이름</th><th>타입</th><th>N</th><th>키</th><th>설명</th></tr></thead><tbody>
+<tr><td><span class='mono'>id</span></td><td>식별자</td><td><span class='mono'>uuid</span></td><td>N</td><td><span class='mono'>PK</span></td><td>대리키(UUIDv7). 시간 순 단조 증가하도록 마이크로초까지 채운다.</td></tr>
+<tr><td><span class='mono'>planned_order_no</span></td><td>계획 오더 번호</td><td><span class='mono'>varchar(40)</span></td><td>N</td><td><span class='mono'>UK</span></td><td>계획 오더 번호.</td></tr>
+<tr><td><span class='mono'>run_no</span></td><td>MRP 실행 번호</td><td><span class='mono'>varchar(40)</span></td><td>N</td><td><span class='mono'>FK→mbpur.mrp_run(run_no)</span></td><td>이 계획 오더를 낸 MRP 실행.</td></tr>
+<tr><td><span class='mono'>order_kind</span></td><td>계획 오더 구분</td><td><span class='mono'>varchar(20)</span></td><td>N</td><td><span class='mono'></span></td><td>PURCHASE(구매)/PRODUCTION(사내 제조 — 작업지시로)/SUBCONTRACT(외주 가공).</td></tr>
+<tr><td><span class='mono'>item_code</span></td><td>품목 코드</td><td><span class='mono'>varchar(40)</span></td><td>N</td><td><span class='mono'>FK→mbcore.item(item_code)</span></td><td>품목. 대체를 계획했으면 대체 부품이다.</td></tr>
+<tr><td><span class='mono'>low_level_code</span></td><td>하위 단계 번호</td><td><span class='mono'>smallint</span></td><td>N</td><td><span class='mono'></span></td><td>모든 유효 MBOM 에서 이 품목이 나오는 가장 깊은 단계(완제품 0). 같은 품목의 소요를 한 단계에 모아 한 번에 차감하려는 순서다.</td></tr>
+<tr><td><span class='mono'>gross_qty</span></td><td>총소요량</td><td><span class='mono'>numeric(24,8)</span></td><td>N</td><td><span class='mono'></span></td><td>MPS 줄 또는 상위 제조 계획 오더에서 내려온 소요.</td></tr>
+<tr><td><span class='mono'>allocated_stock_qty</span></td><td>배분 재고 수량</td><td><span class='mono'>numeric(24,8)</span></td><td>N</td><td><span class='mono'></span></td><td>필요일 순 배분으로 이 소요에 돌아온 가용 재고(판정 대기 · 격리 · 폐기 창고 제외).</td></tr>
+<tr><td><span class='mono'>allocated_receipt_qty</span></td><td>배분 입고 예정 수량</td><td><span class='mono'>numeric(24,8)</span></td><td>N</td><td><span class='mono'></span></td><td>이 소요에 돌아온 미입고 발주 · 생산 중 작업지시 잔량(필요일 전에 들어오는 것만).</td></tr>
+<tr><td><span class='mono'>net_qty</span></td><td>순소요량</td><td><span class='mono'>numeric(24,8)</span></td><td>N</td><td><span class='mono'></span></td><td>순소요량 = 총소요량 − 배분 재고 − 배분 입고 예정.</td></tr>
+<tr><td><span class='mono'>planned_qty</span></td><td>계획 수량</td><td><span class='mono'>numeric(24,8)</span></td><td>N</td><td><span class='mono'></span></td><td>순소요량을 로트 크기 · 최소 발주량 · 배수로 올린 수량.</td></tr>
+<tr><td><span class='mono'>uom_code</span></td><td>단위 코드</td><td><span class='mono'>varchar(20)</span></td><td>N</td><td><span class='mono'>FK→mbcore.uom(uom_code)</span></td><td>단위.</td></tr>
+<tr><td><span class='mono'>required_date</span></td><td>필요 일자</td><td><span class='mono'>date</span></td><td>N</td><td><span class='mono'></span></td><td>있어야 하는 날 — 상위 제조 계획 오더의 착수일 또는 MPS 기간 시작일.</td></tr>
+<tr><td><span class='mono'>release_date</span></td><td>발주 · 착수 필요일</td><td><span class='mono'>date</span></td><td>N</td><td><span class='mono'></span></td><td>필요일에서 조달 기간(구매) 또는 생산 소요 일수(제조)를 뺀 날. 오늘보다 앞이면 늦은 것이다.</td></tr>
+<tr><td><span class='mono'>ready_date</span></td><td>확보 예정일</td><td><span class='mono'>date</span></td><td>Y</td><td><span class='mono'></span></td><td>계획대로 확보되는 날. 늦거나 살 수 없으면 실제 가능일 또는 NULL.</td></tr>
+<tr><td><span class='mono'>peg_plan_id</span></td><td>근거 MPS 줄 ID</td><td><span class='mono'>uuid</span></td><td>N</td><td><span class='mono'>FK→mbmfg.production_plan(id)</span></td><td>이 소요를 낳은 MPS 줄(최상위 수요). 어느 제품 계획 때문에 사는지 거슬러 찾는다(R36-08).</td></tr>
+<tr><td><span class='mono'>parent_planned_order_no</span></td><td>상위 계획 오더 번호</td><td><span class='mono'>varchar(40)</span></td><td>Y</td><td><span class='mono'>FK→mbpur.mrp_planned_order(planned_order_no)</span></td><td>이 소요를 낳은 상위 제조 계획 오더. 완제품(0단계)이면 NULL.</td></tr>
+<tr><td><span class='mono'>bom_line_id</span></td><td>BOM 라인 ID</td><td><span class='mono'>uuid</span></td><td>Y</td><td><span class='mono'>FK→mbdev.bom(id)</span></td><td>상위 제조 계획 오더의 어느 BOM 자리에서 온 소요인지. 완제품이면 NULL.</td></tr>
+<tr><td><span class='mono'>party_code</span></td><td>거래처 코드</td><td><span class='mono'>varchar(20)</span></td><td>Y</td><td><span class='mono'>FK→mbcore.party(party_code)</span></td><td>구매 · 외주 제안 공급사 — 승인 공급사 가운데 조달 기간이 가장 짧은 곳.</td></tr>
+<tr><td><span class='mono'>exception_kind</span></td><td>예외 구분</td><td><span class='mono'>varchar(20)</span></td><td>N</td><td><span class='mono'></span></td><td>NONE/SHORTAGE(필요일 안에 못 채움)/EOL(원본 단종 — 대체 없음)/LATE(늦지만 대체로 흡수)/NO_SOURCE(승인 공급사 없음)/RESCHEDULE(기존 발주 일정 조정 필요).</td></tr>
+<tr><td><span class='mono'>exception_note</span></td><td>예외 설명</td><td><span class='mono'>varchar(400)</span></td><td>Y</td><td><span class='mono'></span></td><td>예외의 사람이 읽는 설명 — 얼마가 언제까지 모자라는지.</td></tr>
+<tr><td><span class='mono'>status</span></td><td>상태</td><td><span class='mono'>varchar(20)</span></td><td>N</td><td><span class='mono'></span></td><td>PLANNED(계획)/FIRMED(사람이 고정 — 새 실행이 바꾸지 않는다)/CONVERTED(구매요청 · 작업지시로 전환)/CANCELLED(새 실행으로 대체).</td></tr>
+<tr><td><span class='mono'>converted_doc_kind</span></td><td>전환 문서 구분</td><td><span class='mono'>varchar(10)</span></td><td>Y</td><td><span class='mono'></span></td><td>PR(구매요청)/WO(작업지시).</td></tr>
+<tr><td><span class='mono'>converted_doc_no</span></td><td>전환 문서 번호</td><td><span class='mono'>varchar(40)</span></td><td>Y</td><td><span class='mono'></span></td><td>전환된 구매요청 · 작업지시 번호. 계획 오더 하나는 한 번만 전환된다(R36-05).</td></tr>
+<tr><td><span class='mono'>converted_at</span></td><td>전환 시각</td><td><span class='mono'>timestamptz</span></td><td>Y</td><td><span class='mono'></span></td><td>전환 시각.</td></tr>
+</tbody></table></div>
+<p style="margin-top:14px"><b>기존 DB Table 에 더한 칸(v3.21)</b></p>
+<div class="tw"><table class=""><colgroup><col style="width:15%"><col style="width:13%"><col style="width:12%"><col style="width:10%"><col style="width:4%"><col style="width:17%"><col style="width:29%"></colgroup><thead><tr><th>DB Table</th><th>컬럼</th><th>한글 이름</th><th>타입</th><th>N</th><th>키</th><th>설명</th></tr></thead><tbody>
+<tr><td><span class='mono'>mbmfg.production_plan</span></td><td><span class='mono'>demand_qty</span></td><td>수요량</td><td><span class='mono'>numeric(24,8)</span></td><td>Y</td><td><span class='mono'></span></td><td>MPS 계산에 쓴 기간 수요 — 확정 수주 + 판매 예측(FL0006001).</td></tr>
+<tr><td><span class='mono'>mbmfg.production_plan</span></td><td><span class='mono'>fg_available_qty</span></td><td>완제품 가용 수량</td><td><span class='mono'>numeric(24,8)</span></td><td>Y</td><td><span class='mono'></span></td><td>같은 기준 시각의 완제품 가용 재고 + 생산 중 잔량.</td></tr>
+<tr><td><span class='mono'>mbmfg.production_plan</span></td><td><span class='mono'>safety_stock_qty</span></td><td>안전재고 수량</td><td><span class='mono'>numeric(24,8)</span></td><td>Y</td><td><span class='mono'></span></td><td>완제품 안전재고(mbpur.stock_policy 에서 읽은 값).</td></tr>
+<tr><td><span class='mono'>mbmfg.production_plan</span></td><td><span class='mono'>shortage_qty</span></td><td>부족 수량</td><td><span class='mono'>numeric(24,8)</span></td><td>Y</td><td><span class='mono'></span></td><td>완제품 부족분 = 수요 + 안전재고 − 가용. 생산량 안(planned_qty)의 근거다. 부품 부족은 여기 없다 — MRP 계획 오더의 예외다.</td></tr>
+<tr><td><span class='mono'>mbmfg.lot_substitution</span></td><td><span class='mono'>planned_order_no</span></td><td>계획 오더 번호</td><td><span class='mono'>varchar(40)</span></td><td>Y</td><td><span class='mono'>FK→mbpur.mrp_planned_order(planned_order_no)</span></td><td>대체를 쓰는 생산 로트의 제조 계획 오더. MRP 가 대체를 계획할 때 채운다(사람이 직접 정한 MANUAL 이면 비울 수 있다).</td></tr>
+<tr><td><span class='mono'>mbmfg.lot_substitution</span></td><td><span class='mono'>run_no</span></td><td>MRP 실행 번호</td><td><span class='mono'>varchar(40)</span></td><td>Y</td><td><span class='mono'>FK→mbpur.mrp_run(run_no)</span></td><td>대체를 판정한 MRP 실행.</td></tr>
+<tr><td><span class='mono'>mbmfg.work_order</span></td><td><span class='mono'>planned_order_no</span></td><td>계획 오더 번호</td><td><span class='mono'>varchar(40)</span></td><td>Y</td><td><span class='mono'>FK→mbpur.mrp_planned_order(planned_order_no)</span></td><td>근거 MRP 제조 계획 오더. 비어 있으면 긴급 삽입 등 사유가 있어야 한다(R36-01).</td></tr>
+<tr><td><span class='mono'>mbpur.purchase_request</span></td><td><span class='mono'>planned_order_no</span></td><td>계획 오더 번호</td><td><span class='mono'>varchar(40)</span></td><td>Y</td><td><span class='mono'>FK→mbpur.mrp_planned_order(planned_order_no)</span></td><td>근거 MRP 구매 계획 오더. 비어 있으면 MRP 밖 요청(소모품 등)이다(R36-01).</td></tr>
+</tbody></table></div>
+<h2 id="t4">4. 강제 규칙 R35 · R36</h2>
+<div class="tw"><table class=""><colgroup><col style="width:8%"><col style="width:14%"><col style="width:46%"><col style="width:18%"><col style="width:14%"></colgroup><thead><tr><th>규칙</th><th>이름</th><th>내용</th><th>대상</th><th>구현</th></tr></thead><tbody>
+<tr><td><b>R35-01</b></td><td>원본 일치</td><td>bom_substitute.original_item_code 는 bom_line_id 라인의 child_item_code 와 같고, 대체 부품은 원본과 다르다</td><td><span class='mono'>mbdev.bom_substitute</span></td><td>트리거(입력 · 수정)</td></tr>
+<tr><td><b>R35-02</b></td><td>정책 정합</td><td>substitution_policy 가 NONE 인 자리에는 APPROVED 대체를 둘 수 없다. 자리 정책을 NONE 으로 바꾸면 그 자리의 APPROVED 대체는 SUSPENDED 가 된다</td><td><span class='mono'>mbdev.bom · bom_substitute</span></td><td>트리거</td></tr>
+<tr><td><b>R35-03</b></td><td>작성자 ≠ 승인자</td><td>APPROVED 이면 approved_by · approved_at 이 있고 approved_by 는 작성자(created_by)와 다르다(설계방향서 v2.4 P7)</td><td><span class='mono'>mbdev.bom_substitute</span></td><td>CHECK + 트리거</td></tr>
+<tr><td><b>R35-04</b></td><td>대체 부품 수명</td><td>대체 부품의 item.lifecycle_status 가 OBSOLETE 이면 APPROVED 로 둘 수 없다. EOL 이면 승인은 되지만 판정은 새 발주로 확보할 수 없다고 본다</td><td><span class='mono'>mbdev.bom_substitute · mbcore.item</span></td><td>트리거 + 판정 식</td></tr>
+<tr><td><b>R35-05</b></td><td>MBOM 원본 필수</td><td>bom_kind 가 MBOM 이면 source_bom_no 가 있고 그 행은 같은 parent_item_code 의 EBOM 이다. EBOM 이면 source_bom_no · 라인의 source_line_no 가 NULL 이다</td><td><span class='mono'>mbdev.bom_master · bom</span></td><td>트리거</td></tr>
+<tr><td><b>R35-06</b></td><td>로트 안 한 부품</td><td>한 작업지시의 한 BOM 자리에서 출고되는 품목은 하나다 — APPLIED 대체가 있으면 대체 부품만, 없으면 원본만 출고한다</td><td><span class='mono'>mbmfg.line_material_issue · mbpur.stock_movement(ISSUE)</span></td><td>트리거</td></tr>
+<tr><td><b>R35-07</b></td><td>활성 판정 하나(중복 실행 방지)</td><td>(테넌트 · 작업지시 · BOM 라인)마다 PROPOSED · APPLIED 는 한 행뿐이다. 판정을 몇 번 다시 돌려도 결과가 한 번 돌린 것과 같다</td><td><span class='mono'>mbmfg.lot_substitution</span></td><td>부분 유일 인덱스 + ON CONFLICT DO NOTHING</td></tr>
+<tr><td><b>R35-08</b></td><td>착수 후 고정</td><td>작업지시가 RUNNING · PAUSED · COMPLETED · CLOSED 이면 대체를 새로 만들거나 되돌리지 못한다. 작업지시 취소 때만 CANCELLED 로 닫는다</td><td><span class='mono'>mbmfg.lot_substitution · work_order</span></td><td>트리거</td></tr>
+<tr><td><b>R35-09</b></td><td>판정 재현</td><td>decision_basis 에 기준 시각과 입력값이 있어야 한다. AGENT 판정은 agent_run_id, HUMAN 확정은 approved_by 가 있어야 한다</td><td><span class='mono'>mbmfg.lot_substitution</span></td><td>CHECK</td></tr>
+<tr><td><b>R35-10</b></td><td>게시본만 읽는다</td><td>자동 판정은 status 가 APPROVED 이고 필요일이 유효기간 안인 대체 지정만 읽는다. 품목 묶음(alternate_group_code)만으로는 대체하지 않는다</td><td><span class='mono'>MRP 함수 ⑥(v1.1 은 Q3) · VA</span></td><td>질의 술어 + VA 검증</td></tr>
+<tr><td><b>R35-11</b></td><td>자동 적용 조건</td><td>AGENT 가 APPLIED 로 두려면 ① 자동 대체 사유가 판정 사유와 맞고(BOTH 포함) ② 대체 확보 예정일 ≤ 필요일이어야 한다. 그 밖은 PROPOSED 로 사람에게 넘긴다</td><td><span class='mono'>MRP 함수 ⑥(v1.1 은 Q3)</span></td><td>질의 식</td></tr>
+<tr><td><b>R35-12</b></td><td>BOM 순환 차단</td><td>구성 전개에서 같은 품목이 한 경로에 두 번 나오면 게시를 거부하고, 조회는 그 가지를 멈춘다</td><td><span class='mono'>mbdev.bom_master · bom</span></td><td>WITH RECURSIVE … CYCLE(제0Y.3)</td></tr>
+</tbody></table></div>
+<p style="margin-top:14px"><b>R36 — MPS · MRP 순서(v3.21 · v1.2)</b></p>
+<div class="tw"><table class=""><colgroup><col style="width:8%"><col style="width:14%"><col style="width:46%"><col style="width:18%"><col style="width:14%"></colgroup><thead><tr><th>규칙</th><th>이름</th><th>내용</th><th>대상</th><th>구현</th></tr></thead><tbody>
+<tr><td><b>R36-01</b></td><td>계산은 한 곳</td><td>BOM 전개 · 재고 차감은 MRP 실행(FL0015001)만 한다. 작업지시 · 구매요청은 계획 오더를 근거(planned_order_no)로 하고 다시 계산하지 않는다. 근거 없이 내면 사유가 있어야 한다</td><td><span class='mono'>mbmfg.work_order · mbpur.purchase_request</span></td><td>CHECK + 트리거</td></tr>
+<tr><td><b>R36-02</b></td><td>MPS 순서</td><td>MPS 확정(FL0006002)은 같은 MPS 안의 능력 부하 검토(FL0006003) 결과가 있어야 하고, MRP 는 확정 버전으로만 실행한다</td><td><span class='mono'>mbmfg.production_plan · mbpur.mrp_run</span></td><td>트리거</td></tr>
+<tr><td><b>R36-03</b></td><td>MRP 재현(중복 실행 방지)</td><td>같은 입력 해시로 다시 돌리면 새로 계산하지 않고 앞선 실행을 돌려준다. 실행마다 입력 요약 원본을 남긴다</td><td><span class='mono'>mbpur.mrp_run</span></td><td>유일 제약(테넌트 · 입력 해시 · COMPLETED)</td></tr>
+<tr><td><b>R36-04</b></td><td>새 실행이 옛 계획을 대체</td><td>새 실행이 끝나면 앞선 실행의 PLANNED 계획 오더와 PLANNED 대체는 CANCELLED 가 된다. FIRMED · CONVERTED 는 유지한다</td><td><span class='mono'>mbpur.mrp_planned_order · mbmfg.lot_substitution</span></td><td>MRP 함수 · 트리거</td></tr>
+<tr><td><b>R36-05</b></td><td>전환은 한 번</td><td>계획 오더 한 건은 구매요청 또는 작업지시 하나로만 전환된다(converted_doc_no 유일)</td><td><span class='mono'>mbpur.mrp_planned_order</span></td><td>부분 유일 인덱스</td></tr>
+<tr><td><b>R36-06</b></td><td>대체는 계획에서 확정으로</td><td>로트 단위 대체는 MRP 가 PLANNED · PROPOSED 로 만들고 작업지시 발행이 APPLIED 로 바꾼다. 작업지시 발행은 새로 판정하지 않는다(R35-11 의 자동 적용 조건은 MRP 판정에 그대로 쓴다)</td><td><span class='mono'>mbmfg.lot_substitution</span></td><td>트리거</td></tr>
+<tr><td><b>R36-07</b></td><td>부족 예외 되돌림</td><td>예외 구분이 NONE 이 아닌 계획 오더가 있으면, MPS 재확정이나 예외 승인 기록 없이는 그 MPS 줄의 작업지시를 발행하지 않는다</td><td><span class='mono'>mbpur.mrp_planned_order · mbmfg.work_order</span></td><td>판정 함수</td></tr>
+<tr><td><b>R36-08</b></td><td>페깅</td><td>모든 계획 오더는 근거 MPS 줄(peg_plan_id)을 가지고, 0단계가 아니면 상위 계획 오더 · BOM 자리를 가진다</td><td><span class='mono'>mbpur.mrp_planned_order</span></td><td>CHECK</td></tr>
+</tbody></table></div>
+<h2 id="t5">5. 조회 — WITH RECURSIVE</h2>
+<p>모든 쿼리는 <span class="mono">:tenant_id</span> 를 조건에 넣고, 같은 조건을 RLS 도 한 번 더 건다(제0Y.2). 기준일(<span class="mono">:as_of</span>)을 넣으면 그날 유효했던 BOM · 대체 지정으로 과거 시점도 다시 볼 수 있다.</p>
+<h3 id="t51">5.1 Q1 — 다단 전개 + 원본 · 대체 + 재고 · 발주 · 납기</h3>
+<div class="tw"><table class=""><colgroup><col style="width:16%"><col style="width:84%"></colgroup><thead><tr><th>단계</th><th>하는 일</th></tr></thead><tbody>
+<tr><td>① eff_bom</td><td>상위 품목마다 기준일에 유효한 BOM 한 벌(EBOM 또는 MBOM)을 고른다 — 개정이 여럿이면 적용 시작일이 가장 늦은 것</td></tr>
+<tr><td>② tree (재귀)</td><td>루트 품목에서 시작해 구성 품목에 다시 BOM 이 있으면 한 단계 더 내려간다. 누적 소요량 = 위 단계 누적 × 구성 수량 × (1 + 공손율). <b>CYCLE</b> 절이 순환 가지를 멈춘다</td></tr>
+<tr><td>③ subs</td><td>대체 지정 중 APPROVED 이고 기준일이 유효기간 안인 것만(R35-10)</td></tr>
+<tr><td>④ parts</td><td>자리마다 원본 줄 1개 + 대체 줄 n개(순위 순). 대체 소요량 = 누적 소요량 × 대체 수량 비율. 정책 NONE 자리는 대체 줄을 내지 않는다</td></tr>
+<tr><td>⑤ ~ ⑦</td><td>품목별 가용 재고(판정 대기 · 격리 · 폐기 창고 제외) · 미입고 발주 잔량 · 가장 이른/늦은 납기 · 조달 기간</td></tr>
+<tr><td>결과</td><td>줄마다 원본 · 대체 구분, 수명 상태, 가용 재고, 발주 잔량, 납기, 조달 기간, 미충족 수량(소요 − 가용 − 발주 잔량), MBOM 줄이면 원본 EBOM 번호 · 줄 · 품목</td></tr>
+</tbody></table></div>
+<figure class="code"><figcaption>Q1. 다단 BOM 전개 — EBOM | MBOM · 원본 · 대체 · 재고 · 발주 · 납기</figcaption><pre><span class="c">-- Q1. 다단계 BOM 전개 — EBOM 또는 MBOM · 원본 부품과 대체 부품 · 재고 · 미입고 발주 · 납기 · 조달 기간</span>
+<span class="c">-- 입력  :tenant_id uuid · :root_item varchar · :bom_kind &#x27;EBOM&#x27; | &#x27;MBOM&#x27; · :as_of date · :build_qty numeric</span>
+<b class="k">WITH RECURSIVE</b>
+eff_bom <b class="k">AS</b> (                                   <span class="c">-- ① 기준일에 유효한 BOM — 상위 품목마다 한 벌</span>
+  <b class="k">SELECT</b> <b class="k">DISTINCT ON</b> (m.parent_item_code)
+         m.bom_no, m.parent_item_code, m.revision, m.source_bom_no
+  <b class="k">FROM</b>   mbdev.bom_master m
+  <b class="k">WHERE</b>  m.tenant_id = :tenant_id <b class="k">AND</b> <b class="k">NOT</b> m.is_deleted
+    <b class="k">AND</b>  m.bom_kind  = :bom_kind
+    <b class="k">AND</b>  m.status <b class="k">IN</b> (&#x27;RELEASED&#x27;,&#x27;SUPERSEDED&#x27;)
+    <b class="k">AND</b>  m.effective_from &lt;= :as_of
+    <b class="k">AND</b>  (m.effective_to <b class="k">IS NULL</b> <b class="k">OR</b> m.effective_to &gt;= :as_of)
+  <b class="k">ORDER</b>  <b class="k">BY</b> m.parent_item_code, m.effective_from DESC
+),
+tree (lvl, parent_item_code, bom_no, source_bom_no, line_id, line_no, source_line_no,
+      item_code, qty_per, cum_qty, is_phantom, substitution_policy, path) <b class="k">AS</b> (
+  <b class="k">SELECT</b> 1, e.parent_item_code, e.bom_no, e.source_bom_no, b.id, b.line_no, b.source_line_no,
+         b.child_item_code, b.quantity,
+         :build_qty * b.quantity * (1 + <b class="k">COALESCE</b>(b.scrap_rate, 0)),
+         b.is_phantom, b.substitution_policy,
+         ARRAY[e.parent_item_code, b.child_item_code]::varchar[]
+  <b class="k">FROM</b>   eff_bom e
+  <b class="k">JOIN</b>   mbdev.bom b <b class="k">ON</b> b.tenant_id = :tenant_id <b class="k">AND</b> b.bom_no = e.bom_no <b class="k">AND</b> <b class="k">NOT</b> b.is_deleted
+  <b class="k">WHERE</b>  e.parent_item_code = :root_item
+  <b class="k">UNION ALL</b>                                    <span class="c">-- ② 구성 품목에 다시 BOM 이 있으면 한 단계 더 내려간다</span>
+  <b class="k">SELECT</b> t.lvl + 1, t.item_code, e.bom_no, e.source_bom_no, b.id, b.line_no, b.source_line_no,
+         b.child_item_code, b.quantity,
+         t.cum_qty * b.quantity * (1 + <b class="k">COALESCE</b>(b.scrap_rate, 0)),
+         b.is_phantom, b.substitution_policy,
+         t.path || b.child_item_code
+  <b class="k">FROM</b>   tree t
+  <b class="k">JOIN</b>   eff_bom e   <b class="k">ON</b> e.parent_item_code = t.item_code
+  <b class="k">JOIN</b>   mbdev.bom b <b class="k">ON</b> b.tenant_id = :tenant_id <b class="k">AND</b> b.bom_no = e.bom_no <b class="k">AND</b> <b class="k">NOT</b> b.is_deleted
+  <b class="k">WHERE</b>  t.lvl &lt; 30
+) <b class="k">CYCLE</b> item_code <b class="k">SET</b> is_cycle <b class="k">USING</b> cycle_path,            <span class="c">-- R35-12 : 순환 가지는 여기서 멈춘다</span>
+subs <b class="k">AS</b> (                                      <span class="c">-- ③ 게시된 대체 지정만(R35-10)</span>
+  <b class="k">SELECT</b> s.bom_line_id, s.substitute_item_code, s.priority, s.qty_ratio, s.auto_trigger
+  <b class="k">FROM</b>   mbdev.bom_substitute s
+  <b class="k">WHERE</b>  s.tenant_id = :tenant_id <b class="k">AND</b> <b class="k">NOT</b> s.is_deleted <b class="k">AND</b> s.status = &#x27;APPROVED&#x27;
+    <b class="k">AND</b>  s.valid_from &lt;= :as_of <b class="k">AND</b> (s.valid_to <b class="k">IS NULL</b> <b class="k">OR</b> s.valid_to &gt;= :as_of)
+),
+parts <b class="k">AS</b> (                                     <span class="c">-- ④ 원본 줄 + 대체 줄을 한 목록으로</span>
+  <b class="k">SELECT</b> t.lvl, t.path, t.parent_item_code, t.bom_no, t.source_bom_no, t.line_no, t.source_line_no,
+         t.item_code <b class="k">AS</b> original_item_code, t.item_code <b class="k">AS</b> part_code, &#x27;ORIGINAL&#x27;::varchar <b class="k">AS</b> role,
+         0::smallint <b class="k">AS</b> sub_priority, t.qty_per, t.cum_qty <b class="k">AS</b> required_qty,
+         t.is_phantom, t.substitution_policy, <b class="k">NULL</b>::varchar <b class="k">AS</b> auto_trigger
+  <b class="k">FROM</b>   tree t <b class="k">WHERE</b> <b class="k">NOT</b> t.is_cycle
+  <b class="k">UNION ALL</b>
+  <b class="k">SELECT</b> t.lvl, t.path, t.parent_item_code, t.bom_no, t.source_bom_no, t.line_no, t.source_line_no,
+         t.item_code, s.substitute_item_code, &#x27;SUBSTITUTE&#x27;, s.priority, t.qty_per, t.cum_qty * s.qty_ratio,
+         t.is_phantom, t.substitution_policy, s.auto_trigger
+  <b class="k">FROM</b>   tree t <b class="k">JOIN</b> subs s <b class="k">ON</b> s.bom_line_id = t.line_id
+  <b class="k">WHERE</b>  <b class="k">NOT</b> t.is_cycle <b class="k">AND</b> t.substitution_policy &lt;&gt; &#x27;NONE&#x27;
+),
+stock <b class="k">AS</b> (                                     <span class="c">-- ⑤ 가용 재고 — 판정 대기 · 격리 · 폐기 창고는 뺀다</span>
+  <b class="k">SELECT</b> sb.item_code, <b class="k">SUM</b>(sb.on_hand_qty) <b class="k">AS</b> on_hand_qty, <b class="k">SUM</b>(sb.allocated_qty) <b class="k">AS</b> allocated_qty,
+         <b class="k">SUM</b>(sb.available_qty) <b class="k">AS</b> available_qty
+  <b class="k">FROM</b>   mbpur.stock_balance sb
+  <b class="k">JOIN</b>   mbpur.warehouse w <b class="k">ON</b> w.tenant_id = sb.tenant_id <b class="k">AND</b> w.warehouse_code = sb.warehouse_code
+  <b class="k">WHERE</b>  sb.tenant_id = :tenant_id <b class="k">AND</b> <b class="k">NOT</b> sb.is_deleted
+    <b class="k">AND</b>  w.is_active <b class="k">AND</b> <b class="k">NOT</b> w.is_quality_hold <b class="k">AND</b> w.warehouse_kind <b class="k">NOT</b> <b class="k">IN</b> (&#x27;QUARANTINE&#x27;,&#x27;SCRAP&#x27;)
+  <b class="k">GROUP</b>  <b class="k">BY</b> sb.item_code
+),
+open_po <b class="k">AS</b> (                                   <span class="c">-- ⑥ 미입고 발주 잔량 · 가장 이른 납기 · 가장 늦은 납기</span>
+  <b class="k">SELECT</b> l.item_code,
+         <b class="k">SUM</b>(l.order_qty - l.received_qty)                <b class="k">AS</b> open_po_qty,
+         <b class="k">MIN</b>(<b class="k">COALESCE</b>(l.delivery_date, h.delivery_date)) <b class="k">AS</b> next_due_date,
+         <b class="k">MAX</b>(<b class="k">COALESCE</b>(l.delivery_date, h.delivery_date)) <b class="k">AS</b> last_due_date,
+         <b class="k">COUNT</b>(DISTINCT h.po_no)                          <b class="k">AS</b> open_po_count
+  <b class="k">FROM</b>   mbpur.purchase_order_line l
+  <b class="k">JOIN</b>   mbpur.purchase_order h <b class="k">ON</b> h.tenant_id = l.tenant_id <b class="k">AND</b> h.po_no = l.po_no
+  <b class="k">WHERE</b>  l.tenant_id = :tenant_id <b class="k">AND</b> <b class="k">NOT</b> l.is_deleted <b class="k">AND</b> <b class="k">NOT</b> h.is_deleted
+    <b class="k">AND</b>  h.status <b class="k">IN</b> (&#x27;ISSUED&#x27;,&#x27;ACKNOWLEDGED&#x27;,&#x27;PARTIAL&#x27;)
+    <b class="k">AND</b>  l.order_qty &gt; l.received_qty
+  <b class="k">GROUP</b>  <b class="k">BY</b> l.item_code
+),
+lead <b class="k">AS</b> (                                      <span class="c">-- ⑦ 조달 기간 — 승인 공급사 거래조건 중 가장 짧은 것</span>
+  <b class="k">SELECT</b> item_code, <b class="k">MIN</b>(lead_time_days) <b class="k">AS</b> lead_time_days
+  <b class="k">FROM</b>   mbpur.vendor_buying_terms
+  <b class="k">WHERE</b>  tenant_id = :tenant_id <b class="k">AND</b> <b class="k">NOT</b> is_deleted <b class="k">AND</b> is_approved_vendor
+    <b class="k">AND</b>  effective_from &lt;= :as_of <b class="k">AND</b> (effective_to <b class="k">IS NULL</b> <b class="k">OR</b> effective_to &gt;= :as_of)
+  <b class="k">GROUP</b>  <b class="k">BY</b> item_code
+)
+<b class="k">SELECT</b> p.lvl,
+       repeat(&#x27;  &#x27;, p.lvl - 1) || p.part_code                    <b class="k">AS</b> tree_view,
+       p.parent_item_code, p.bom_no, p.line_no,
+       p.source_bom_no  <b class="k">AS</b> ebom_no, p.source_line_no <b class="k">AS</b> ebom_line_no, eb.child_item_code <b class="k">AS</b> ebom_item_code,
+       p.role, p.sub_priority, p.original_item_code, p.part_code, i.item_name,
+       i.lifecycle_status, i.supply_risk_grade, i.last_time_buy_date,
+       p.qty_per, p.required_qty,
+       <b class="k">COALESCE</b>(st.on_hand_qty, 0)   <b class="k">AS</b> on_hand_qty,
+       <b class="k">COALESCE</b>(st.available_qty, 0) <b class="k">AS</b> available_qty,
+       <b class="k">COALESCE</b>(po.open_po_qty, 0)   <b class="k">AS</b> open_po_qty,
+       po.next_due_date, po.last_due_date, ld.lead_time_days,
+       <b class="k">GREATEST</b>(p.required_qty - <b class="k">COALESCE</b>(st.available_qty, 0) - <b class="k">COALESCE</b>(po.open_po_qty, 0), 0) <b class="k">AS</b> uncovered_qty,
+       p.is_phantom, p.substitution_policy, p.auto_trigger
+<b class="k">FROM</b>   parts p
+<b class="k">JOIN</b>   mbcore.item i <b class="k">ON</b> i.tenant_id = :tenant_id <b class="k">AND</b> i.item_code = p.part_code
+<b class="k">LEFT</b>   <b class="k">JOIN</b> mbdev.bom eb <b class="k">ON</b> eb.tenant_id = :tenant_id <b class="k">AND</b> eb.bom_no = p.source_bom_no
+                        <b class="k">AND</b> eb.line_no = p.source_line_no <b class="k">AND</b> <b class="k">NOT</b> eb.is_deleted     <span class="c">-- MBOM 줄의 원본 EBOM 줄</span>
+<b class="k">LEFT</b>   <b class="k">JOIN</b> stock   st <b class="k">ON</b> st.item_code = p.part_code
+<b class="k">LEFT</b>   <b class="k">JOIN</b> open_po po <b class="k">ON</b> po.item_code = p.part_code
+<b class="k">LEFT</b>   <b class="k">JOIN</b> lead    ld <b class="k">ON</b> ld.item_code = p.part_code
+<b class="k">ORDER</b>  <b class="k">BY</b> p.path, (p.role = &#x27;SUBSTITUTE&#x27;), p.sub_priority;</pre></figure>
+<p><b>결과 모양(예시 · 가상 수치)</b> — :root_item = SM-100, :bom_kind = MBOM, :build_qty = 1,000</p>
+<div class="tw"><table class=""><colgroup><col style="width:5%"><col style="width:15%"><col style="width:13%"><col style="width:12%"><col style="width:8%"><col style="width:9%"><col style="width:9%"><col style="width:11%"><col style="width:9%"><col style="width:9%"></colgroup><thead><tr><th>lvl</th><th>tree_view</th><th>role</th><th>원본 EBOM 줄</th><th>소요</th><th>가용 재고</th><th>발주 잔량</th><th>가장 이른 납기</th><th>조달 기간</th><th>미충족</th></tr></thead><tbody>
+<tr><td>1</td><td>PCBA-100</td><td>ORIGINAL</td><td>EB-100/10</td><td>1,000</td><td>120</td><td>0</td><td>—</td><td>—</td><td>880</td></tr>
+<tr><td>2</td><td>&nbsp;&nbsp;MCU-A</td><td>ORIGINAL</td><td>EB-PCBA/10</td><td>1,000</td><td>300</td><td>0</td><td>—</td><td>— (단종)</td><td>700</td></tr>
+<tr><td>2</td><td>&nbsp;&nbsp;MCU-B</td><td>SUBSTITUTE · 1</td><td>EB-PCBA/10</td><td>1,000</td><td>1,500</td><td>0</td><td>—</td><td>35일</td><td>0</td></tr>
+<tr><td>2</td><td>&nbsp;&nbsp;C-10uF</td><td>ORIGINAL</td><td>EB-PCBA/20</td><td>12,000</td><td>2,000</td><td>20,000</td><td>2026-11-20</td><td>84일</td><td>0</td></tr>
+<tr><td>2</td><td>&nbsp;&nbsp;C-10uF-B</td><td>SUBSTITUTE · 1</td><td>EB-PCBA/20</td><td>12,000</td><td>15,000</td><td>0</td><td>—</td><td>21일</td><td>0</td></tr>
+<tr><td>2</td><td>&nbsp;&nbsp;C-10uF-C</td><td>SUBSTITUTE · 2</td><td>EB-PCBA/20</td><td>12,000</td><td>14,000</td><td>0</td><td>—</td><td>28일</td><td>0</td></tr>
+<tr><td>1</td><td>CASE-100</td><td>ORIGINAL</td><td>EB-100/20</td><td>1,000</td><td>4,200</td><td>0</td><td>—</td><td>14일</td><td>0</td></tr>
+<tr><td>1</td><td>PKG-BOX</td><td>ORIGINAL</td><td>(제조 추가)</td><td>1,000</td><td>9,000</td><td>0</td><td>—</td><td>7일</td><td>0</td></tr>
+</tbody></table></div>
+<div class="note">Q1 의 미충족은 <b>이 루트 하나만</b> 볼 때의 값이다. 같은 부품을 원하는 다른 계획 오더까지 함께 따지는 것은 MRP 의 누적 순소요다(6.2). 순환 점검은 Q1 의 마지막 SELECT 만 바꾸면 된다(Q1-c).</div>
+<figure class="code"><figcaption>Q1-c. 순환 점검</figcaption><pre><span class="c">-- Q1-c. 순환 점검 — Q1 의 tree 를 그대로 두고 마지막 <b class="k">SELECT</b> 만 바꾼다</span>
+<b class="k">SELECT</b> lvl, parent_item_code, item_code, bom_no, line_no, cycle_path
+<b class="k">FROM</b>   tree
+<b class="k">WHERE</b>  is_cycle;</pre></figure>
+<h3 id="t52">5.2 Q2 — MBOM 과 원본 EBOM 줄 대조</h3>
+<figure class="code"><figcaption>Q2. MBOM ↔ 원본 EBOM</figcaption><pre><span class="c">-- Q2. 제조 BOM 한 벌과 그 원본 설계 BOM 을 줄 단위로 대조 (이관 누락 · 품목 바뀜 · 수량 바뀜)</span>
+<span class="c">-- 입력  :tenant_id uuid · :mbom_no varchar</span>
+<b class="k">WITH</b> m <b class="k">AS</b> (
+  <b class="k">SELECT</b> bom_no, source_bom_no <b class="k">FROM</b> mbdev.bom_master
+  <b class="k">WHERE</b>  tenant_id = :tenant_id <b class="k">AND</b> bom_no = :mbom_no <b class="k">AND</b> bom_kind = &#x27;MBOM&#x27; <b class="k">AND</b> <b class="k">NOT</b> is_deleted
+),
+ml <b class="k">AS</b> (<b class="k">SELECT</b> b.* <b class="k">FROM</b> mbdev.bom b <b class="k">JOIN</b> m <b class="k">ON</b> b.bom_no = m.bom_no        <b class="k">WHERE</b> b.tenant_id = :tenant_id <b class="k">AND</b> <b class="k">NOT</b> b.is_deleted),
+el <b class="k">AS</b> (<b class="k">SELECT</b> b.* <b class="k">FROM</b> mbdev.bom b <b class="k">JOIN</b> m <b class="k">ON</b> b.bom_no = m.source_bom_no <b class="k">WHERE</b> b.tenant_id = :tenant_id <b class="k">AND</b> <b class="k">NOT</b> b.is_deleted)
+<b class="k">SELECT</b> el.line_no <b class="k">AS</b> ebom_line_no, ml.line_no <b class="k">AS</b> mbom_line_no,
+       el.child_item_code <b class="k">AS</b> ebom_item, ml.child_item_code <b class="k">AS</b> mbom_item,
+       el.quantity <b class="k">AS</b> ebom_qty, ml.quantity <b class="k">AS</b> mbom_qty,
+       <b class="k">CASE</b> <b class="k">WHEN</b> ml.id <b class="k">IS NULL</b>                              <b class="k">THEN</b> &#x27;EBOM_ONLY&#x27;     <span class="c">-- 이관되지 않은 설계 줄</span>
+            <b class="k">WHEN</b> el.id <b class="k">IS NULL</b>                              <b class="k">THEN</b> &#x27;MBOM_ADDED&#x27;    <span class="c">-- 제조가 더한 줄(공정 자재 등)</span>
+            <b class="k">WHEN</b> ml.child_item_code &lt;&gt; el.child_item_code   <b class="k">THEN</b> &#x27;ITEM_CHANGED&#x27;
+            <b class="k">WHEN</b> ml.quantity &lt;&gt; el.quantity                 <b class="k">THEN</b> &#x27;QTY_CHANGED&#x27;
+            <b class="k">ELSE</b> &#x27;SAME&#x27; <b class="k">END</b> <b class="k">AS</b> diff
+<b class="k">FROM</b>   ml <b class="k">FULL</b> <b class="k">JOIN</b> el <b class="k">ON</b> el.line_no = ml.source_line_no
+<b class="k">ORDER</b>  <b class="k">BY</b> <b class="k">COALESCE</b>(el.line_no, ml.line_no), ml.line_no;</pre></figure>
+<h3 id="t53">5.3 Q5 — 대체 부품이 들어간 완성품 로트 추적</h3>
+<p>대체 부품에 품질 문제가 생기면 그 부품이 들어간 모든 상위 로트를 찾아야 한다. <span class="mono">lot_substitution</span> 이 「어느 생산 로트에 대체가 들어갔나」를 알려 주고, <span class="mono">lot_genealogy</span> 를 재귀로 올라가 완성품 · 출하 로트까지 닿는다.</p>
+<figure class="code"><figcaption>Q5. 대체 부품 → 완성품 로트</figcaption><pre><span class="c">-- Q5. 대체 부품이 들어간 로트를 완성품까지 따라 올라간다 — 리콜 · 품질 이상 범위</span>
+<span class="c">-- 입력  :tenant_id uuid · :substitute_item varchar</span>
+<b class="k">WITH RECURSIVE</b>
+start <b class="k">AS</b> (                                     <span class="c">-- 대체를 적용해 만든 생산 로트</span>
+  <b class="k">SELECT</b> ls.lot_no, ls.wo_no, ls.original_item_code, ls.substitute_item_code, ls.substitution_reason
+  <b class="k">FROM</b>   mbmfg.lot_substitution ls
+  <b class="k">WHERE</b>  ls.tenant_id = :tenant_id <b class="k">AND</b> <b class="k">NOT</b> ls.is_deleted
+    <b class="k">AND</b>  ls.status = &#x27;APPLIED&#x27; <b class="k">AND</b> ls.lot_no <b class="k">IS NOT NULL</b>
+    <b class="k">AND</b>  ls.substitute_item_code = :substitute_item
+),
+up (lot_no, depth, via_wo, path) <b class="k">AS</b> (
+  <b class="k">SELECT</b> s.lot_no, 0, s.wo_no, ARRAY[s.lot_no]::varchar[] <b class="k">FROM</b> start s
+  <b class="k">UNION ALL</b>                                    <span class="c">-- 투입(부모) 로트 → 결과(자식) 로트로 올라간다</span>
+  <b class="k">SELECT</b> g.child_lot_no, u.depth + 1, g.wo_no, u.path || g.child_lot_no
+  <b class="k">FROM</b>   up u
+  <b class="k">JOIN</b>   mbmfg.lot_genealogy g <b class="k">ON</b> g.tenant_id = :tenant_id <b class="k">AND</b> g.parent_lot_no = u.lot_no
+                              <b class="k">AND</b> <b class="k">NOT</b> g.is_deleted <b class="k">AND</b> g.relation_kind <b class="k">IN</b> (&#x27;CONSUME&#x27;,&#x27;SPLIT&#x27;,&#x27;MERGE&#x27;,&#x27;REWORK&#x27;,&#x27;REPACK&#x27;)
+  <b class="k">WHERE</b>  u.depth &lt; 20
+) <b class="k">CYCLE</b> lot_no <b class="k">SET</b> is_cycle <b class="k">USING</b> cyc
+<b class="k">SELECT</b> u.path[1] <b class="k">AS</b> substituted_lot, u.lot_no <b class="k">AS</b> reached_lot, u.depth, l.item_code, i.item_type,
+       l.status <b class="k">AS</b> lot_status, l.produced_at
+<b class="k">FROM</b>   up u
+<b class="k">JOIN</b>   mbmfg.lot  l <b class="k">ON</b> l.tenant_id = :tenant_id <b class="k">AND</b> l.lot_no = u.lot_no
+<b class="k">JOIN</b>   mbcore.item i <b class="k">ON</b> i.tenant_id = :tenant_id <b class="k">AND</b> i.item_code = l.item_code
+<b class="k">WHERE</b>  <b class="k">NOT</b> u.is_cycle
+<b class="k">ORDER</b>  <b class="k">BY</b> substituted_lot, u.depth, u.lot_no;</pre></figure>
+<h2 id="t6">6. 로트 단위 자동 대체 — MRP 안에서</h2>
+<figure class="svg"><svg viewBox="0 0 1060 400" width="100%" role="img" aria-label="로트 단위 자동 대체 판정 흐름">
+<defs><marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0L10,5L0,10z" fill="#12315c"/></marker></defs>
+<style>.s{fill:#fff;stroke:#12315c;stroke-width:1.4}.d{fill:#fdf8ec;stroke:#b8860b;stroke-width:1.4}.g{fill:#f3faf5;stroke:#2e7d5b;stroke-width:1.6}
+.p{fill:#eef6ff;stroke:#2d6cb5;stroke-width:1.6}.x{fill:#fdf0ee;stroke:#c0392b;stroke-width:1.6}
+.t{font:12.5px 'Malgun Gothic',sans-serif;fill:#16181d}.tb{font:600 12.5px 'Malgun Gothic',sans-serif;fill:#12315c}.a{stroke:#12315c;stroke-width:1.3;fill:none;marker-end:url(#a2)}
+.l{font:11.5px 'Malgun Gothic',sans-serif;fill:#5a6b80}</style>
+<rect class="s" x="16" y="30" width="170" height="64" rx="8"/><text class="tb" x="30" y="56">MRP 실행</text><text class="t" x="30" y="78">확정 MPS · 매일</text>
+<rect class="s" x="216" y="30" width="190" height="64" rx="8"/><text class="tb" x="230" y="56">②·⑧ 단계별 전개</text><text class="t" x="230" y="78">LLC 순 + 가상 통과</text>
+<rect class="s" x="436" y="30" width="200" height="64" rx="8"/><text class="tb" x="450" y="56">④ ~ ⑤ 누적 순소요</text><text class="t" x="450" y="78">원본 확보 예정일</text>
+<rect class="d" x="666" y="22" width="200" height="80" rx="8"/><text class="tb" x="680" y="48">⑤ 사유가 서나?</text><text class="t" x="680" y="70">EOL: 단종 + 못 채움</text><text class="t" x="680" y="90">LEAD_TIME: 확보 > 필요 + 허용</text>
+<rect class="s" x="896" y="30" width="150" height="64" rx="8"/><text class="tb" x="910" y="56">원본 그대로</text><text class="t" x="910" y="78">계획 오더만</text>
+<path class="a" d="M186,62 L214,62"/><path class="a" d="M406,62 L434,62"/><path class="a" d="M636,62 L664,62"/><path class="a" d="M866,62 L894,62"/><text class="l" x="881" y="14" text-anchor="middle">아니오</text>
+<rect class="d" x="600" y="150" width="330" height="80" rx="8"/><text class="tb" x="614" y="176">⑥ 승인 대체 중 필요일 안 확보?</text>
+<text class="t" x="614" y="198">APPROVED · 유효기간 · 정책 ≠ NONE</text><text class="t" x="614" y="218">순위 순 · 필요일 순으로 대체 재고 배분</text>
+<path class="a" d="M766,102 L766,148"/><text class="l" x="774" y="130">예</text>
+<rect class="d" x="330" y="280" width="260" height="80" rx="8"/><text class="tb" x="344" y="306">자리의 자동 대체 사유가</text><text class="t" x="344" y="328">판정 사유와 맞나? (BOTH 포함)</text>
+<rect class="x" x="720" y="290" width="320" height="64" rx="8"/><text class="tb" x="734" y="316">부족 예외 → MPS 확정</text><text class="t" x="734" y="338">대체 지정 요청 · 긴급 구매 · 일정 조정</text>
+<path class="a" d="M765,232 L765,288"/><text class="l" x="773" y="264">없음</text>
+<path class="a" d="M620,232 C560,250 500,250 470,278"/><text class="l" x="520" y="262">있음</text>
+<rect class="g" x="16" y="250" width="270" height="56" rx="8"/><text class="tb" x="30" y="274">PLANNED — 자동 대체 계획</text><text class="t" x="30" y="294">작업지시 발행이 APPLIED 로</text>
+<rect class="p" x="16" y="320" width="270" height="56" rx="8"/><text class="tb" x="30" y="344">PROPOSED — 사람 확인 대기</text><text class="t" x="30" y="364">확인 뒤 작업지시 변경으로 적용</text>
+<path class="a" d="M330,305 L288,285"/><text class="l" x="296" y="276">예</text><path class="a" d="M330,335 L288,345"/><text class="l" x="296" y="360">아니오</text>
+</svg><figcaption>동그라미 번호는 MRP 함수(6.2)의 단계. MRP 한 번이 한 트랜잭션이며, 같은 계획 오더 · 같은 자리에 살아 있는 대체가 있으면 다시 만들지 않는다(R35-07 을 계획 단계까지 넓힌 부분 유일 인덱스).</figcaption></figure>
+<h3 id="t61">6.1 판정 규칙</h3>
+<div class="tw"><table class=""><colgroup><col style="width:14%"><col style="width:72%"><col style="width:14%"></colgroup><thead><tr><th>단계</th><th>규칙</th><th>근거</th></tr></thead><tbody>
+<tr><td>대상</td><td>확정 MPS 로 MRP 가 만든 제조 계획 오더(= 앞으로의 생산 로트)의 BOM 자리 중 필요일이 계획 범위(:horizon_days) 안인 것. 이미 작업지시로 전환돼 착수한 로트는 고정</td><td>R35-08 · R36-02</td></tr>
+<tr><td>소요</td><td>상위 제조 계획 오더의 계획 수량 × 구성 수량 × (1 + 공손율). 가상 구성은 통과해 아래 부품의 소요로 센다. 하위 단계 번호(LLC) 순으로 풀어 앞 단계의 제조 계획 오더가 다음 단계의 총소요가 된다</td><td>MRP ② · ⑧</td></tr>
+<tr><td>원본 확보 예정일</td><td>필요일 순으로 누적 수요를 쌓고, 가용 재고(기준일) + 미입고 발주(납기일) + 생산 중 잔량의 누적 공급이 필요일까지 그 누적 수요를 채우는지 본다. 못 채우면 오늘 + 조달 기간. 단종(OBSOLETE) · 최종 구매일 경과 · 승인 공급사 없음이면 없음(NULL)</td><td>MRP ④ · ⑤</td></tr>
+<tr><td>EOL 사유</td><td>원본이 EOL · OBSOLETE 이거나 위험 등급 EOL_ANNOUNCED · OBSOLETE 이고, 원본이 필요일까지 이 로트 몫을 못 채울 때. <b>남은 원본 재고로 채워지는 로트는 원본을 먼저 소진한다</b></td><td>MRP ⑤</td></tr>
+<tr><td>LEAD_TIME 사유</td><td>원본 확보 예정일이 없거나 필요일 + 허용 지연 일수보다 늦을 때</td><td>MRP ⑤ · ⑥</td></tr>
+<tr><td>후보</td><td>그 자리에 APPROVED 이고 필요일이 유효기간 안인 대체 지정. 자리 정책이 NONE 이면 후보 없음</td><td>R35-02 · R35-10</td></tr>
+<tr><td>선택</td><td>대체 부품 공급으로 필요일까지 <b>로트 몫 전량</b>(소요 × 대체 수량 비율)을 채우는 후보 중 순위가 가장 앞선 하나. 로트를 필요일 순으로 하나씩 고르고, 고른 대체 수량을 공급에서 빼 두므로 같은 대체 재고를 두 로트가 함께 잡지 않는다. 같은 단계에서 대체 부품 자신이 원본으로 쓰일 몫도 먼저 뺀다</td><td>MRP ⑥</td></tr>
+<tr><td>적용</td><td>자리의 자동 대체 사유가 판정 사유와 맞으면(BOTH 포함) PLANNED — 작업지시 발행이 APPLIED 로 확정한다. 아니면 PROPOSED — 사람이 확인한 뒤 작업지시 변경(FL0006005)으로 적용</td><td>R35-11 · R36-06</td></tr>
+<tr><td>기록</td><td>판정 입력값 원본을 decision_basis 에, 판정한 MRP 실행 · 계획 오더를 run_no · planned_order_no 에 남긴다 — 뒤에 재고가 바뀌어도 같은 판정을 되살린다. 대체한 자리의 계획 오더는 대체 부품 · 계획 수량 0(재고로 채움) · 예외 LATE 로 적는다</td><td>R35-09 · R36-08</td></tr>
+<tr><td>예외</td><td>사유는 섰는데 고른 후보가 없으면 계획 오더의 부족 예외(SHORTAGE · EOL · NO_SOURCE)로 MPS 확정(FL0006002)에 돌아간다 — 대체 지정 요청(FL0001022) · 긴급 구매 · 일정 조정</td><td>6.3 · R36-07</td></tr>
+</tbody></table></div>
+<div class="warn"><b>v1.1 과 달라진 점.</b> v1.1 의 Q3 는 집합 한 번으로 판정해 같은 대체 재고를 두 작업지시가 원하면 뒤쪽을 빼고 <b>새 기록이 0 이 될 때까지 되풀이</b>했다. MRP 함수는 로트를 필요일 순으로 하나씩 고르고 고른 대체 수량을 공급에서 빼 두므로 한 번의 실행으로 끝난다. 다만 원본이 부족해 대체로 넘긴 로트에 배분됐던 원본 재고는 이번 실행에서 다른 로트에 다시 나눠 주지 않는다 — 다음 실행(입력이 바뀌면)에서 반영된다(9장).</div>
+<h3 id="t62">6.2 MRP 함수 — mbpur.run_mrp (v1.1 의 Q3 를 대신한다)</h3>
+<div class="tw"><table class=""><colgroup><col style="width:16%"><col style="width:84%"></colgroup><thead><tr><th>단계</th><th>하는 일</th></tr></thead><tbody>
+<tr><td>시작</td><td>테넌트마다 한 번에 하나(권고 잠금). MPS 가 확정(CONFIRMED) 버전이 아니면 멈춘다(R36-02)</td></tr>
+<tr><td>① 입력 해시</td><td>MPS 줄 · 재고 · 미입고 발주 · 게시 MBOM · 승인 대체 지정 · 조달 기간을 해시로 묶는다. 같은 해시의 완료 실행이 있으면 그 실행 번호를 돌려주고 끝(R36-03)</td></tr>
+<tr><td>기준 자료</td><td>기준일에 유효한 MBOM 한 벌(품목마다) · 가용 재고(판정 대기 · 격리 · 폐기 창고 제외) · 미입고 발주 · 생산 중 작업지시 잔량 · 승인 공급사 중 가장 짧은 조달 기간</td></tr>
+<tr><td>② LLC</td><td>WITH RECURSIVE + <b>CYCLE</b> 로 MPS 품목에서 끝까지 내려가 품목마다 가장 깊은 단계를 구한다(순환 가지는 멈춘다 — R35-12)</td></tr>
+<tr><td>③ 0단계 총소요</td><td>확정 MPS 줄 — 필요일은 MPS 기간의 시작일</td></tr>
+<tr><td>④ 누적 순소요</td><td>이 단계 품목의 소요를 필요일 순으로 세워 공급을 차례로 배분한다. 순소요를 로트 크기 · 최소 발주량으로 올리고, 필요일에서 조달 기간(구매) · 생산 소요 일수(제조)를 빼 발주 · 착수 필요일을 낸다</td></tr>
+<tr><td>⑤ 확보 · 예외</td><td>확보 예정일과 예외 구분(NONE · SHORTAGE · EOL · NO_SOURCE)</td></tr>
+<tr><td>⑥ 로트 단위 대체</td><td>6.1 의 선택 규칙 — 로트 몫 전량 · 필요일 순 · 대체 재고 배분</td></tr>
+<tr><td>⑦ 기록</td><td>계획 오더(대체한 자리는 대체 부품 · 계획 수량 0 · LATE) · 로트 단위 대체(PLANNED · PROPOSED, 작업지시 번호는 비움)</td></tr>
+<tr><td>⑧ 다음 단계</td><td>제조 계획 오더의 한 단계 구성을 다음 단계 총소요로(가상 구성은 통과)</td></tr>
+<tr><td>⑨ 마감</td><td>앞선 실행의 PLANNED 계획 오더 · 작업지시 전 대체를 CANCELLED 로, 앞선 실행을 SUPERSEDED 로(R36-04). FIRMED · CONVERTED 는 그대로</td></tr>
+</tbody></table></div>
+<figure class="code"><figcaption>MRP 함수 — 확정 MPS 한 버전 → 계획 오더 · 로트 단위 대체 계획 · 부족 예외 (한 트랜잭션)</figcaption><pre><span class="c">-- MRP 실행 — 기준생산계획(MPS) 확정 버전 하나를 입력으로 계획 오더 · 로트 단위 대체 계획 · 부족 예외를 만든다(한 트랜잭션)</span>
+<span class="c">-- 순서 : 입력 해시 → 하위 단계 번호(LLC) → 0단계 총소요(MPS) → 단계마다 [필요일 순 차감 → 로트 크기 → 조달 기간 역산 → 대체 → 계획 오더 → 다음 단계 총소요]</span>
+<b class="k">CREATE OR REPLACE FUNCTION</b> mbpur.run_mrp(p_tenant uuid, p_mps_version integer, p_as_of timestamptz,
+                                         p_horizon_days int, p_agent_run uuid)
+<b class="k">RETURNS</b> varchar LANGUAGE plpgsql <b class="k">AS</b> $fn$
+<b class="k">DECLARE</b>
+  v_day  date := p_as_of::date;
+  v_run  varchar := &#x27;MRP-&#x27; || p_mps_version || &#x27;-&#x27; || to_char(p_as_of, &#x27;YYYYMMDDHH24MISS&#x27;);
+  v_hash varchar;  v_prev varchar;  v_lvl smallint;  v_max smallint;  r record;  x record;
+<b class="k">BEGIN</b>
+  <b class="k">PERFORM</b> pg_advisory_xact_lock(hashtextextended(&#x27;mrp:&#x27; || p_tenant::text, 0));       <span class="c">-- 테넌트마다 한 번에 하나</span>
+  <b class="k">PERFORM</b> 1 <b class="k">FROM</b> mbmfg.production_plan
+   <b class="k">WHERE</b> tenant_id = p_tenant <b class="k">AND</b> plan_version = p_mps_version <b class="k">AND</b> status = &#x27;CONFIRMED&#x27; <b class="k">LIMIT</b> 1;
+  <b class="k">IF</b> <b class="k">NOT</b> <b class="k">FOUND</b> <b class="k">THEN</b> <b class="k">RAISE EXCEPTION</b> &#x27;MPS % 는 확정 전이다(R36-02)&#x27;, p_mps_version; <b class="k">END</b> <b class="k">IF</b>;
+
+  <span class="c">-- ① 입력 해시 — 같은 입력이면 앞선 실행을 돌려준다(R36-03)</span>
+  <b class="k">SELECT</b> md5(string_agg(k, &#x27;|&#x27; <b class="k">ORDER BY</b> k)) <b class="k">INTO</b> v_hash <b class="k">FROM</b> (
+    <b class="k">SELECT</b> &#x27;P:&#x27; || id || &#x27;:&#x27; || planned_qty <b class="k">FROM</b> mbmfg.production_plan <b class="k">WHERE</b> tenant_id = p_tenant <b class="k">AND</b> plan_version = p_mps_version
+    <b class="k">UNION ALL</b> <b class="k">SELECT</b> &#x27;S:&#x27; || item_code || &#x27;:&#x27; || sum(available_qty) <b class="k">FROM</b> mbpur.stock_balance <b class="k">WHERE</b> tenant_id = p_tenant <b class="k">AND</b> <b class="k">NOT</b> is_deleted <b class="k">GROUP BY</b> item_code
+    <b class="k">UNION ALL</b> <b class="k">SELECT</b> &#x27;O:&#x27; || l.po_no || &#x27;:&#x27; || l.line_no || &#x27;:&#x27; || (l.order_qty - l.received_qty) || &#x27;:&#x27; || coalesce(l.delivery_date::text, &#x27;&#x27;)
+              <b class="k">FROM</b> mbpur.purchase_order_line l <b class="k">WHERE</b> l.tenant_id = p_tenant <b class="k">AND</b> <b class="k">NOT</b> l.is_deleted <b class="k">AND</b> l.order_qty &gt; l.received_qty
+    <b class="k">UNION ALL</b> <b class="k">SELECT</b> &#x27;B:&#x27; || bom_no || &#x27;:&#x27; || status <b class="k">FROM</b> mbdev.bom_master <b class="k">WHERE</b> tenant_id = p_tenant <b class="k">AND</b> bom_kind = &#x27;MBOM&#x27; <b class="k">AND</b> status = &#x27;RELEASED&#x27;
+    <b class="k">UNION ALL</b> <b class="k">SELECT</b> &#x27;X:&#x27; || id || &#x27;:&#x27; || status || &#x27;:&#x27; || priority <b class="k">FROM</b> mbdev.bom_substitute <b class="k">WHERE</b> tenant_id = p_tenant <b class="k">AND</b> status = &#x27;APPROVED&#x27;
+    <b class="k">UNION ALL</b> <b class="k">SELECT</b> &#x27;L:&#x27; || item_code || &#x27;:&#x27; || party_code || &#x27;:&#x27; || coalesce(lead_time_days, -1) <b class="k">FROM</b> mbpur.vendor_buying_terms
+              <b class="k">WHERE</b> tenant_id = p_tenant <b class="k">AND</b> is_approved_vendor <b class="k">AND</b> <b class="k">NOT</b> is_deleted) q(k);
+  <b class="k">SELECT</b> run_no <b class="k">INTO</b> v_prev <b class="k">FROM</b> mbpur.mrp_run
+   <b class="k">WHERE</b> tenant_id = p_tenant <b class="k">AND</b> input_hash = v_hash <b class="k">AND</b> status = &#x27;COMPLETED&#x27; <b class="k">AND</b> <b class="k">NOT</b> is_deleted;
+  <b class="k">IF</b> v_prev <b class="k">IS NOT NULL</b> <b class="k">THEN</b> <b class="k">RETURN</b> v_prev; <b class="k">END</b> <b class="k">IF</b>;
+  <b class="k">INSERT INTO</b> mbpur.mrp_run (tenant_id, id, run_no, mps_plan_version, plan_period, as_of, horizon_days, input_hash,
+                             input_summary, agent_run_id, planned_order_count, exception_count, status)
+  <b class="k">SELECT</b> p_tenant, uuidv7(), v_run, p_mps_version, min(plan_period), p_as_of, p_horizon_days, v_hash,
+         jsonb_build_object(&#x27;mps_lines&#x27;, count(*), &#x27;as_of&#x27;, p_as_of), p_agent_run, 0, 0, &#x27;RUNNING&#x27;
+  <b class="k">FROM</b> mbmfg.production_plan <b class="k">WHERE</b> tenant_id = p_tenant <b class="k">AND</b> plan_version = p_mps_version;
+
+  <span class="c">-- 기준 자료 — 기준 시각에 유효한 MBOM · 가용 재고 · 입고 예정 · 조달 기간 · 로트 크기</span>
+  <b class="k">CREATE TEMP TABLE</b> t_bom <b class="k">ON</b> <b class="k">COMMIT</b> DROP <b class="k">AS</b>
+    <b class="k">SELECT</b> <b class="k">DISTINCT ON</b> (m.parent_item_code) m.parent_item_code, m.bom_no
+    <b class="k">FROM</b> mbdev.bom_master m
+    <b class="k">WHERE</b> m.tenant_id = p_tenant <b class="k">AND</b> <b class="k">NOT</b> m.is_deleted <b class="k">AND</b> m.bom_kind = &#x27;MBOM&#x27; <b class="k">AND</b> m.status <b class="k">IN</b> (&#x27;RELEASED&#x27;,&#x27;SUPERSEDED&#x27;)
+      <b class="k">AND</b> m.effective_from &lt;= v_day <b class="k">AND</b> (m.effective_to <b class="k">IS NULL</b> <b class="k">OR</b> m.effective_to &gt;= v_day)
+    <b class="k">ORDER BY</b> m.parent_item_code, m.effective_from DESC;
+  <b class="k">CREATE TEMP TABLE</b> t_supply <b class="k">ON</b> <b class="k">COMMIT</b> DROP <b class="k">AS</b>                          <span class="c">-- 품목별 공급 시점(재고는 기준일)</span>
+    <b class="k">SELECT</b> sb.item_code, v_day <b class="k">AS</b> supply_date, sum(sb.available_qty) <b class="k">AS</b> qty
+    <b class="k">FROM</b> mbpur.stock_balance sb <b class="k">JOIN</b> mbpur.warehouse w <b class="k">ON</b> w.tenant_id = sb.tenant_id <b class="k">AND</b> w.warehouse_code = sb.warehouse_code
+    <b class="k">WHERE</b> sb.tenant_id = p_tenant <b class="k">AND</b> <b class="k">NOT</b> sb.is_deleted <b class="k">AND</b> w.is_active <b class="k">AND</b> <b class="k">NOT</b> w.is_quality_hold <b class="k">AND</b> w.warehouse_kind <b class="k">NOT</b> <b class="k">IN</b> (&#x27;QUARANTINE&#x27;,&#x27;SCRAP&#x27;)
+    <b class="k">GROUP BY</b> sb.item_code
+    <b class="k">UNION ALL</b>
+    <b class="k">SELECT</b> l.item_code, coalesce(l.delivery_date, h.delivery_date, DATE &#x27;9999-12-31&#x27;), l.order_qty - l.received_qty
+    <b class="k">FROM</b> mbpur.purchase_order_line l <b class="k">JOIN</b> mbpur.purchase_order h <b class="k">ON</b> h.tenant_id = l.tenant_id <b class="k">AND</b> h.po_no = l.po_no
+    <b class="k">WHERE</b> l.tenant_id = p_tenant <b class="k">AND</b> <b class="k">NOT</b> l.is_deleted <b class="k">AND</b> h.status <b class="k">IN</b> (&#x27;ISSUED&#x27;,&#x27;ACKNOWLEDGED&#x27;,&#x27;PARTIAL&#x27;) <b class="k">AND</b> l.order_qty &gt; l.received_qty
+    <b class="k">UNION ALL</b>
+    <b class="k">SELECT</b> wo.item_code, wo.planned_end::date, wo.order_qty                <span class="c">-- 생산 중 작업지시 잔량(단순화: 완료 전 지시 수량)</span>
+    <b class="k">FROM</b> mbmfg.work_order wo <b class="k">WHERE</b> wo.tenant_id = p_tenant <b class="k">AND</b> <b class="k">NOT</b> wo.is_deleted <b class="k">AND</b> wo.status <b class="k">IN</b> (&#x27;RELEASED&#x27;,&#x27;RUNNING&#x27;,&#x27;PAUSED&#x27;);
+  <b class="k">CREATE TEMP TABLE</b> t_lead <b class="k">ON</b> <b class="k">COMMIT</b> DROP <b class="k">AS</b>
+    <b class="k">SELECT</b> <b class="k">DISTINCT ON</b> (item_code) item_code, party_code, lead_time_days, moq
+    <b class="k">FROM</b> mbpur.vendor_buying_terms
+    <b class="k">WHERE</b> tenant_id = p_tenant <b class="k">AND</b> <b class="k">NOT</b> is_deleted <b class="k">AND</b> is_approved_vendor
+      <b class="k">AND</b> effective_from &lt;= v_day <b class="k">AND</b> (effective_to <b class="k">IS NULL</b> <b class="k">OR</b> effective_to &gt;= v_day)
+    <b class="k">ORDER BY</b> item_code, lead_time_days NULLS LAST;
+
+  <span class="c">-- ② 하위 단계 번호 — 모든 MBOM 에서 품목이 나오는 가장 깊은 단계(R35-12 : 순환은 <b class="k">CYCLE</b> 로 멈춘다)</span>
+  <b class="k">CREATE TEMP TABLE</b> t_llc <b class="k">ON</b> <b class="k">COMMIT</b> DROP <b class="k">AS</b>
+  <b class="k">WITH RECURSIVE</b> walk (item_code, lvl) <b class="k">AS</b> (
+    <b class="k">SELECT</b> DISTINCT p.item_code, 0 <b class="k">FROM</b> mbmfg.production_plan p <b class="k">WHERE</b> p.tenant_id = p_tenant <b class="k">AND</b> p.plan_version = p_mps_version
+    <b class="k">UNION ALL</b>
+    <b class="k">SELECT</b> b.child_item_code, w.lvl + 1
+    <b class="k">FROM</b> walk w <b class="k">JOIN</b> t_bom e <b class="k">ON</b> e.parent_item_code = w.item_code
+    <b class="k">JOIN</b> mbdev.bom b <b class="k">ON</b> b.tenant_id = p_tenant <b class="k">AND</b> b.bom_no = e.bom_no <b class="k">AND</b> <b class="k">NOT</b> b.is_deleted
+    <b class="k">WHERE</b> w.lvl &lt; 30
+  ) <b class="k">CYCLE</b> item_code <b class="k">SET</b> is_cycle <b class="k">USING</b> path
+  <b class="k">SELECT</b> item_code, max(lvl)::smallint <b class="k">AS</b> llc <b class="k">FROM</b> walk <b class="k">WHERE</b> <b class="k">NOT</b> is_cycle <b class="k">GROUP BY</b> item_code;
+
+  <span class="c">-- ③ 0단계 총소요 = MPS 확정 줄</span>
+  <b class="k">CREATE TEMP TABLE</b> t_gross (item_code varchar, required_date date, qty numeric, peg_plan_id uuid,
+                             parent_po varchar, bom_line_id uuid) <b class="k">ON</b> <b class="k">COMMIT</b> DROP;
+  <b class="k">INSERT INTO</b> t_gross
+  <b class="k">SELECT</b> p.item_code, cp.start_date, p.planned_qty, p.id, <b class="k">NULL</b>, <b class="k">NULL</b>                 <span class="c">-- MPS 기간의 시작일이 필요일</span>
+  <b class="k">FROM</b> mbmfg.production_plan p
+  <b class="k">JOIN</b> mbcore.calendar_period cp <b class="k">ON</b> cp.tenant_id = p.tenant_id <b class="k">AND</b> cp.period_code = p.plan_period
+  <b class="k">WHERE</b> p.tenant_id = p_tenant <b class="k">AND</b> p.plan_version = p_mps_version <b class="k">AND</b> p.status = &#x27;CONFIRMED&#x27; <b class="k">AND</b> p.planned_qty &gt; 0;
+
+  <b class="k">SELECT</b> max(llc) <b class="k">INTO</b> v_max <b class="k">FROM</b> t_llc;
+  <b class="k">FOR</b> v_lvl <b class="k">IN</b> 0 .. coalesce(v_max, 0) <b class="k">LOOP</b>
+    <span class="c">-- ④ 이 단계 품목의 소요를 필요일 순으로 세우고 재고 · 입고 예정을 차례로 배분한다(누적 순소요)</span>
+    <b class="k">CREATE TEMP TABLE</b> t_net <b class="k">ON</b> <b class="k">COMMIT</b> DROP <b class="k">AS</b>
+    <b class="k">WITH</b> g <b class="k">AS</b> (
+      <b class="k">SELECT</b> gr.*, row_number() <b class="k">OVER</b> () <b class="k">AS</b> rid <b class="k">FROM</b> t_gross gr <b class="k">JOIN</b> t_llc l <b class="k">ON</b> l.item_code = gr.item_code <b class="k">AND</b> l.llc = v_lvl
+    ), dcum <b class="k">AS</b> (
+      <b class="k">SELECT</b> g.*, sum(qty) <b class="k">OVER</b> (<b class="k">PARTITION</b> <b class="k">BY</b> item_code <b class="k">ORDER BY</b> required_date, rid <b class="k">ROWS</b> <b class="k">UNBOUNDED</b> <b class="k">PRECEDING</b>) <b class="k">AS</b> cum_d
+      <b class="k">FROM</b> g
+    )
+    <b class="k">SELECT</b> d.*,
+           coalesce((<b class="k">SELECT</b> sum(s.qty) <b class="k">FROM</b> t_supply s <b class="k">WHERE</b> s.item_code = d.item_code <b class="k">AND</b> s.supply_date &lt;= d.required_date), 0) <b class="k">AS</b> sup_by_due,
+           i.lifecycle_status, i.supply_risk_grade, i.last_time_buy_date, i.uom_code <b class="k">AS</b> item_uom,
+           (<b class="k">EXISTS</b> (<b class="k">SELECT</b> 1 <b class="k">FROM</b> t_bom e <b class="k">WHERE</b> e.parent_item_code = d.item_code)) <b class="k">AS</b> is_made,
+           ld.party_code, ld.lead_time_days, coalesce(sp.lot_size_qty, ld.moq, 0) <b class="k">AS</b> lot_size,
+           coalesce(sp.lead_time_days, 1) <b class="k">AS</b> make_days
+    <b class="k">FROM</b> dcum d
+    <b class="k">JOIN</b> mbcore.item i <b class="k">ON</b> i.tenant_id = p_tenant <b class="k">AND</b> i.item_code = d.item_code
+    <b class="k">LEFT</b> <b class="k">JOIN</b> t_lead ld <b class="k">ON</b> ld.item_code = d.item_code
+    <b class="k">LEFT</b> <b class="k">JOIN</b> <b class="k">LATERAL</b> (<b class="k">SELECT</b> lot_size_qty, lead_time_days <b class="k">FROM</b> mbpur.stock_policy
+                       <b class="k">WHERE</b> tenant_id = p_tenant <b class="k">AND</b> item_code = d.item_code <b class="k">AND</b> is_active <b class="k">LIMIT</b> 1) sp <b class="k">ON</b> true;
+    <b class="k">ALTER TABLE</b> t_net <b class="k">ADD COLUMN</b> net numeric, <b class="k">ADD COLUMN</b> planned numeric, <b class="k">ADD COLUMN</b> release date,
+                      <b class="k">ADD COLUMN</b> ready date, <b class="k">ADD COLUMN</b> exc varchar, <b class="k">ADD COLUMN</b> po_no varchar, <b class="k">ADD COLUMN</b> sub_item varchar,
+                      <b class="k">ADD COLUMN</b> sub_id uuid, <b class="k">ADD COLUMN</b> sub_reason varchar, <b class="k">ADD COLUMN</b> auto_ok boolean, <b class="k">ADD COLUMN</b> sub_ratio numeric;
+    <b class="k">UPDATE</b> t_net <b class="k">SET</b> net = greatest(0, least(qty, cum_d - sup_by_due));                       <span class="c">-- 이 소요 몫의 부족분</span>
+    <b class="k">UPDATE</b> t_net <b class="k">SET</b> planned = <b class="k">CASE</b> <b class="k">WHEN</b> net = 0 <b class="k">THEN</b> 0
+                                    <b class="k">WHEN</b> lot_size &gt; 0 <b class="k">THEN</b> ceil(net / lot_size) * lot_size <b class="k">ELSE</b> net <b class="k">END</b>,
+                     release = required_date - <b class="k">CASE</b> <b class="k">WHEN</b> is_made <b class="k">THEN</b> make_days <b class="k">ELSE</b> coalesce(lead_time_days, 0) <b class="k">END</b>,
+                     po_no   = v_run || &#x27;-&#x27; || v_lvl || &#x27;-&#x27; || lpad(rid::text, 6, &#x27;0&#x27;);
+    <span class="c">-- ⑤ 확보 가능 여부 · 예외 — 늦게 풀리는 구매, 살 수 없는 원본(단종 · 최종 구매일 경과 · 공급사 없음)</span>
+    <b class="k">UPDATE</b> t_net <b class="k">SET</b>
+      ready = <b class="k">CASE</b> <b class="k">WHEN</b> net = 0 <b class="k">THEN</b> required_date
+                   <b class="k">WHEN</b> is_made <b class="k">THEN</b> greatest(required_date, v_day + make_days)
+                   <b class="k">WHEN</b> lifecycle_status = &#x27;OBSOLETE&#x27; <b class="k">OR</b> supply_risk_grade = &#x27;OBSOLETE&#x27; <b class="k">OR</b> last_time_buy_date &lt; v_day
+                        <b class="k">OR</b> lead_time_days <b class="k">IS NULL</b> <b class="k">THEN</b> <b class="k">NULL</b>
+                   <b class="k">ELSE</b> greatest(required_date, v_day + lead_time_days) <b class="k">END</b>;
+    <b class="k">UPDATE</b> t_net <b class="k">SET</b> exc = <b class="k">CASE</b> <b class="k">WHEN</b> net = 0 <b class="k">OR</b> ready = required_date <b class="k">THEN</b> &#x27;NONE&#x27;
+                                <b class="k">WHEN</b> lifecycle_status <b class="k">IN</b> (&#x27;EOL&#x27;,&#x27;OBSOLETE&#x27;) <b class="k">OR</b> supply_risk_grade <b class="k">IN</b> (&#x27;EOL_ANNOUNCED&#x27;,&#x27;OBSOLETE&#x27;) <b class="k">THEN</b> &#x27;EOL&#x27;
+                                <b class="k">WHEN</b> lead_time_days <b class="k">IS NULL</b> <b class="k">AND</b> <b class="k">NOT</b> is_made <b class="k">THEN</b> &#x27;NO_SOURCE&#x27;
+                                <b class="k">ELSE</b> &#x27;SHORTAGE&#x27; <b class="k">END</b>;
+    <span class="c">-- ⑥ 로트 단위 대체 — 구매 부품의 부족 자리에서 승인 대체 가운데 필요일 안에 확보되는 가장 앞 순위(R35-10 · R35-11)</span>
+    <span class="c">--    · 로트(= 상위 제조 계획 오더) 한 자리의 소요 전량을 대체한다 — 로트 안에서 원본과 섞지 않는다(R35-06)</span>
+    <span class="c">--    · 필요일 · 소요 순서로 한 줄씩 고르고, 고른 대체 수량을 공급에서 음수로 빼 둔다 — 같은 대체 재고를 두 로트가 함께 잡지 않는다</span>
+    <b class="k">FOR</b> r <b class="k">IN</b> <b class="k">SELECT</b> * <b class="k">FROM</b> t_net n
+             <b class="k">WHERE</b> n.exc <b class="k">IN</b> (&#x27;EOL&#x27;,&#x27;SHORTAGE&#x27;) <b class="k">AND</b> <b class="k">NOT</b> n.is_made <b class="k">AND</b> n.bom_line_id <b class="k">IS NOT NULL</b> <b class="k">AND</b> n.parent_po <b class="k">IS NOT NULL</b>
+             <b class="k">ORDER BY</b> n.required_date, n.rid <b class="k">LOOP</b>
+      <b class="k">SELECT</b> s.* <b class="k">INTO</b> x <b class="k">FROM</b> mbdev.bom_substitute s
+      <b class="k">JOIN</b> mbdev.bom b <b class="k">ON</b> b.tenant_id = p_tenant <b class="k">AND</b> b.id = s.bom_line_id <b class="k">AND</b> b.substitution_policy &lt;&gt; &#x27;NONE&#x27;
+      <b class="k">WHERE</b> s.tenant_id = p_tenant <b class="k">AND</b> s.bom_line_id = r.bom_line_id <b class="k">AND</b> s.status = &#x27;APPROVED&#x27; <b class="k">AND</b> <b class="k">NOT</b> s.is_deleted
+        <b class="k">AND</b> s.valid_from &lt;= r.required_date <b class="k">AND</b> (s.valid_to <b class="k">IS NULL</b> <b class="k">OR</b> s.valid_to &gt;= r.required_date)
+        <b class="k">AND</b> (r.exc = &#x27;EOL&#x27; <b class="k">OR</b> r.ready <b class="k">IS NULL</b> <b class="k">OR</b> r.ready &gt; r.required_date + coalesce(s.lead_time_gap_days, 0))
+        <b class="k">AND</b> coalesce((<b class="k">SELECT</b> sum(su.qty) <b class="k">FROM</b> t_supply su                          <span class="c">-- 대체 부품 공급(앞서 고른 대체는 음수로 빠져 있다)</span>
+                      <b class="k">WHERE</b> su.item_code = s.substitute_item_code <b class="k">AND</b> su.supply_date &lt;= r.required_date), 0)
+          - coalesce((<b class="k">SELECT</b> sum(o.qty) <b class="k">FROM</b> t_net o                                <span class="c">-- 같은 단계에서 대체 부품 자신이 원본으로 쓰일 몫</span>
+                      <b class="k">WHERE</b> o.item_code = s.substitute_item_code <b class="k">AND</b> o.required_date &lt;= r.required_date), 0)
+            &gt;= r.qty * s.qty_ratio
+      <b class="k">ORDER BY</b> s.priority <b class="k">LIMIT</b> 1;
+      <b class="k">IF</b> <b class="k">FOUND</b> <b class="k">THEN</b>
+        <b class="k">UPDATE</b> t_net <b class="k">SET</b> sub_item = x.substitute_item_code, sub_id = x.id, sub_ratio = x.qty_ratio,
+                         sub_reason = <b class="k">CASE</b> <b class="k">WHEN</b> r.exc = &#x27;EOL&#x27; <b class="k">THEN</b> &#x27;EOL&#x27; <b class="k">ELSE</b> &#x27;LEAD_TIME&#x27; <b class="k">END</b>,
+                         auto_ok = x.auto_trigger <b class="k">IN</b> (<b class="k">CASE</b> <b class="k">WHEN</b> r.exc = &#x27;EOL&#x27; <b class="k">THEN</b> &#x27;EOL&#x27; <b class="k">ELSE</b> &#x27;LEAD_TIME&#x27; <b class="k">END</b>, &#x27;BOTH&#x27;),
+                         exc = &#x27;LATE&#x27;, planned = 0, ready = required_date                 <span class="c">-- 대체 재고로 채우므로 살 것이 없다</span>
+         <b class="k">WHERE</b> rid = r.rid;
+        <b class="k">INSERT INTO</b> t_supply <b class="k">VALUES</b> (x.substitute_item_code, r.required_date, -(r.qty * x.qty_ratio));
+      <b class="k">END</b> <b class="k">IF</b>;
+    <b class="k">END</b> <b class="k">LOOP</b>;
+    <span class="c">-- ⑦ 계획 오더 기록 — 대체한 자리는 대체 부품 · 대체 수량으로 적고 계획 수량 0(재고로 채움), 예외 구분 LATE(늦은 원본을 대체로 흡수)</span>
+    <b class="k">INSERT INTO</b> mbpur.mrp_planned_order (tenant_id, id, planned_order_no, run_no, order_kind, item_code, low_level_code,
+           gross_qty, allocated_stock_qty, allocated_receipt_qty, net_qty, planned_qty, uom_code, required_date, release_date,
+           ready_date, peg_plan_id, parent_planned_order_no, bom_line_id, party_code, exception_kind, exception_note, status)
+    <b class="k">SELECT</b> p_tenant, uuidv7(), po_no, v_run, <b class="k">CASE</b> <b class="k">WHEN</b> is_made <b class="k">THEN</b> &#x27;PRODUCTION&#x27; <b class="k">ELSE</b> &#x27;PURCHASE&#x27; <b class="k">END</b>,
+           coalesce(sub_item, item_code), v_lvl,
+           <b class="k">CASE</b> <b class="k">WHEN</b> sub_id <b class="k">IS NULL</b> <b class="k">THEN</b> qty <b class="k">ELSE</b> qty * sub_ratio <b class="k">END</b>,
+           <b class="k">CASE</b> <b class="k">WHEN</b> sub_id <b class="k">IS NULL</b> <b class="k">THEN</b> least(qty, greatest(0, sup_by_due - (cum_d - qty))) <b class="k">ELSE</b> qty * sub_ratio <b class="k">END</b>, 0,
+           <b class="k">CASE</b> <b class="k">WHEN</b> sub_id <b class="k">IS NULL</b> <b class="k">THEN</b> net <b class="k">ELSE</b> 0 <b class="k">END</b>, planned,
+           item_uom, required_date, release, ready, peg_plan_id, parent_po, bom_line_id, party_code, exc,
+           <b class="k">CASE</b> <b class="k">WHEN</b> exc <b class="k">NOT</b> <b class="k">IN</b> (&#x27;NONE&#x27;,&#x27;LATE&#x27;) <b class="k">THEN</b> net || &#x27; &#x27; || item_uom || &#x27; 이 &#x27; || required_date || &#x27; 까지 모자란다&#x27;
+                <b class="k">WHEN</b> sub_id <b class="k">IS NOT NULL</b> <b class="k">THEN</b> &#x27;원본 &#x27; || item_code || &#x27; 대신 대체 &#x27; || sub_item || &#x27; (&#x27; || sub_reason || &#x27;)&#x27; <b class="k">END</b>,
+           &#x27;PLANNED&#x27;
+    <b class="k">FROM</b> t_net <b class="k">WHERE</b> planned &gt; 0 <b class="k">OR</b> exc &lt;&gt; &#x27;NONE&#x27;;
+    <b class="k">INSERT INTO</b> mbmfg.lot_substitution (tenant_id, id, lot_sub_no, wo_no, planned_order_no, run_no, bom_line_id, bom_substitute_id,
+           original_item_code, substitute_item_code, original_qty, substitute_qty, uom_code, required_date, original_ready_date,
+           substitute_ready_date, substitution_reason, decision_basis, decided_by_kind, agent_run_id, status)
+    <b class="k">SELECT</b> p_tenant, uuidv7(), &#x27;LS-&#x27; || n.po_no, <b class="k">NULL</b>, n.parent_po, v_run, n.bom_line_id, n.sub_id,
+           n.item_code, n.sub_item, n.qty, n.qty * n.sub_ratio, n.item_uom, n.required_date,
+           <b class="k">CASE</b> <b class="k">WHEN</b> n.sub_reason = &#x27;EOL&#x27; <b class="k">THEN</b> <b class="k">NULL</b> <b class="k">ELSE</b> v_day + n.lead_time_days <b class="k">END</b>, n.required_date, n.sub_reason,
+           jsonb_build_object(&#x27;run&#x27;, v_run, &#x27;as_of&#x27;, p_as_of, &#x27;rule&#x27;, &#x27;R35-06 · R35-11 · R36-06&#x27;, &#x27;lot_qty&#x27;, n.qty, &#x27;short&#x27;, n.net,
+                              &#x27;lifecycle&#x27;, n.lifecycle_status, &#x27;risk&#x27;, n.supply_risk_grade, &#x27;auto_trigger&#x27;, s.auto_trigger),
+           &#x27;AGENT&#x27;, p_agent_run, <b class="k">CASE</b> <b class="k">WHEN</b> n.auto_ok <b class="k">THEN</b> &#x27;PLANNED&#x27; <b class="k">ELSE</b> &#x27;PROPOSED&#x27; <b class="k">END</b>
+    <b class="k">FROM</b> t_net n <b class="k">JOIN</b> mbdev.bom_substitute s <b class="k">ON</b> s.id = n.sub_id
+    <b class="k">WHERE</b> n.sub_id <b class="k">IS NOT NULL</b>
+    <b class="k">ON</b> <b class="k">CONFLICT</b> (tenant_id, planned_order_no, bom_line_id) <b class="k">WHERE</b> status <b class="k">IN</b> (&#x27;PLANNED&#x27;,&#x27;PROPOSED&#x27;,&#x27;APPLIED&#x27;) <b class="k">AND</b> <b class="k">NOT</b> is_deleted
+    <b class="k">DO NOTHING</b>;
+    <span class="c">-- ⑧ 다음 단계 총소요 — 제조 계획 오더의 한 단계 구성(가상 구성은 통과 — R35-12 순환은 ② 에서 이미 막았다)</span>
+    <b class="k">INSERT INTO</b> t_gross
+    <b class="k">WITH RECURSIVE</b> ex (parent_po, peg_plan_id, need_date, item_code, qty, bom_line_id, is_phantom, depth) <b class="k">AS</b> (
+      <b class="k">SELECT</b> n.po_no, n.peg_plan_id, n.release, b.child_item_code, n.planned * b.quantity * (1 + coalesce(b.scrap_rate, 0)),
+             b.id, b.is_phantom, 1
+      <b class="k">FROM</b> t_net n <b class="k">JOIN</b> t_bom e <b class="k">ON</b> e.parent_item_code = n.item_code
+      <b class="k">JOIN</b> mbdev.bom b <b class="k">ON</b> b.tenant_id = p_tenant <b class="k">AND</b> b.bom_no = e.bom_no <b class="k">AND</b> <b class="k">NOT</b> b.is_deleted
+      <b class="k">WHERE</b> n.is_made <b class="k">AND</b> n.planned &gt; 0
+      <b class="k">UNION ALL</b>
+      <b class="k">SELECT</b> x.parent_po, x.peg_plan_id, x.need_date, b.child_item_code, x.qty * b.quantity * (1 + coalesce(b.scrap_rate, 0)),
+             b.id, b.is_phantom, x.depth + 1
+      <b class="k">FROM</b> ex x <b class="k">JOIN</b> t_bom e <b class="k">ON</b> e.parent_item_code = x.item_code
+      <b class="k">JOIN</b> mbdev.bom b <b class="k">ON</b> b.tenant_id = p_tenant <b class="k">AND</b> b.bom_no = e.bom_no <b class="k">AND</b> <b class="k">NOT</b> b.is_deleted
+      <b class="k">WHERE</b> x.is_phantom <b class="k">AND</b> x.depth &lt; 10
+    )
+    <b class="k">SELECT</b> item_code, need_date, qty, peg_plan_id, parent_po, bom_line_id <b class="k">FROM</b> ex <b class="k">WHERE</b> <b class="k">NOT</b> is_phantom;
+    <b class="k">DROP TABLE</b> t_net;
+  <b class="k">END</b> <b class="k">LOOP</b>;
+
+  <span class="c">-- ⑨ 마감 — 옛 실행의 미확정 계획은 대체되고(R36-04) 이 실행을 완료로</span>
+  <b class="k">UPDATE</b> mbpur.mrp_planned_order o <b class="k">SET</b> status = &#x27;CANCELLED&#x27;
+   <b class="k">FROM</b> mbpur.mrp_run r
+   <b class="k">WHERE</b> r.tenant_id = p_tenant <b class="k">AND</b> r.run_no = o.run_no <b class="k">AND</b> r.run_no &lt;&gt; v_run <b class="k">AND</b> r.status = &#x27;COMPLETED&#x27; <b class="k">AND</b> o.status = &#x27;PLANNED&#x27;;
+  <b class="k">UPDATE</b> mbmfg.lot_substitution <b class="k">SET</b> status = &#x27;CANCELLED&#x27;
+   <b class="k">WHERE</b> tenant_id = p_tenant <b class="k">AND</b> run_no &lt;&gt; v_run <b class="k">AND</b> status <b class="k">IN</b> (&#x27;PLANNED&#x27;,&#x27;PROPOSED&#x27;) <b class="k">AND</b> wo_no <b class="k">IS NULL</b>;
+  <b class="k">UPDATE</b> mbpur.mrp_run <b class="k">SET</b> status = &#x27;SUPERSEDED&#x27;, superseded_by_run_no = v_run
+   <b class="k">WHERE</b> tenant_id = p_tenant <b class="k">AND</b> status = &#x27;COMPLETED&#x27; <b class="k">AND</b> run_no &lt;&gt; v_run <b class="k">AND</b> mps_plan_version = p_mps_version;
+  <b class="k">UPDATE</b> mbpur.mrp_run r <b class="k">SET</b> status = &#x27;COMPLETED&#x27;, completed_at = now(),
+         planned_order_count = (<b class="k">SELECT</b> count(*) <b class="k">FROM</b> mbpur.mrp_planned_order <b class="k">WHERE</b> tenant_id = p_tenant <b class="k">AND</b> run_no = v_run),
+         exception_count = (<b class="k">SELECT</b> count(*) <b class="k">FROM</b> mbpur.mrp_planned_order <b class="k">WHERE</b> tenant_id = p_tenant <b class="k">AND</b> run_no = v_run
+                                                                          <b class="k">AND</b> exception_kind <b class="k">NOT</b> <b class="k">IN</b> (&#x27;NONE&#x27;,&#x27;LATE&#x27;))
+   <b class="k">WHERE</b> r.tenant_id = p_tenant <b class="k">AND</b> r.run_no = v_run;
+  <b class="k">RETURN</b> v_run;
+<b class="k">END</b>
+$fn$;</pre></figure>
+<h3 id="t63">6.3 부족 예외 — MPS 확정으로 (v1.1 의 Q4 를 대신한다)</h3>
+<p>MRP 가 채우지 못한 소요는 계획 오더의 예외 구분으로 남고, MPS 확정(FL0006002)이 이 목록으로 수량 · 일정을 고치거나 예외를 승인한다. 예외가 남은 MPS 줄은 작업지시를 내지 않는다(R36-07).</p>
+<figure class="code"><figcaption>부족 예외 목록 — 최신 완료 실행 기준</figcaption><pre><span class="c">-- 부족 예외 — MPS 확정(FL0006002)이 조정할 목록(R36-07). 최신 완료 실행 기준</span>
+<b class="k">SELECT</b> o.planned_order_no, o.item_code, i.item_name, o.order_kind, o.exception_kind, o.net_qty, o.required_date, o.ready_date,
+       o.release_date, p.item_code <b class="k">AS</b> mps_item, p.plan_period, o.exception_note,
+       <b class="k">CASE</b> o.exception_kind
+            <b class="k">WHEN</b> &#x27;EOL&#x27;        <b class="k">THEN</b> &#x27;대체 지정 요청(FL0001022) 또는 MPS 수량 · 일정 조정&#x27;
+            <b class="k">WHEN</b> &#x27;NO_SOURCE&#x27;  <b class="k">THEN</b> &#x27;공급사 등록(FL0015005) 또는 MPS 조정&#x27;
+            <b class="k">WHEN</b> &#x27;RESCHEDULE&#x27; <b class="k">THEN</b> &#x27;기존 발주 납기 조정(FL0015012)&#x27;
+            <b class="k">ELSE</b> &#x27;긴급 구매 · MPS 일정 조정&#x27; <b class="k">END</b> <b class="k">AS</b> next_action
+<b class="k">FROM</b> mbpur.mrp_planned_order o
+<b class="k">JOIN</b> mbpur.mrp_run r <b class="k">ON</b> r.tenant_id = o.tenant_id <b class="k">AND</b> r.run_no = o.run_no <b class="k">AND</b> r.status = &#x27;COMPLETED&#x27;
+<b class="k">JOIN</b> mbmfg.production_plan p <b class="k">ON</b> p.tenant_id = o.tenant_id <b class="k">AND</b> p.id = o.peg_plan_id
+<b class="k">JOIN</b> mbcore.item i <b class="k">ON</b> i.tenant_id = o.tenant_id <b class="k">AND</b> i.item_code = o.item_code
+<b class="k">WHERE</b> o.tenant_id = :tenant_id <b class="k">AND</b> r.mps_plan_version = :mps_version
+  <b class="k">AND</b> o.exception_kind <b class="k">NOT</b> <b class="k">IN</b> (&#x27;NONE&#x27;,&#x27;LATE&#x27;) <b class="k">AND</b> o.status &lt;&gt; &#x27;CANCELLED&#x27;
+<b class="k">ORDER BY</b> o.required_date, p.plan_period, o.item_code;</pre></figure>
+<h3 id="t64">6.4 예시 — 판정이 어떻게 갈리는가 (가상 수치)</h3>
+<p>제조 계획 오더(작업지시로 전환되면 <span class="mono">WO-2610-0142</span>) · SM-100 스마트미터 1,000대 · 필요일 2026-10-12 · MRP 기준 2026-10-01</p>
+<div class="tw"><table class=""><colgroup><col style="width:5%"><col style="width:9%"><col style="width:7%"><col style="width:22%"><col style="width:9%"><col style="width:8%"><col style="width:26%"><col style="width:14%"></colgroup><thead><tr><th>자리</th><th>원본</th><th>소요</th><th>원본 상태</th><th>원본 확보</th><th>사유</th><th>후보 판정</th><th>결과</th></tr></thead><tbody>
+<tr><td><b>10</b></td><td><span class='mono'>MCU-A</span></td><td>1,000</td><td>단종 통보(EOL_ANNOUNCED) · 최종 구매일 경과 · 가용 300</td><td>확보 불가(NULL)</td><td>EOL</td><td>1순위 MCU-B — 가용 1,500 → 10-01 확보</td><td><b>PLANNED (자동 사유 BOTH) → 작업지시 발행 때 APPLIED</b></td></tr>
+<tr><td><b>20</b></td><td><span class='mono'>C-10uF</span></td><td>12,000</td><td>가용 2,000 · 발주 잔량 20,000(납기 11-20) · 허용 지연 7일</td><td>11-20</td><td>LEAD_TIME</td><td>1순위 C-10uF-B — 앞선 작업지시 5,000 + 이번 12,000 &gt; 가용 15,000 → 새 발주 21일 → 10-22 ✕ · 2순위 C-10uF-C — 가용 14,000 → 10-01 ✓</td><td><b>PLANNED (2순위 · 자동 사유 LEAD_TIME) → 작업지시 발행 때 APPLIED</b></td></tr>
+<tr><td><b>30</b></td><td><span class='mono'>CONN-5P</span></td><td>2,000</td><td>가용 0 · 발주 잔량 2,000(납기 10-25)</td><td>10-25</td><td>LEAD_TIME</td><td>자리 정책 NONE — 후보 없음</td><td><b>부족 예외(SHORTAGE) → MPS 확정 — 일정 조정 · 긴급 구매</b></td></tr>
+<tr><td><b>40</b></td><td><span class='mono'>R-4.7k</span></td><td>8,000</td><td>가용 50,000</td><td>10-01</td><td>—</td><td>판정 대상 아님</td><td><b>원본 그대로</b></td></tr>
+</tbody></table></div>
+<div class="note">자리 10 은 원본 재고 300개가 있어도 1,000대 로트를 다 못 채우므로 <b>로트 전량</b>을 MCU-B 로 바꾼다. MCU-A 300개는 남아 뒤 작업지시(예: 소량 수리 로트)가 쓴다. 자리 20 은 1순위 대체 재고를 필요일이 앞선 로트가 먼저 가져가(MRP ⑥ 이 공급에서 빼 둔다) 필요일 안에 못 들어오므로 2순위로 간다.</div>
+<h3 id="t65">6.5 작업지시 발행 — 확인 · 고정 (v1.2)</h3>
+<p>작업지시 발행(FL0006004)은 새로 판정하지 않는다. 제조 계획 오더를 작업지시로 한 번 전환하고, 부족 예외가 남은 MPS 줄이면 멈추고, PLANNED 대체를 APPLIED 로 확정한 뒤, 발행 직전 대체 부품의 가용이 MRP 기준 시각보다 줄었는지만 다시 본다 — 줄었으면 발행을 보류하고 MRP 재실행을 요청한다.</p>
+<figure class="code"><figcaption>작업지시 발행 — 계획 오더 전환 · 예외 확인 · 대체 확정 · 가용 재확인</figcaption><pre><span class="c">-- 작업지시 발행(FL0006004) — MRP 결과를 확인 · 고정만 한다(R36-01 · R36-06). 새로 계산하지 않는다</span>
+<span class="c">-- 입력 :tenant_id uuid · :planned_order_no varchar · :wo_no varchar(방금 등록한 작업지시)</span>
+<b class="k">BEGIN</b>;
+<span class="c">-- ① 전환 한 번(R36-05) — 제조 계획 오더를 작업지시로 전환</span>
+<b class="k">UPDATE</b> mbpur.mrp_planned_order
+   <b class="k">SET</b> status = &#x27;CONVERTED&#x27;, converted_doc_kind = &#x27;WO&#x27;, converted_doc_no = :wo_no, converted_at = now()
+ <b class="k">WHERE</b> tenant_id = :tenant_id <b class="k">AND</b> planned_order_no = :planned_order_no <b class="k">AND</b> order_kind <b class="k">IN</b> (&#x27;PRODUCTION&#x27;,&#x27;SUBCONTRACT&#x27;)
+   <b class="k">AND</b> status <b class="k">IN</b> (&#x27;PLANNED&#x27;,&#x27;FIRMED&#x27;);
+<span class="c">-- ② 부족 예외가 남은 MPS 줄이면 멈춘다(R36-07)</span>
+<b class="k">SELECT</b> count(*) <b class="k">AS</b> open_exceptions
+<b class="k">FROM</b> mbpur.mrp_planned_order c
+<b class="k">JOIN</b> mbpur.mrp_planned_order p <b class="k">ON</b> p.tenant_id = c.tenant_id <b class="k">AND</b> p.planned_order_no = :planned_order_no
+<b class="k">WHERE</b> c.tenant_id = :tenant_id <b class="k">AND</b> c.run_no = p.run_no <b class="k">AND</b> c.peg_plan_id = p.peg_plan_id
+  <b class="k">AND</b> c.exception_kind <b class="k">NOT</b> <b class="k">IN</b> (&#x27;NONE&#x27;,&#x27;LATE&#x27;) <b class="k">AND</b> c.status &lt;&gt; &#x27;CANCELLED&#x27;;
+<span class="c">-- ③ 계획된 대체를 확정 — PLANNED 는 적용, PROPOSED 는 사람 확인 뒤 적용(작업지시 변경 FL0006005)</span>
+<b class="k">UPDATE</b> mbmfg.lot_substitution
+   <b class="k">SET</b> status = &#x27;APPLIED&#x27;, wo_no = :wo_no, applied_at = now()
+ <b class="k">WHERE</b> tenant_id = :tenant_id <b class="k">AND</b> planned_order_no = :planned_order_no <b class="k">AND</b> status = &#x27;PLANNED&#x27;;
+<span class="c">-- ④ 발행 직전 가용성 재확인 — 대체 부품 · 원본의 가용이 MRP 기준 시각보다 줄었으면 MRP 재실행을 요청한다(판정은 MRP 가 다시 한다)</span>
+<b class="k">SELECT</b> ls.substitute_item_code, ls.substitute_qty, coalesce(sum(sb.available_qty), 0) <b class="k">AS</b> available_now
+<b class="k">FROM</b> mbmfg.lot_substitution ls
+<b class="k">LEFT</b> <b class="k">JOIN</b> mbpur.stock_balance sb <b class="k">ON</b> sb.tenant_id = ls.tenant_id <b class="k">AND</b> sb.item_code = ls.substitute_item_code <b class="k">AND</b> <b class="k">NOT</b> sb.is_deleted
+<b class="k">WHERE</b> ls.tenant_id = :tenant_id <b class="k">AND</b> ls.wo_no = :wo_no <b class="k">AND</b> ls.status = &#x27;APPLIED&#x27;
+<b class="k">GROUP BY</b> ls.substitute_item_code, ls.substitute_qty
+HAVING coalesce(sum(sb.available_qty), 0) &lt; ls.substitute_qty;           <span class="c">-- 행이 나오면 발행 보류 · MRP 재실행</span>
+<b class="k">COMMIT</b>;</pre></figure>
+<h2 id="t7">7. 업무코드와 처리 단계</h2>
+<p>업무코드는 새로 만들지 않는다. 대체 지정은 <b>설계(D01)</b>가, 로트 단위 판정은 <b>MRP(D15 FL0015001)</b>가, 확정 · 적용은 <b>제조(D06)</b>가 기존 업무코드 안에서 맡는다. 업무코드당 단계가 3 ~ 8개로 정해져 있고 FL0001022 는 이미 8단계이므로, <b>새 동작은 이미 있는 규칙 · 기록 · 승인 단계에 넣었다</b> — 실행 수단 · 단계 수 · 처리 순서가 그대로라 등록표 수치(스킬 756 · 도구 744 · 단계 3,837)도 바뀌지 않는다. 이 표의 내용은 업무스킬설계서 D01 v1.5 · D06 v1.6 · D10 v1.5 · D15 v1.8 · D16 v1.5 와 실행순서 v2.9 에 실었다.</p>
+<div class="tw"><table class=""><colgroup><col style="width:11%"><col style="width:12%"><col style="width:55%"><col style="width:22%"></colgroup><thead><tr><th>업무코드</th><th>업무</th><th>이 설계로 하는 일</th><th>쓰는 것</th></tr></thead><tbody>
+<tr><td><span class='mono'>FL0001006</span></td><td>부품 선정</td><td>부품을 고를 때 같은 자리의 대체 후보를 함께 정해 DRAFT 로 올린다</td><td>bom_substitute(C)</td></tr>
+<tr><td><span class='mono'>FL0001022</span></td><td>부품 단종 대응</td><td>단종 통보를 받으면 영향 받는 BOM 자리를 찾아(Q1 역방향) 대체 지정 초안 → 설계 변경 요청 → 승인(작성자 ≠ 승인자)</td><td>bom_substitute(C)</td></tr>
+<tr><td><span class='mono'>FL0001021</span></td><td>설계 변경 실행</td><td>승인된 변경으로 대체 지정의 상태 · 유효기간 · 순위를 바꾼다</td><td>bom_substitute(U)</td></tr>
+<tr><td><span class='mono'>FL0001023</span></td><td>제조 BOM 이관</td><td>MBOM 을 만들 때 source_bom_no · source_line_no 를 채우고, EBOM 자리의 승인 대체를 MBOM 자리로 DRAFT 복사 → 승인</td><td>bom_master · bom · bom_substitute(C)</td></tr>
+<tr><td><span class='mono'>FL0006001</span></td><td>기준생산계획(MPS) 수립</td><td>완제품만 계산한다 — 수요 · 수주 − 완제품 재고 − 생산 중 잔량 + 안전재고. 부품 전개는 하지 않는다</td><td>production_plan(C)</td></tr><tr><td><span class='mono'>FL0006003</span></td><td>능력 부하 검토</td><td>MPS 안의 작업장 부하를 확정 <b>앞에서</b> 본다</td><td>production_plan(U)</td></tr><tr><td><span class='mono'>FL0006002</span></td><td>기준생산계획(MPS) 확정</td><td>부하 검토를 통과한 MPS 를 확정해 MRP 에 넘기고, MRP 부족 예외(6.3)를 받아 재확정한다</td><td>production_plan(U) · mrp_planned_order(R)</td></tr><tr><td><span class='mono'>FL0015001</span></td><td>자재소요계획(MRP) 실행</td><td><b>판정은 여기서만</b> — MRP 함수(6.2)가 계획 오더와 로트 단위 대체 계획(PLANNED · PROPOSED) · 부족 예외를 만든다</td><td>mrp_run · mrp_planned_order · lot_substitution(C) · bom_substitute(R)</td></tr><tr><td><span class='mono'>FL0006004</span></td><td>작업지시 발행</td><td>제조 계획 오더를 작업지시로 전환하고 PLANNED 대체를 APPLIED 로 확정한다(6.5). 다시 판정하지 않는다</td><td>mrp_planned_order · lot_substitution(U)</td></tr>
+<tr><td><span class='mono'>FL0006005</span></td><td>작업지시 변경</td><td>PROPOSED 를 사람이 확인해 적용 · 착수 전 되돌림(원본 조기 입고 등). 재판정이 필요하면 MRP 재실행을 요청한다</td><td>lot_substitution(U)</td></tr>
+<tr><td><span class='mono'>FL0006006</span></td><td>작업지시 취소</td><td>살아 있는 판정을 CANCELLED 로 닫는다</td><td>lot_substitution(U)</td></tr>
+<tr><td><span class='mono'>FL0006011</span></td><td>로트 생성</td><td>생산 로트 번호를 lot_substitution.lot_no 에 채운다</td><td>lot_substitution(U)</td></tr>
+<tr><td><span class='mono'>FL0006007</span></td><td>라인 자재 청구</td><td>APPLIED 자리는 대체 부품 · 대체 소요량으로 청구한다</td><td>lot_substitution(R)</td></tr>
+<tr><td><span class='mono'>FL0016007</span></td><td>라인 출고 실행</td><td>R35-06 — 그 작업지시 · 자리의 허용 품목만 출고</td><td>lot_substitution · bom_substitute(R)</td></tr>
+<tr><td><span class='mono'>FL0010020</span></td><td>로트 계보 추적</td><td>Q5 — 대체가 들어간 로트를 완성품까지</td><td>lot_substitution(R)</td></tr>
+<tr><td><span class='mono'>FL0015002</span></td><td>구매요청 등록</td><td>구매 계획 오더를 근거로 구매요청을 내고 계획 오더를 전환 상태로 바꾼다</td><td>mrp_planned_order(U)</td></tr>
+<tr><td><span class='mono'>FL0015014</span></td><td>납기 관리</td><td>원본 발주의 납기 지연이 대체로 흡수된 건(예외 LATE)을 구분해 본다. 필요일은 최신 MRP 계획 오더에서 읽는다</td><td>lot_substitution · mrp_planned_order(R)</td></tr>
+</tbody></table></div>
+<h3 id="t71">7.1 언제 판정하나</h3>
+<div class="tw"><table class=""><colgroup><col style="width:28%"><col style="width:34%"><col style="width:38%"></colgroup><thead><tr><th>기동</th><th>범위</th><th>이유</th></tr></thead><tbody>
+<tr><td>MPS 확정(FL0006002) 직후</td><td>그 확정 버전 전체 — MRP 실행</td><td>계획이 정해지면 부품 · 대체도 한 번에 계산한다</td></tr>
+<tr><td>매일 정해진 시각</td><td>최신 확정 MPS — MRP 재실행(입력이 같으면 앞선 실행을 돌려준다)</td><td>재고 · 발주 · 납기가 매일 바뀐다</td></tr>
+<tr><td>품목 위험 등급 · 수명 상태 변경</td><td>MRP 재실행</td><td>단종 통보는 즉시 반영해야 한다</td></tr>
+<tr><td>발주 납기 변경 · 입고 수불</td><td>MRP 재실행</td><td>납기가 당겨지면 PLANNED 대체는 새 실행이 취소한다. 이미 APPLIED 인 것은 사람이 FL0006005 로 되돌린다</td></tr>
+<tr><td>작업지시 발행(FL0006004)</td><td>판정하지 않는다 — 확인 · 고정만(6.5)</td><td>계산을 두 번 하지 않는다(R36-01)</td></tr>
+</tbody></table></div>
+<h2 id="t8">8. 인덱스</h2>
+<figure class="code"><figcaption>조회 · 판정용 인덱스와 R35-07 부분 유일 인덱스</figcaption><pre><span class="c">-- 조회 · 판정이 기대는 인덱스 (공통 컬럼 tenant_id 를 앞에 둔다)</span>
+<b class="k">CREATE INDEX</b> ix_bom_master_eff   <b class="k">ON</b> mbdev.bom_master (tenant_id, parent_item_code, bom_kind, effective_from DESC)
+       <b class="k">WHERE</b> status <b class="k">IN</b> (&#x27;RELEASED&#x27;,&#x27;SUPERSEDED&#x27;) <b class="k">AND</b> <b class="k">NOT</b> is_deleted;
+<b class="k">CREATE UNIQUE INDEX</b> ux_bom_line  <b class="k">ON</b> mbdev.bom (tenant_id, bom_no, line_no) <b class="k">WHERE</b> <b class="k">NOT</b> is_deleted;
+<b class="k">CREATE UNIQUE INDEX</b> ux_bom_sub   <b class="k">ON</b> mbdev.bom_substitute (tenant_id, bom_line_id, substitute_item_code) <b class="k">WHERE</b> <b class="k">NOT</b> is_deleted;
+<b class="k">CREATE UNIQUE INDEX</b> ux_bom_sub_p <b class="k">ON</b> mbdev.bom_substitute (tenant_id, bom_line_id, priority) <b class="k">WHERE</b> <b class="k">NOT</b> is_deleted <b class="k">AND</b> status &lt;&gt; &#x27;REVOKED&#x27;;
+<b class="k">CREATE INDEX</b> ix_bom_sub_ok       <b class="k">ON</b> mbdev.bom_substitute (tenant_id, bom_line_id, priority) <b class="k">WHERE</b> status = &#x27;APPROVED&#x27; <b class="k">AND</b> <b class="k">NOT</b> is_deleted;
+<span class="c">-- R35-07 : 작업지시 · BOM 자리마다 살아 있는 판정은 하나 (<b class="k">ON</b> <b class="k">CONFLICT</b> 의 대상)</span>
+<b class="k">CREATE UNIQUE INDEX</b> ux_lot_sub_live <b class="k">ON</b> mbmfg.lot_substitution (tenant_id, wo_no, bom_line_id)
+       <b class="k">WHERE</b> status <b class="k">IN</b> (&#x27;PROPOSED&#x27;,&#x27;APPLIED&#x27;) <b class="k">AND</b> <b class="k">NOT</b> is_deleted;
+<b class="k">CREATE INDEX</b> ix_po_line_open     <b class="k">ON</b> mbpur.purchase_order_line (tenant_id, item_code) <b class="k">WHERE</b> order_qty &gt; received_qty <b class="k">AND</b> <b class="k">NOT</b> is_deleted;
+<b class="k">CREATE INDEX</b> ix_stock_item       <b class="k">ON</b> mbpur.stock_balance (tenant_id, item_code) <b class="k">WHERE</b> <b class="k">NOT</b> is_deleted;</pre></figure>
+<figure class="code"><figcaption>MRP 원장 인덱스 · R36-03 · R36-05 · R35-07 을 계획 단계까지 넓힌 부분 유일 인덱스</figcaption><pre><b class="k">CREATE UNIQUE INDEX</b> ux_mrp_run_hash   <b class="k">ON</b> mbpur.mrp_run (tenant_id, input_hash) <b class="k">WHERE</b> status = &#x27;COMPLETED&#x27; <b class="k">AND</b> <b class="k">NOT</b> is_deleted;   <span class="c">-- R36-03</span>
+<b class="k">CREATE INDEX</b>        ix_mrp_po_item     <b class="k">ON</b> mbpur.mrp_planned_order (tenant_id, item_code, required_date) <b class="k">WHERE</b> status <b class="k">IN</b> (&#x27;PLANNED&#x27;,&#x27;FIRMED&#x27;);
+<b class="k">CREATE INDEX</b>        ix_mrp_po_peg      <b class="k">ON</b> mbpur.mrp_planned_order (tenant_id, peg_plan_id);
+<b class="k">CREATE UNIQUE INDEX</b> ux_mrp_po_conv     <b class="k">ON</b> mbpur.mrp_planned_order (tenant_id, converted_doc_kind, converted_doc_no) <b class="k">WHERE</b> converted_doc_no <b class="k">IS NOT NULL</b>;  <span class="c">-- R36-05</span>
+<span class="c">-- R35-07 을 계획 단계까지 넓힌다: 생산 로트(계획 오더)의 한 BOM 자리에 살아 있는 대체는 하나</span>
+<b class="k">CREATE UNIQUE INDEX</b> ux_lot_sub_plan_live <b class="k">ON</b> mbmfg.lot_substitution (tenant_id, planned_order_no, bom_line_id)
+       <b class="k">WHERE</b> status <b class="k">IN</b> (&#x27;PLANNED&#x27;,&#x27;PROPOSED&#x27;,&#x27;APPLIED&#x27;) <b class="k">AND</b> <b class="k">NOT</b> is_deleted;</pre></figure>
+<h2 id="t9">9. 한계와 검증 범위</h2>
+<div class="tw"><table class=""><colgroup><col style="width:16%"><col style="width:50%"><col style="width:34%"></colgroup><thead><tr><th>항목</th><th>지금</th><th>보완</th></tr></thead><tbody>
+<tr><td>DBMS 실행</td><td><b>SQL 은 작성만 했고 실행하지 않았다</b>(지시에 따른 제외). 문법 · 실행 계획 · 성능은 확인되지 않았다</td><td>실행 검증 단계에서 가상 BOM(5단 · 순환 포함)과 재고 · 발주 시나리오로 확인</td></tr>
+<tr><td>사업장</td><td>재고 · 발주를 테넌트 전체로 합쳐 본다(발주에 사업장 칸이 없다)</td><td>사업장 간 이동이 제약이면 stock_balance 를 작업지시 사업장 창고로 좁히는 선택 조건을 둔다</td></tr>
+<tr><td>단위</td><td>BOM 라인 단위 = 품목 기본 단위로 가정</td><td>다르면 mbcore.uom_con버전으로 환산하는 단계를 ④ 앞에 둔다</td></tr>
+<tr><td>부분 대체</td><td>로트 안 혼용은 허용하지 않는다(요구 · R35-06)</td><td>필요하면 자리 단위 예외 칸을 따로 설계 — 지금은 두지 않는다</td></tr>
+<tr><td>UUID 생성</td><td><span class="mono">uuidv7()</span> 은 PostgreSQL 18 내장 함수</td><td>그 아래 버전이면 플랫폼의 UUIDv7 함수로 바꾼다</td></tr>
+<tr><td>부속 표</td><td>부속 표 4종 · 제5부 상관관계에 실었다(DB 테이블설계서 v3.20)</td><td>10장</td></tr>
+<tr><td>MRP 능력</td><td>MRP 는 능력을 무한으로 본다. 작업장 능력은 MPS 쪽(능력 부하 검토 · 확정)에서 맞춘다</td><td>세부 일정(작업장 순서)은 작업지시 뒤 공정 계획이 맡는다</td></tr>
+<tr><td>원본 재배분</td><td>대체로 넘긴 로트에 배분됐던 원본 재고는 같은 실행에서 다른 로트에 다시 나눠 주지 않는다</td><td>다음 MRP 실행에서 반영된다. 필요하면 대체 확정 뒤 원본 몫을 되돌리는 2차 배분 단계를 둔다</td></tr>
+<tr><td>생산 중 잔량</td><td>완료 전 작업지시의 지시 수량 전체를 입고 예정으로 본다(완료 수량을 빼지 않는다)</td><td>작업 실적 수량 칸으로 잔량을 계산하는 식으로 바꾼다</td></tr>
+</tbody></table></div>
+<h2 id="t10">10. 함께 고친 문서</h2><div class="note"><b>v1.2 에서 함께 고친 것.</b> DB 테이블설계서 v3.21 · 부속 표 4종(한글명 v3.3 · 매핑 v3.4 · 커버리지 v3.4 · 상관관계 v3.3) · 관계도 v2.2 · 설계방향서 v2.6 · 코드체계 v3.17 · 업무스킬설계서 D06 v1.6 · D15 v1.8 · 실행순서 v2.9 · Intent SLM v4.4 · 설계지시문 v5.15(제12.10조).</div><div class="note"><b>v1.1 에서 바뀐 것.</b> v1.0 이 「남음」으로 둔 세 건(부속 표 4종 · 설계방향서 배치표 · 관계도)을 반영했고, 설계지시문 v5.14 가 이 설계를 <b>제12.9조</b>로 조문화하면서 이 문서를 산출물 S-22 로 정했다. 설계 내용 · SQL · 규칙은 v1.0 과 같다.</div>
+<div class="tw"><table class=""><colgroup><col style="width:34%"><col style="width:8%"><col style="width:58%"></colgroup><thead><tr><th>문서</th><th>상태</th><th>내용</th></tr></thead><tbody>
+<tr><td>업무스킬설계서 D01 v1.5 · D06 v1.5 · D10 v1.5 · D15 v1.7 · D16 v1.5 (docx)</td><td>반영(v1.0 · v1.1 때)</td><td>업무코드 13건 — 단계 설명 22 · 절차 요약 6 · 담당자 유의 2 · 결속 항목 2. FL0006004 4단계는 「대체·승인 경로 판정」이 된다</td></tr>
+<tr><td>업무코드 스킬 · 로직도구 실행순서 v2.7</td><td>반영(v1.0 · v1.1 때)</td><td>같은 칸 16곳을 등록표에서 옮겼다. 등록 수치는 v2.6 과 같다</td></tr>
+<tr><td>부속 표 4종 · DB 테이블설계서 v3.20 제5부</td><td>반영(v1.0 · v1.1 때)</td><td>신설 2 DB Table 의 대응 17쌍 · 외래키 16건. 부속 표는 제4부에서 다시 만들어 한글명매핑 14,823행 · 업무코드매핑 2,837행 · 상관관계분석표 1,627행(외래키 1,520)이 되었다</td></tr>
+<tr><td>DB 설계방향서 v2.5 배치표</td><td>반영(v1.0 · v1.1 때)</td><td>bom_substitute = 구조·저작, lot_substitution = 값 — 구조·저작 35 · 값 455 · 합계 547</td></tr>
+<tr><td>업무영역 · DB 관계도 v2.1</td><td>반영(v1.0 · v1.1 때)</td><td>547 DB Table · 관계 1,627 로 그래프를 다시 계산</td></tr><tr><td>설계지시문 v5.14 · 코드체계 설계서 v3.16</td><td>반영(v1.0 · v1.1 때)</td><td>제12.9조(8개 항) · 부속서 AK · 인수 기준 A-41 / 대체가 얹힌 업무코드 안내</td></tr>
+<tr><td>DB 테이블설계서 v3.21</td><td><b>반영</b></td><td>제0AB부 — MRP 원장 2 DB Table · 칸 8 · R36 · 업무코드 이름 3건 · 커버리지 재판정 2건. DB Table 549 · 외래키 1,533 · 대응 2,831쌍</td></tr>
+<tr><td>부속 표 4종 v3.3 ~ v3.4 · 관계도 v2.2 · 설계방향서 v2.6</td><td><b>반영</b></td><td>한글명매핑 14,900행 · 업무코드매핑 2,851행 · 상관관계분석표 1,640행(외래키 1,533) · 값 평면 +2</td></tr>
+<tr><td>업무스킬설계서 D06 v1.6 · D15 v1.8 · 실행순서 v2.9</td><td><b>반영</b></td><td>업무코드 7건의 이름 · 절차 요약 · 단계 문장 · 분기 · 결속. 등록 수치(스킬 756 · 도구 744 · 단계 3,837 · 칸 4,442)는 그대로</td></tr>
+<tr><td>코드체계 v3.17 · Intent SLM v4.4 · 설계지시문 v5.15</td><td><b>반영</b></td><td>이름 · 산출물 · 완료 기준 · 선행 / 카탈로그 이름 / 제12.10조 · 부속서 AL · 인수 기준 A-42</td></tr>
+</tbody></table></div>
+<footer>MyBee BOM 대체부품 · 로트 단위 자동 대체 설계서 v1.3 · 2026-09-30<br>생성 <span class="mono">src_v34/bomsub/build_doc.py</span> → <span class="mono">bomdoc12.py</span> · 설계 원천 <span class="mono">spec.py</span> · <span class="mono">spec2.py</span> · DB 반영 <span class="mono">build_db319.py</span> → v3.19 · <span class="mono">build_db321.py</span> → MyBee_DB테이블설계서_v3.21<br>DBMS 실행 검증은 하지 않았다(지시에 따른 제외).</footer></div></body></html>

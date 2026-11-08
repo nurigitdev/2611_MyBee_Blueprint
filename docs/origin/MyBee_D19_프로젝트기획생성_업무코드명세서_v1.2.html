@@ -1,0 +1,352 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MyBee D19 프로젝트기획·생성 업무코드 명세서 v1.2</title>
+<style>
+:root{--bg:#fbfcfe;--fg:#16181d;--mut:#5a6b80;--line:#c6d2e2;--head:#12315c;--acc:#2d6cb5;
+ --soft:#e8eef7;--zebra:#f7f9fc;--warn:#fff8e6;--warnl:#d9a441;--bad:#fdeceb;--badl:#c0392b;
+ --ok:#ecf7ee;--okl:#2e8b57;}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Malgun Gothic","맑은 고딕",sans-serif;font-size:15px;line-height:1.75;
+ color:var(--fg);background:var(--bg)}
+header.top{position:sticky;top:0;z-index:50;background:var(--head);color:#fff;padding:10px 20px;
+ display:flex;flex-wrap:wrap;gap:12px;align-items:center;box-shadow:0 2px 8px rgba(0,0,0,.18)}
+header.top b{font-size:16px;letter-spacing:.5px}
+header.top .sp{flex:1}
+header.top a{color:#cfe0f5;text-decoration:none;font-size:13px;padding:3px 8px;border-radius:4px}
+header.top a:hover{background:rgba(255,255,255,.14);color:#fff}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px 80px}
+.hero{background:linear-gradient(160deg,#12315c,#2d6cb5 70%,#4a8fd4);color:#fff;padding:56px 20px;margin-bottom:8px}
+.hero .in{max-width:1180px;margin:0 auto}
+.hero h1{margin:0 0 6px;font-size:34px;letter-spacing:-.5px}
+.hero p{margin:4px 0;opacity:.92;font-size:15px}
+.hero .meta{margin-top:22px;font-size:13px;opacity:.85;line-height:2}
+h2{font-size:25px;color:var(--head);margin:46px 0 10px;padding-bottom:8px;border-bottom:3px solid var(--head)}
+h3{font-size:19px;color:#1b3a6b;margin:30px 0 8px;padding-left:11px;border-left:5px solid var(--acc)}
+h4{font-size:16px;color:#24406b;margin:20px 0 6px}
+p{margin:9px 0}
+ul,ol{margin:9px 0 9px 20px;padding-left:8px}
+li{margin:4px 0}
+table{width:100%;border-collapse:collapse;margin:14px 0 20px;font-size:13px}
+th{background:var(--soft);border:1px solid #9fb4d0;padding:7px 8px;text-align:left;color:var(--head);font-weight:600;
+ position:sticky;top:44px;z-index:5}
+td{border:1px solid var(--line);padding:6px 8px;vertical-align:top}
+tbody tr:nth-child(even){background:var(--zebra)}
+tbody tr:hover{background:#eef3fa}
+code,.mono{font-family:Consolas,"D2Coding",monospace;font-size:13px;background:#f0f3f8;padding:1px 5px;border-radius:3px}
+pre{font-family:Consolas,"D2Coding",monospace;font-size:13px;background:#f4f6fa;border:1px solid #d6deea;
+ border-left:4px solid var(--acc);padding:12px 14px;overflow-x:auto;white-space:pre;border-radius:4px}
+.note{background:var(--warn);border:1px solid #e8d59a;border-left:5px solid var(--warnl);padding:12px 15px;margin:14px 0;border-radius:4px}
+.warn{background:var(--bad);border:1px solid #eab4ae;border-left:5px solid var(--badl);padding:12px 15px;margin:14px 0;border-radius:4px}
+.ok{background:var(--ok);border:1px solid #a9d4b2;border-left:5px solid var(--okl);padding:12px 15px;margin:14px 0;border-radius:4px}
+.kv{display:flex;flex-wrap:wrap;gap:10px;margin:18px 0}
+.kv > div{flex:1 1 130px;border:1px solid var(--line);border-top:4px solid var(--acc);padding:11px 13px;background:#fff;border-radius:4px}
+.kv .k{font-size:12px;color:var(--mut)}
+.kv .v{font-size:24px;font-weight:700;color:var(--head);line-height:1.3}
+.tools{position:sticky;top:44px;z-index:20;background:var(--bg);padding:12px 0;border-bottom:1px solid var(--line);
+ display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.tools input{flex:1 1 260px;padding:9px 12px;border:1px solid var(--line);border-radius:5px;font-size:14px;font-family:inherit}
+.tools select{padding:9px 10px;border:1px solid var(--line);border-radius:5px;font-size:14px;font-family:inherit}
+.tools .cnt{font-size:13px;color:var(--mut);white-space:nowrap}
+.badge{display:inline-block;padding:1px 7px;border-radius:10px;font-size:11px;font-weight:600;white-space:nowrap}
+.b-A{background:#e3f0e7;color:#226b44}.b-H{background:#fde8e6;color:#a5352a}.b-Y{background:#fdf2dc;color:#8a6415}
+.r-L{background:#eef2f7;color:#5a6b80}.r-M{background:#e6eefb;color:#24508f}
+.r-H{background:#fdf0dc;color:#96621a}.r-C{background:#fce0dd;color:#9c2b20}
+.u-M{background:#f1f1f1;color:#666}.u-A{background:#eaf0f9;color:#3a5d91}
+.u-S{background:#e4eefb;color:#1f4f96}.u-F{background:#e0f0e6;color:#1d6b42}
+.domhead{background:#fff;border:1px solid var(--line);border-radius:6px;padding:16px 18px;margin:16px 0}
+.domhead .t{font-size:12px;color:var(--mut);text-transform:uppercase;letter-spacing:1px}
+.domhead .n{font-size:21px;font-weight:700;color:var(--head);margin:2px 0 6px}
+.domhead .d{font-size:14px}
+.domhead .l{font-size:13px;color:var(--mut);margin-top:8px}
+.toc{columns:2;column-gap:34px;margin:14px 0}
+.toc a{color:var(--fg);text-decoration:none;display:block;padding:3px 0;font-size:14px}
+.toc a:hover{color:var(--acc)}
+.small{font-size:13px;color:var(--mut)}
+.nw{white-space:nowrap}
+footer{margin-top:60px;padding:24px 0;border-top:1px solid var(--line);font-size:13px;color:var(--mut)}
+.m{display:inline-block;padding:1px 6px;border-radius:3px;font-size:11px;font-weight:600;color:#fff;white-space:nowrap}
+.m-T1{background:#5a6b80}.m-T2{background:#8a5a2b}.m-T3{background:#7d4a9e}.m-T4{background:#c0392b}
+.m-T5{background:#c0602b}.m-T6{background:#2e7d5b}.m-T7{background:#2d6cb5}.m-T8{background:#4f8a76}
+.m.ref{opacity:.55}.m.ref:after{content:" 참고"}
+.hid{display:inline-block;padding:1px 6px;border-radius:3px;font-size:11px;background:#fff0c2;color:#7a5a12;border:1px solid #e8d59a;white-space:nowrap}
+figure{margin:18px 0;text-align:center}figure svg{width:100%;height:auto;background:#fff;border:1px solid var(--line);border-radius:6px}
+figcaption{font-size:13px;color:var(--mut);margin-top:6px}
+.chg{background:#fff;border:1px solid var(--line);border-left:5px solid #2e7d5b;padding:12px 16px;border-radius:4px;margin:14px 0}
+.qual{display:inline-block;padding:0 6px;margin-left:4px;border-radius:3px;font-size:11px;font-weight:600;background:#fde8d8;color:#8a3b12;border:1px solid #f0b894;white-space:nowrap}
+.trv{display:inline-block;padding:0 6px;margin-left:4px;border-radius:3px;font-size:11px;background:#eee6f7;color:#5a3d8a;border:1px solid #cbb8e6;white-space:nowrap}
+.irs{display:inline-block;padding:0 6px;margin-left:4px;border-radius:3px;font-size:11px;font-weight:600;background:#e3f1ea;color:#1f6b47;border:1px solid #9fcfb4;white-space:nowrap}
+.aud{display:inline-block;padding:0 6px;margin-left:4px;border-radius:3px;font-size:11px;font-weight:600;background:#ece6f6;color:#553a86;border:1px solid #c2b2e0;white-space:nowrap}
+.ret{background:#f7f7f7;color:#777}
+@media print{header.top,.tools{position:static}h2{page-break-before:always}tr{page-break-inside:avoid}}
+
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:16px 0}
+@media(max-width:820px){.grid2{grid-template-columns:1fr}}
+.card{background:#fff;border:1px solid var(--line);border-top:4px solid var(--acc);border-radius:5px;padding:14px 16px}
+.card .h{font-weight:700;color:var(--head);margin-bottom:6px}
+.gap{background:#fff;border:1px solid var(--line);border-left:5px solid var(--badl);border-radius:4px;padding:12px 16px;margin:12px 0}
+.gap .id{display:inline-block;background:var(--badl);color:#fff;border-radius:3px;padding:0 7px;font-size:12px;font-weight:700;margin-right:7px}
+.sol{background:#fff;border:1px solid var(--line);border-left:5px solid var(--okl);border-radius:4px;padding:12px 16px;margin:12px 0}
+.sol .id{display:inline-block;background:var(--okl);color:#fff;border-radius:3px;padding:0 7px;font-size:12px;font-weight:700;margin-right:7px}
+.cite{font-size:12px;color:var(--mut)}
+.new{display:inline-block;padding:0 6px;border-radius:3px;font-size:11px;font-weight:600;background:#e4eefb;color:#1f4f96;border:1px solid #9fc0e8}
+.mod{display:inline-block;padding:0 6px;border-radius:3px;font-size:11px;font-weight:600;background:#fdf2dc;color:#8a6415;border:1px solid #e8d59a}
+.keep{display:inline-block;padding:0 6px;border-radius:3px;font-size:11px;font-weight:600;background:#eef2f7;color:#5a6b80;border:1px solid #c6d2e2}
+td.c,th.c{text-align:center}
+table.dd{font-size:12.5px}
+table.dd td:first-child{font-family:Consolas,"D2Coding",monospace;white-space:nowrap}
+
+.gloss{border:1px solid #c6d2e2;border-radius:8px;background:#fbfcfe;padding:14px 16px;margin:18px 0}
+.gloss h3{margin:0 0 8px;font-size:15px;color:#12315c}
+.gloss table{width:100%;border-collapse:collapse;font-size:12.5px}
+.gloss td{border-top:1px solid #e6ecf4;padding:6px 8px;vertical-align:top}
+.gloss td:first-child{width:22%;font-weight:700;color:#12315c;white-space:nowrap}
+.gloss td:last-child{width:34%;color:#5a6b80}
+@media(max-width:760px){.gloss td:first-child{white-space:normal}}
+
+table.tight{font-size:12.5px}table.tight td,table.tight th{padding:4px 6px}
+.g{display:inline-block;padding:0 7px;border-radius:10px;font-size:11px;font-weight:700;background:#e4eefb;color:#1f4f96}
+.new2{background:#e3f1ea;color:#1f6b47}
+@media(max-width:760px){.wrap table{display:block;overflow-x:auto;max-width:100%}}
+</style></head><body>
+<div class="hero"><div class="in">
+<p style="opacity:.8;letter-spacing:6px;font-size:13px">MYBEE PLATFORM</p>
+<h1>D19 프로젝트기획·생성 — 업무코드 명세서</h1>
+<p>아이디어가 생긴 순간부터 프로젝트가 돌기 시작할 때까지. 외부에도 문을 열되 <b>회사마다</b> 열고, 채택 보상금과 사업화 성과 보상으로 갚는다</p>
+<div class="meta">문서번호 MB-D19-2026-001 &nbsp;·&nbsp; 버전 <b>v1.2</b> &nbsp;·&nbsp; 작성일 2026-09-23<br>
+업무코드 <b>28건 신설</b> · 게이트 6 · 외부 개방 · 보상 2종 · 권리 3층 · 법무 확인 12건<br>
+근거 <b>MyBee 설계지시문 v5.12</b>(5.4.23 ~ 5.4.27 · 11.6 · 11.7) &nbsp;·&nbsp; 코드체계 설계서 v3.15 ·
+DB 테이블설계서 v3.13 · 업무스킬설계서 D19 v1.0 · 실행순서 v2.6</div>
+</div></div>
+<header class="top"><b>D19 업무코드</b><a href="#s0">용어</a><a href="#s1">요약</a><a href="#s2">영역</a><a href="#s3">업무코드</a><a href="#s4">외부 개방</a><a href="#s5">보상</a><a href="#s6">권리·법무</a><a href="#s7">점검</a><a href="#s8">영향</a></header>
+<div class="wrap">
+<h2 id="s0">용어 정의</h2>
+<div class="gloss"><h3>용어 정의 — 이 문서에서 쓰는 말</h3><p style="font-size:12.5px;margin:0 0 8px;color:#5a6b80">이 문서부터 「버전」은 <b>버전</b>, 데이터베이스의 표는 <b>DB Table</b>, 「중복 실행 방지」은 <b>중복 실행 방지</b>로 부른다.</p><table><tbody><tr><td>버전 (version)</td><td>문서 · 기준 · 정의가 고쳐질 때마다 매기는 번호. v1.0 → v1.1 처럼 올라간다. 예전 문서에서 「버전」이라고 부르던 것을 이 문서부터 <b>버전</b>으로 부른다.</td><td>옛 버전은 고치지 않고 그대로 두고 새 버전을 따로 낸다. 그래야 그때 무엇을 보고 결정했는지 나중에 되살릴 수 있다.</td></tr><tr><td>DB Table</td><td>데이터베이스에 실제로 만들어지는 표. 예) <span class="mono">mbproj.project_request</span>. 예전 문서에서 그냥 「표」라고 부르던 것을 <b>DB Table</b> 로 부른다.</td><td>문서 안에서 읽으라고 그린 표(비교표 · 목록표)는 그대로 「표」라고 부른다. 둘을 섞지 않는다.</td></tr><tr><td>중복 실행 방지 (idempotency)</td><td>같은 요청이 두 번, 세 번 들어와도 <b>결과가 한 번 처리한 것과 똑같게</b> 만드는 성질. 예를 들어 신청서 제출 버튼을 두 번 눌러도 신청은 하나만 생기고, 통신이 끊겨 시스템이 같은 요청을 다시 보내도 돈이 두 번 나가지 않는다.</td><td>왜 필요한가 — 네트워크는 끊기고, 시스템은 답이 없으면 다시 보내고, 사람은 버튼을 두 번 누른다. 이 세 가지는 막을 수 없으므로 <b>두 번 와도 안전하게</b> 만든다.</td></tr><tr><td>중복 실행 방지 키 (중복 실행 방지 키)</td><td>같은 요청인지 가리는 열쇠. 이 열쇠가 같으면 새로 처리하지 않고 <b>먼저 처리한 결과를 그대로 돌려준다</b>. 예) 프로젝트 신청의 열쇠는 「회사 + 신청번호 + 개정차수」다 — 같은 신청서를 두 번 보내도 신청은 하나다.</td><td>열쇠는 <b>업무적으로 뜻이 있는 값</b>으로 만든다. 시각 · 난수 · 재시도 횟수 · 서버 이름처럼 매번 달라지는 값은 넣지 않는다. 넣으면 두 번째 요청이 「다른 요청」이 되어 중복이 생긴다.</td></tr><tr><td>되돌릴 수 없는 일 (non-idempotent)</td><td>이체 · 발송 · 신고처럼 한 번 나가면 되돌리기 어려운 일. 이런 단계는 중복 실행 방지 키를 반드시 두고, 답이 없으면 다시 보내지 않고 <b>조회해서 결과를 확인</b>한다.</td><td>답이 없는 상태를 「모름」으로 두고 사람이 확인하게 한다. 다시 보내는 것이 가장 위험하다.</td></tr><tr><td>업무코드</td><td>회사의 일을 더 쪼갤 수 없는 단위로 나눠 붙인 코드. 예) <span class="mono">FL0012001</span> 프로젝트 신청. 사람이 하든 에이전트가 하든 같은 코드로 부른다.</td><td>모든 일은 업무코드로 수행되고, 보상 · 원가 · 기록이 모두 이 코드에 붙는다.</td></tr><tr><td>업무영역</td><td>업무코드를 묶는 큰 분류. D01 HW개발 … D18 감사, 그리고 이 문서의 <b>D19 프로젝트기획·생성</b>.</td><td>코드 안의 두 자리(FL00<b>19</b>001)가 업무영역이다.</td></tr><tr><td>스킬 · 도구 · 규칙</td><td>업무코드를 수행하는 세 가지 수단. <b>스킬</b>은 AI 가 문장을 읽고 쓰는 일, <b>도구</b>는 계산 · 서식 · 외부 연결처럼 정해진 대로 도는 프로그램, <b>규칙</b>은 조건과 결론을 표로 적어 둔 판정.</td><td>수치와 판정은 도구와 규칙이 한다. AI 는 수치를 만들지 않는다.</td></tr><tr><td>PA · IA · EA · TA · VA</td><td>PA 는 프로젝트를 맡는 에이전트(프로젝트 1개에 1개), IA 는 사람의 말을 알아듣고 업무로 잇는 에이전트, EA 는 법무 · 회계 같은 전문가 의견을 내는 에이전트, TA 는 외부 시스템을 부르는 에이전트, VA 는 결과를 검증하는 에이전트.</td><td>외부로 나가는 일은 TA 만 한다.</td></tr><tr><td>자율 수준 L1 · L2 · L3</td><td>에이전트가 사람 없이 어디까지 갈 수 있는지. <b>L1</b> 은 사람이 결정, <b>L2</b> 는 에이전트가 하되 사람이 승인, <b>L3</b> 는 에이전트가 하고 사람은 나중에 본다.</td><td>위험이 큰 업무일수록 낮은 수준을 쓴다.</td></tr><tr><td>NVT 토큰</td><td>업무를 수행하면 쌓이는 회사 안의 점수. 연말에 단가를 곱해 인센티브 · 연봉에 반영된다.</td><td>직책이 아니라 <b>수행한 업무</b>에 붙는다.</td></tr><tr><td>채택 보상금</td><td>제안이 채택되었을 때 제안자에게 한 번 주는 보상. 직원은 토큰으로, 외부 제안자는 현금으로 받는다. 상한 500만 원.</td><td>가결(직원) 또는 용역 계약 체결(외부) 때 지급한다.</td></tr><tr><td>사업화 성과 보상</td><td>제품 · 서비스가 실제로 팔린 뒤 해마다 나누는 보상. 연간 순매출의 0 ~ 3% 안에서 위원회가 정한다.</td><td>제안 20% · 원 기여 30% · 진행 기여 50% 로 나눈다. 진행 기여는 해마다 다시 계산한다.</td></tr><tr><td>판정 기준 버전</td><td>문턱 값 · 요율 · 가중치처럼 나중에 바뀔 수 있는 숫자를 화면이나 규칙 본문에 박지 않고 따로 모아 둔 것. 예) PRJ-ECON(경제성) · PRJ-RESEARCH(조사) · PRJ-REWARD(보상).</td><td>값이 바뀌면 새 버전을 게시하고, 지난 판정은 그때 버전으로 다시 볼 수 있다.</td></tr><tr><td>개정차수</td><td>한 신청서를 고쳐 다시 낼 때 올라가는 번호. 제출한 개정차수는 고치지 않고 새 개정차수를 만든다.</td><td>중복 실행 방지 키의 한 조각이기도 하다.</td></tr><tr><td>관리 최소집합</td><td>모든 프로젝트에 반드시 담기는 D12 업무코드 5건(개설 · 업무 구성 확정 · PM 지정 · 진행 보고 집계 · 종결).</td><td>빼거나 바꿀 수 없다.</td></tr><tr><td>게이트</td><td>다음 단계로 넘어가려면 통과해야 하는 관문. 이 문서에서는 G-1 등재 · G0 아이디어 · G1 기획 · G2 신청 · G3 심의 · G4 착수.</td><td>게이트마다 무엇을 확인하는지 정해 둔다.</td></tr><tr><td>사전 조사</td><td>신청 전에 에이전트가 하는 조사. <b>시장 조사</b>(시장 규모 · 경쟁 동향)와 <b>소요 비용 조사</b>(개발 기간 · 단계별 비용) 두 가지다.</td><td>조사는 에이전트가 하고, 채택은 사람이 승인한다.</td></tr><tr><td>TAM · SAM · SOM</td><td>시장 크기를 세 겹으로 본 것. <b>TAM</b> 은 품목 전체 시장, <b>SAM</b> 은 우리가 닿을 수 있는 시장, <b>SOM</b> 은 실제로 가져올 수 있는 몫(하단 · 상단).</td><td>편익의 판매 수량은 SOM 하단을 기본으로 쓴다.</td></tr><tr><td>위험 조정 편익 현재가치</td><td>앞으로 생길 편익을 <b>확신도</b>로 깎고(H 100% · M 70% · L 40%), 먼 미래의 돈을 <b>할인율</b>로 줄여 오늘 값으로 바꾼 금액.</td><td>이 값이 프로젝트의 「기대 가치」가 된다.</td></tr><tr><td>NPV · 편익/비용 · 회수 기간 · 민감도</td><td><b>NPV</b> 는 편익 현재가치에서 비용 현재가치를 뺀 값, <b>편익/비용</b> 은 그 둘의 비율, <b>회수 기간</b> 은 들인 돈을 되찾는 데 걸리는 햇수, <b>민감도</b> 는 편익이 20% 줄고 비용이 20% 늘어도 견디는지 본 것.</td><td>네 숫자를 함께 보아야 한 쪽으로 치우치지 않는다.</td></tr><tr><td>배경 IP</td><td>제안자가 <b>이 제안 이전부터 가지고 있던</b> 기술 · 저작물. 채택되어도 회사가 가져가지 않고 쓸 권리(통상실시권)만 받는다.</td><td>이것을 빼지 않으면 좋은 외부 제안자가 참여하지 않는다.</td></tr><tr><td>순매출</td><td>매출액에서 반품 · 에누리 · 할인을 뺀 금액. 사업화 성과 보상의 기준이 된다.</td><td>회계 원장에서 자동으로 뽑는다.</td></tr></tbody></table></div>
+<div class="note"><b>이 문서의 성격.</b> D19 업무영역과 그 안의 업무코드 28건을 정의한다. 신청 · 사전 검토 · 심의 · 개설 · 업무 구성 확정 · PM 지정 본체는
+<b>D12 에 그대로 둔다</b>(이관하지 않는다). 단계 · 스킬 · 도구 등록은 2차(실행순서 · 스킬설계서)에서 한다. DBMS 실행 검증은 하지 않았다.</div>
+<div class="note"><b>v1.2 에서 바뀐 것.</b> 정합성 4차 — 업무코드 28건과 제도는 v1.1 과 같고, 코드체계가 D19 를 본문에 실은 v3.15 · DB 테이블설계서 v3.13 · 설계지시문 v5.12 로 근거를 맞췄다.</div>
+<div class="note"><b>v1.1 에서 바뀐 것.</b> 외부 제안을 <b>회사(테넌트)마다 따로</b> 받는다 — 개방 여부 · 접수 경로 · 용역비 상한 · 접수 한도 · 심사 기준 · 보상 요율을 회사가 각각 정하고, 외부 제안자 등록 · 자격 심사 · 조건 동의도 회사마다 따로 받으며, 제안 내용 · 조사 결과 · 산출물 · 평가 등급은 접수한 회사 안에서만 보인다(4.1절 신설). 업무코드 28건과 보상 · 권리 규칙은 v1.0 과 같다.</div>
+<h2 id="s1">제1부 · 한 장 요약</h2>
+<div class="kv"><div><div class="k">신설 업무코드</div><div class="v">28</div></div><div><div class="k">1회 수행 토큰</div><div class="v">231</div></div><div><div class="k">게이트</div><div class="v">7</div></div><div><div class="k">접수 경로</div><div class="v">2</div></div><div><div class="k">보상</div><div class="v">2</div></div><div><div class="k">권리 층</div><div class="v">3</div></div></div>
+<div class="ok"><b>결론.</b> ① 아이디어 → 기획 → 신청 → 심의 → 착수를 하나의 업무영역 <b>D19</b> 로 묶고 28건을 신설한다.
+② 문호를 <b>외부에도 연다</b> — 공모 주제형과 상시 접수 두 경로, 외부 제안자가 <b>직접 신청</b>하고 PM 은 가결 뒤 사내에서 정한다.
+③ 외부 제안에서 <b>예산은 용역비</b>다 — 경제성의 C3 에 들어가고, 인건비 일수 요청은 적용하지 않는다.
+④ 보상은 둘뿐이다 — <b>채택 보상금</b>(상한 500만 원 · 일시)과 <b>사업화 성과 보상</b>(순매출 0 ~ 3% · 해마다).
+⑤ 사업화 보상은 <b>제안 20 · 원 기여 30 · 진행 기여 50</b> 으로 나누고, 진행 기여는 <b>해마다 다시 계산</b>한다.
+⑥ 채택 보상금을 받으면 <b>사업화 권리가 회사에 귀속</b>한다. 다만 제안자가 원래 가지고 있던 <b>배경 IP 는 제외</b>한다.</div>
+<h2 id="s2">제2부 · 업무영역 정의</h2>
+<table>
+<colgroup><col style="width:16%"><col style="width:84%"></colgroup>
+<thead><tr><th>항목</th><th>내용</th></tr></thead><tbody>
+<tr><td>영역 코드</td><td><b>D19</b> — 업무코드 <span class="mono">FL0019NNN</span></td></tr>
+<tr><td>이름</td><td>프로젝트기획·생성</td></tr>
+<tr><td>범위</td><td>아이디어가 생긴 순간부터 프로젝트가 ACTIVE 로 돌기 시작할 때까지. 외부 개방 · 채택 보상금 · 사업화 보상 제도의 운영을 포함한다</td></tr>
+<tr><td>넘기는 곳</td><td>신청 · 사전 검토 · 심의 · 개설 · 업무 구성 · PM 지정 본체는 D12 에 그대로 둔다(이관하지 않는다) · 시장 조사 실행은 D14 · 편익 실현 점검은 D05 · 계약은 D13 · 검수는 D15 · 지급은 D05 · 급여 반영은 D08</td></tr>
+</tbody></table>
+<table class="tight">
+<colgroup><col style="width:10%"><col style="width:16%"><col style="width:74%"></colgroup>
+<thead><tr><th>게이트</th><th>이름</th><th>무엇을 하나</th></tr></thead><tbody>
+<tr><td><span class="g">G-1</span></td><td>등재</td><td>외부 제안자 자격 · NDA</td></tr>
+<tr><td><span class="g">G0</span></td><td>아이디어 · 공모</td><td>착상 · 기회 스캔 · 주제 공고</td></tr>
+<tr><td><span class="g">G1</span></td><td>기획</td><td>문제 정의 · 조사 · 적합성 · 위험 · 자원 · PoC</td></tr>
+<tr><td><span class="g">G2</span></td><td>신청</td><td>접수 · 1차 심사 · 철회</td></tr>
+<tr><td><span class="g">G3</span></td><td>심의</td><td>용역비 적정성 · 위원회(D12) · 부결 사유</td></tr>
+<tr><td><span class="g">G4</span></td><td>착수</td><td>조건 협의 · 계약 · 개설(D12) · 채택 보상금 · ACTIVE</td></tr>
+<tr><td><span class="g">상시</span></td><td>제도 운영</td><td>자료원 · 분류표 · 기준 버전 · 회고 · 사업화 보상</td></tr>
+</tbody></table>
+<h2 id="s3">제3부 · 업무코드 28건</h2>
+<p class="small">위험 L · M · H · C / 승인 A 사후 · Y 사전 · H 사람 / 자율 L1 사람 결정 · L2 승인 · L3 자율. 토큰 = 표준시간 × 난이도 × 기준배점 2.5(설계지시문 11.2.1).</p>
+<table class="tight">
+<colgroup><col style="width:9%"><col style="width:14%"><col style="width:5%"><col style="width:4%"><col style="width:4%"><col style="width:4%"><col style="width:6%"><col style="width:5%"><col style="width:3%"><col style="width:4%"><col style="width:6%"><col style="width:36%"></colgroup>
+<thead><tr><th>업무코드</th><th>이름</th><th>게이트</th><th>위험</th><th>승인</th><th>자율</th><th>유형</th><th>주 수단</th><th>h</th><th>토큰</th><th>EA</th><th>무엇을 하나</th></tr></thead><tbody>
+<tr><td><b class="mono">FL0019001</b></td><td>아이디어 등록</td><td><span class="g">G0</span></td><td>L</td><td>A</td><td>L3</td><td>HYBRID</td><td>T8</td><td>0.5</td><td>1</td><td>—</td><td>누구나 착상을 카드로 남긴다. 신청으로 가지 않아도 풀에 쌓인다</td></tr>
+<tr><td><b class="mono">FL0019002</b></td><td>기회 스캔</td><td><span class="g">G0</span></td><td>L</td><td>A</td><td>L3</td><td>HYBRID</td><td>T7</td><td>2</td><td>8</td><td>—</td><td>에이전트가 정기로 시장 자료원 · 사내 이슈 · 정산 차이를 훑어 기회 후보를 낸다</td></tr>
+<tr><td><b class="mono">FL0019003</b></td><td>문제 정의</td><td><span class="g">G1</span></td><td>L</td><td>A</td><td>L3</td><td>HYBRID</td><td>T7</td><td>2</td><td>8</td><td>—</td><td>문제 · 현재 · 목표 · 제약을 굳힌다. 해법부터 적은 제안을 걸러낸다</td></tr>
+<tr><td><b class="mono">FL0019004</b></td><td>유사 제안 탐색·합류 협의</td><td><span class="g">G1</span></td><td>M</td><td>A</td><td>L3</td><td>HYBRID</td><td>T6</td><td>2</td><td>8</td><td>—</td><td>제출 전에 중복을 찾아 합치고 공동 제안 지분 초안을 만든다</td></tr>
+<tr><td><b class="mono">FL0019005</b></td><td>신청 준비 조사 요청</td><td><span class="g">G1</span></td><td>L</td><td>A</td><td>L3</td><td>HYBRID</td><td>T8</td><td>1</td><td>4</td><td>—</td><td>시장 조사(FL0014002) · 비용 조사 기동과 품목 분류 대응표 확정</td></tr>
+<tr><td><b class="mono">FL0019006</b></td><td>조사 결과 승인</td><td><span class="g">G1</span></td><td>M</td><td>H</td><td>L1</td><td>HYBRID</td><td>T1</td><td>1</td><td>2</td><td>—</td><td>조사를 신청의 근거로 채택한다. 사내 신청은 신청자, 외부 신청은 접수 담당</td></tr>
+<tr><td><b class="mono">FL0019007</b></td><td>포트폴리오 적합성 검토</td><td><span class="g">G1</span></td><td>M</td><td>Y</td><td>L2</td><td>HYBRID</td><td>T7</td><td>3</td><td>11</td><td>—</td><td>연간 계획 · 전략 과제와의 정렬, 같은 목표의 중복, 상위 배치를 본다</td></tr>
+<tr><td><b class="mono">FL0019008</b></td><td>사전 위험 스크리닝</td><td><span class="g">G1</span></td><td>H</td><td>Y</td><td>L2</td><td>HYBRID</td><td>T6</td><td>2</td><td>10</td><td>법무·보안</td><td>인허가 · 개인정보 · 보안 · 인증 필요 여부를 심의 전에 가른다</td></tr>
+<tr><td><b class="mono">FL0019009</b></td><td>자원 가용성 사전 확인</td><td><span class="g">G1</span></td><td>M</td><td>A</td><td>L3</td><td>LOGIC</td><td>T4</td><td>1</td><td>2</td><td>—</td><td>기간 중 인력 · 설비 · 에이전트 동시 실행 한도의 여유를 본다</td></tr>
+<tr><td><b class="mono">FL0019010</b></td><td>개념 검증(PoC) 승인</td><td><span class="g">G1</span></td><td>H</td><td>H</td><td>L1</td><td>HYBRID</td><td>T1</td><td>2</td><td>10</td><td>—</td><td>큰 신청 전에 소액 · 단기 검증을 위임 한도로 먼저 승인한다</td></tr>
+<tr><td><b class="mono">FL0019011</b></td><td>신청 철회·보류</td><td><span class="g">G2</span></td><td>L</td><td>A</td><td>L3</td><td>LOGIC</td><td>T8</td><td>0.5</td><td>1</td><td>—</td><td>낸 신청을 접거나 보류해 아이디어 풀로 되돌린다</td></tr>
+<tr><td><b class="mono">FL0019012</b></td><td>부결 사유 등재·재도전 조건</td><td><span class="g">G3</span></td><td>M</td><td>A</td><td>L3</td><td>HYBRID</td><td>T7</td><td>1</td><td>4</td><td>—</td><td>무엇이 바뀌면 다시 낼 수 있는지를 부결 때 적는다</td></tr>
+<tr><td><b class="mono">FL0019013</b></td><td>착수 판정·ACTIVE 전환</td><td><span class="g">G4</span></td><td>H</td><td>A</td><td>L2</td><td>LOGIC</td><td>T6</td><td>1</td><td>4</td><td>—</td><td>준비물 완비를 규칙으로 판정하고 상태를 ACTIVE 로 바꾼다</td></tr>
+<tr><td><b class="mono">FL0019014</b></td><td>기획 회고·기준값 조정 제안</td><td><span class="g">상시</span></td><td>M</td><td>A</td><td>L3</td><td>HYBRID</td><td>T4</td><td>4</td><td>15</td><td>—</td><td>분기마다 제안 대비 실현을 모아 판정 기준값 조정안을 낸다</td></tr>
+<tr><td><b class="mono">FL0019015</b></td><td>조사 자료원 등재·상태 변경</td><td><span class="g">상시</span></td><td>M</td><td>H</td><td>L2</td><td>HYBRID</td><td>T6</td><td>2</td><td>8</td><td>—</td><td>약관 · 계약을 확인해 자료원을 ACTIVE 로 바꾸거나 막는다</td></tr>
+<tr><td><b class="mono">FL0019016</b></td><td>품목 분류 대응표 관리</td><td><span class="g">상시</span></td><td>M</td><td>Y</td><td>L3</td><td>HYBRID</td><td>T7</td><td>2</td><td>8</td><td>—</td><td>통계 품목 · HS · 물품 분류 · 특허 분류 대응표를 유지한다</td></tr>
+<tr><td><b class="mono">FL0019017</b></td><td>판정 기준 버전 게시</td><td><span class="g">상시</span></td><td>C</td><td>H</td><td>L1</td><td>HYBRID</td><td>T1</td><td>3</td><td>15</td><td>—</td><td>PRJ-ECON · PRJ-RESEARCH · PRJ-REWARD 의 값을 의결해 게시한다</td></tr>
+<tr><td><b class="mono">FL0019018</b></td><td>외부 제안자 등록·자격 심사</td><td><span class="g">G-1</span></td><td>H</td><td>H</td><td>L2</td><td>HYBRID</td><td>T6</td><td>3</td><td>11</td><td>—</td><td>개인 · 개인사업자 · 법인을 등재하고 제재 이력 · 경쟁사 · 이해충돌을 본다</td></tr>
+<tr><td><b class="mono">FL0019019</b></td><td>비밀유지·제안 조건 동의</td><td><span class="g">G-1</span></td><td>H</td><td>H</td><td>L2</td><td>HYBRID</td><td>T1</td><td>2</td><td>10</td><td>법무</td><td>NDA · 권리 3층 · 보증 · 면책 · 미채택 비사용에 동의를 받는다</td></tr>
+<tr><td><b class="mono">FL0019020</b></td><td>공모 주제 공고</td><td><span class="g">G0</span></td><td>M</td><td>Y</td><td>L3</td><td>HYBRID</td><td>T5</td><td>2</td><td>8</td><td>—</td><td>주제 · 용역비 상한 · 마감 · 심사 기준을 공고한다</td></tr>
+<tr><td><b class="mono">FL0019021</b></td><td>외부 제안 접수</td><td><span class="g">G2</span></td><td>L</td><td>A</td><td>L3</td><td>HYBRID</td><td>T8</td><td>1</td><td>2</td><td>—</td><td>외부 제안자가 직접 낸 신청을 접수하고 접수 한도 · 중복을 본다</td></tr>
+<tr><td><b class="mono">FL0019022</b></td><td>외부 제안 1차 심사</td><td><span class="g">G2</span></td><td>M</td><td>Y</td><td>L3</td><td>HYBRID</td><td>T6</td><td>2</td><td>8</td><td>—</td><td>형식 · 자격 · 기밀 · 소관 부서 의견을 보고 조사 대행 여부를 정한다</td></tr>
+<tr><td><b class="mono">FL0019023</b></td><td>용역비 적정성 검토</td><td><span class="g">G3</span></td><td>H</td><td>Y</td><td>L2</td><td>HYBRID</td><td>T4</td><td>3</td><td>11</td><td>—</td><td>견적 · 시장가 · 유사 실적 · 사내 환산 비용과 견준다(과소도 본다)</td></tr>
+<tr><td><b class="mono">FL0019024</b></td><td>용역 조건 협의·확정</td><td><span class="g">G4</span></td><td>H</td><td>H</td><td>L1</td><td>HYBRID</td><td>T1</td><td>4</td><td>20</td><td>법무</td><td>산출물 · 검수 · 분할 지급 · 사업화 보상 조건 · 권리 · 하자 담보를 협상해 굳힌다</td></tr>
+<tr><td><b class="mono">FL0019025</b></td><td>외부 제안 정산·평가</td><td><span class="g">상시</span></td><td>M</td><td>A</td><td>L3</td><td>HYBRID</td><td>T4</td><td>2</td><td>8</td><td>—</td><td>실현 편익 대비 평가로 재참여 등급을 매긴다</td></tr>
+<tr><td><b class="mono">FL0019026</b></td><td>채택 보상금 산정·지급 처리</td><td><span class="g">G4</span></td><td>H</td><td>H</td><td>L2</td><td>HYBRID</td><td>T4</td><td>2</td><td>8</td><td>—</td><td>기준 금액 × 요율(상한 500만 원)을 셈해 직원은 토큰, 외부는 현금으로</td></tr>
+<tr><td><b class="mono">FL0019027</b></td><td>사업화 성과 보상 의결</td><td><span class="g">상시</span></td><td>C</td><td>H</td><td>L1</td><td>HYBRID</td><td>T1</td><td>3</td><td>15</td><td>—</td><td>사업화 여부 · 요율(순매출 3% 이내) · 기간 · 매출 귀속 범위를 의결한다</td></tr>
+<tr><td><b class="mono">FL0019028</b></td><td>사업화 보상 배분 확정·연차 정산</td><td><span class="g">상시</span></td><td>H</td><td>H</td><td>L2</td><td>HYBRID</td><td>T4</td><td>3</td><td>11</td><td>—</td><td>PM 이 배분안을 만들고 참여자 확인 뒤 비PM 승인, 연차마다 순매출로 정산한다</td></tr>
+</tbody></table>
+<p class="small">1회 수행 토큰 합계 <b>231</b>. 업무코드는 546 → <b>574</b>건이 된다.</p>
+<h2 id="s4">제4부 · 외부 개방</h2>
+<table>
+<colgroup><col style="width:16%"><col style="width:58%"><col style="width:26%"></colgroup>
+<thead><tr><th>접수 경로</th><th>어떻게</th><th>용역비 상한</th></tr></thead><tbody>
+<tr><td><b>공모 주제형</b></td><td>회사가 주제 · 용역비 상한 · 마감 · 심사 기준을 공고하고 그 안에서 받는다</td><td>상한 있음(공고문)</td></tr>
+<tr><td><b>상시 접수</b></td><td>주제 제한 없이 언제든 받는다</td><td>상한 없음 — 금액 구간 승인 경로로 가른다</td></tr>
+</tbody></table>
+<table class="tight">
+<colgroup><col style="width:14%"><col style="width:86%"></colgroup>
+<thead><tr><th>항목</th><th>규칙</th></tr></thead><tbody>
+<tr><td>신청 명의</td><td>외부 제안자가 신청자 본인으로 직접 낸다. PM 은 가결 뒤 PM 지정(FL0012006)으로 사내에서 정한다</td></tr>
+<tr><td>책임 소재</td><td>사내 스폰서를 두지 않는 대신 1차 심사(FL0019022)에서 소관 부서 의견을 필수로 받는다 — 받아 줄 조직 없이 심의에 올리지 않는다</td></tr>
+<tr><td>기밀</td><td>외부 신청은 기밀 등급 PUBLIC 만. 사내 원장 · 실적 · 단가에 접근하지 않는다</td></tr>
+<tr><td>사전 조사</td><td>시장 조사는 회사가 대행하되 1차 심사를 통과한 제안만. 조사 결과 승인(FL0019006)은 외부 신청이면 접수 담당이 한다</td></tr>
+<tr><td>개인 제안자</td><td>개인 제안자도 받는다. 용역비가 1억 원을 넘으면 사업자 등록 또는 법인을 요구한다. 산출물 단위 계약 · 장소 · 시간 지정 금지 · 상주 금지</td></tr>
+<tr><td>예산의 뜻</td><td>외부 제안의 예산은 용역비다 — 경제성의 C3(비인건비)에 들어가고, C1 인건비 평가액은 사내 관리 · 검수분만 잡는다. 인건비 일수 요청(5.4.8)과 기간-업무 정합(W-04)은 외부 제안에 적용하지 않는다</td></tr>
+</tbody></table>
+<h3>4.1 회사(테넌트)별 접수 <span class="g new2">v1.1</span></h3>
+<div class="ok"><b>문은 회사마다 연다.</b> MyBee 는 1,000 회사가 함께 쓰는 플랫폼이다. 외부 접수를 창구 하나로 두면 A 회사에 낸 제안이 B 회사에 보이고, 한 회사가 한 자격 심사가 다른 회사의 책임이 된다. 창구 · 등록 · 동의 · 평가를 모두 회사 단위로 둔다(설계지시문 5.4.27).</div>
+<table class="tight">
+<colgroup><col style="width:14%"><col style="width:86%"></colgroup>
+<thead><tr><th>무엇</th><th>어떻게</th></tr></thead><tbody>
+<tr><td><b>회사별 창구</b></td><td>외부 접수 창구는 <b>회사(테넌트)마다 따로</b> 연다. 개방 여부 · 접수 경로(공모 · 상시) · 용역비 상한 · 분기 접수 한도 · 심사 기준 · 보상 요율을 회사가 각각 정한다</td></tr>
+<tr><td><b>회사별 등록</b></td><td>외부 제안자 등록 · 자격 심사 · 조건 동의는 회사마다 따로 받는다. 같은 사람이 두 회사에 내려면 회사마다 등록한다 — 한 회사의 등록이 다른 회사에서 자격이 되지 않는다</td></tr>
+<tr><td><b>칸막이</b></td><td>제안 내용 · 조사 결과 · 산출물 · 평가 등급 · 제재 이력은 <b>접수한 회사 안에서만</b> 보인다. 회사 사이로 넘기거나 견주지 않는다</td></tr>
+<tr><td><b>넘기지 않음</b></td><td>한 회사가 받은 제안을 다른 회사로 옮기지 않는다. 제안자가 여러 회사에 내고 싶으면 회사마다 새로 낸다 — 비밀유지도 회사마다 따로 걸린다</td></tr>
+<tr><td><b>운영사</b></td><td>플랫폼 운영사는 회사별 개방 설정만 관리하고 제안 내용은 보지 않는다</td></tr>
+<tr><td><b>안 여는 회사</b></td><td>개방하지 않은 회사는 외부 접수 화면 자체가 열리지 않는다. 외부 제안자 등록도 받지 않는다</td></tr>
+</tbody></table>
+<p class="small">데이터로는 <span class="mono">mbproj.external_intake_policy</span> 한 행이 그 회사의 개방 설정이고(DB 테이블설계서 v3.12 신설), 등록 · 동의 · 공고 · 접수 · 평가 DB Table 은 모두 기본키 맨 앞에 <span class="mono">tenant_id</span> 를 둔다. 회사 사이 비교 · 통합 조회는 만들지 않는다.</p>
+<h3>4.2 금액 구간별 승인 경로</h3>
+<table>
+<colgroup><col style="width:22%"><col style="width:38%"><col style="width:40%"></colgroup>
+<thead><tr><th>용역비</th><th>경로</th><th>누가</th></tr></thead><tbody>
+<tr><td><b>5천만 원 이하</b></td><td>간이 심의(위임)</td><td>소관 부서장 + 접수 담당</td></tr>
+<tr><td><b>5억 원 이하</b></td><td>NVT위원회 의결</td><td>정규 심의</td></tr>
+<tr><td><b>5억 원 초과</b></td><td>NVT위원회 의결 + 이사회 보고</td><td>의결 뒤 보고</td></tr>
+</tbody></table>
+<h2 id="s5">제5부 · 보상 — 두 가지뿐</h2>
+<table>
+<colgroup><col style="width:18%"><col style="width:38%"><col style="width:26%"><col style="width:18%"></colgroup>
+<thead><tr><th>보상</th><th>무엇에 대한 것</th><th>받는 사람</th><th>언제</th></tr></thead><tbody>
+<tr><td><b>채택 보상금</b></td><td>제안이 채택되었다는 사실에 대한 일시금</td><td>직원 · 외부 제안자</td><td>가결(직원) · 계약 체결(외부)</td></tr>
+<tr><td><b>사업화 성과 보상</b></td><td>사업화된 뒤 실제로 팔린 만큼 나누는 연차 보상</td><td>제안자 · PM · PL · Member</td><td>사업화 뒤 매년</td></tr>
+</tbody></table>
+<div class="note">별도의 용역 성과 보수를 두지 않는다. 외부 수행자의 성과 연동은 사업화 성과 보상으로 받는다 — 요율 · 기간 · 매출 귀속 범위는 위원회가 의결하고(FL0019027), 계약에는 수령 자격과 지급 방식만 적는다.</div>
+<h3>5.1 채택 보상금</h3>
+<table class="tight">
+<colgroup><col style="width:14%"><col style="width:86%"></colgroup>
+<thead><tr><th>항목</th><th>내용</th></tr></thead><tbody>
+<tr><td>기준 금액</td><td>직원 — min(가결 총소요비용, 가결 위험 조정 편익 현재가치) / 외부 — 용역비 총액</td></tr>
+<tr><td>요율</td><td>1억 원 이하 <b>3%</b> · 1억 초과 ~ 5억 원 <b>2.5%</b> · 5억 원 초과 <b>2%</b></td></tr>
+<tr><td>상한</td><td><b>5,000,000원</b></td></tr>
+<tr><td>지급</td><td>일시 지급 — 직원은 가결 때 토큰으로 환산(가결 시점 단가), 외부는 용역 계약 체결 때 현금</td></tr>
+<tr><td>안 되는 경우</td><td>외부는 협상 결렬이면 지급하지 않는다. 회사 사정으로 중단되면 지급한다</td></tr>
+<tr><td>환수</td><td>허위 · 과장 기재가 확인되면 환수한다. 부정 · 차명 제안은 전액 환수하고 재참여를 막는다</td></tr>
+<tr><td>대상 아님</td><td>운영(O) 프로젝트 · 필수 운영 예외(MANDATORY) · 하위(자 · 자자) 프로젝트 · 위원 재임 중 본인 제안(별도 의결)</td></tr>
+<tr><td>대체</td><td>11.6 제안 성과 보상(편익 1% · 가결 20 / 종결 30 / 실현 50 분할)은 폐지하고 이 제도로 갈음한다. 실현 연동은 사업화 보상(11.7)이 맡는다</td></tr>
+</tbody></table>
+<h3>5.2 사업화 성과 보상</h3>
+<table class="tight">
+<colgroup><col style="width:14%"><col style="width:86%"></colgroup>
+<thead><tr><th>항목</th><th>내용</th></tr></thead><tbody>
+<tr><td>기준</td><td>사업화된 제품 · 서비스의 <b>연간 순매출</b>(매출액에서 반품 · 에누리 · 할인을 뺀 금액)</td></tr>
+<tr><td>요율 · 기간</td><td>0 ~ <b>3%</b> — 요율(0 ~ 3%) · 지급 기간 · 매출 귀속 범위는 NVT위원회가 의결한다(FL0019027). 요율은 사업화 기여도 · 위험 부담 · 외부 참여 여부로 가른다. 기간 첫 값 5년 — 편익 평가 기간과 같게 둔다. 위원회가 줄이거나 늘린다</td></tr>
+<tr><td>사업화 시점</td><td><b>최초 매출 발생</b> — 출시만으로는 시작하지 않고, 목표 매출 달성을 기다리지도 않는다</td></tr>
+<tr><td>받는 사람</td><td>제안자(직원 또는 외부 수행자) · PM · PL · Member</td></tr>
+<tr><td>지급</td><td>직원은 토큰(연간 총발행량 한도 안), 외부는 현금(용역 계약의 사업화 보상 조항). 지급은 연 1회 결산 확정 뒤</td></tr>
+<tr><td>회계 · 세무</td><td>매출 연동 보상은 판매비로 처리하고, 외부 지급분은 실시료(로열티) 또는 용역 대가로 구분한다 — 세무 확인 필요</td></tr>
+<tr><td>경제성 반영</td><td>신청의 경제성에서는 매출 편익이 있는 연차에 <b>예상 사업화 보상</b>을 비용 C4 에 넣는다</td></tr>
+</tbody></table>
+<h3>5.3 배분 — 20 / 30 / 50</h3>
+<table class="tight">
+<colgroup><col style="width:14%"><col style="width:8%"><col style="width:30%"><col style="width:48%"></colgroup>
+<thead><tr><th>몫</th><th>비율</th><th>누구</th><th>성격</th></tr></thead><tbody>
+<tr><td><b>제안 몫</b></td><td>20%</td><td>제안자</td><td><b>고정</b> — 제안은 한 번뿐이고 나중에 누가 무엇을 해도 변하지 않는다</td></tr>
+<tr><td><b>원 기여 몫</b></td><td>30%</td><td>최초 매출 발생 시점까지 기여한 사람들(외부 수행자 포함)</td><td><b>고정</b> — 나중에 들어온 사람에게 희석되지 않는다</td></tr>
+<tr><td><b>진행 기여 몫</b></td><td>50%</td><td>그해에 실제로 기여한 사람들 — 추가 개발자 · 현직 PM · 운영</td><td><b>해마다 다시 계산</b> — 사람이 바뀌면 그해부터 반영</td></tr>
+</tbody></table>
+<table class="tight">
+<colgroup><col style="width:20%"><col style="width:80%"></colgroup>
+<thead><tr><th>규칙</th><th>내용</th></tr></thead><tbody>
+<tr><td>기여를 재는 잣대</td><td>그 연차에 그 프로젝트(및 승인된 후속 개선 프로젝트)에서 획득한 NVT 토큰. 외부 수행자는 <b>용역비 ÷ 토큰 단가</b>를 환산 토큰으로 같은 저울에 올린다</td></tr>
+<tr><td>진행 기여가 없는 해</td><td>그 50% 는 <b>지급하지 않는다</b>(회사에 남긴다). 원 기여 몫에 합치지 않는다 — 손대지 않을수록 더 받는 구조를 만들지 않는다</td></tr>
+<tr><td>진행 기여 인정 범위</td><td>승인된 개선 프로젝트와 운영 업무코드만. 연간 진행 기여 토큰에 상한을 둔다 — 토큰을 쌓으려고 필요 없는 개선을 만드는 것을 막는다</td></tr>
+<tr><td>PM 교체</td><td>PM 역할분은 그 연차의 <b>재임 일수에 비례</b>해 전임 · 후임이 나눈다. 지난 연차는 소급하지 않는다</td></tr>
+<tr><td>재계산 주기</td><td>연 1회, 결산 확정 뒤 정산 때만. 수시 조정은 없다</td></tr>
+<tr><td>조정 권한</td><td>현직 PM 이 자동 배분안을 <b>±10%p</b> 안에서 조정하고 사유를 적는다</td></tr>
+<tr><td>승인</td><td><b>PM 이 아닌 사람</b>(상위 조직장 또는 위원회)이 승인한다 — PM 도 수령자다. 참여자 전원에게 보여 이의를 받는다</td></tr>
+<tr><td>상 · 하한</td><td>외부 몫 상한 90% · 사내 최소 10% · PM 몫 40% 이하</td></tr>
+<tr><td>확정과 소급</td><td>연차별 지분은 스냅샷으로 굳힌다. 다음 해 재계산이 지난해를 덮지 않는다. 확정된 몫은 퇴사 · 이동해도 지급한다</td></tr>
+<tr><td>지급 정지</td><td>부정 · 환수 사유가 있는 사람은 그 연차부터 0</td></tr>
+</tbody></table>
+<h3>5.4 예시 — 풀 1억 원(순매출 50억 × 2%)</h3>
+<table class="tight">
+<colgroup><col style="width:16%"><col style="width:28%"><col style="width:34%"><col style="width:22%"></colgroup>
+<thead><tr><th></th><th>1년차(최초 매출)</th><th>3년차(추가 개발 · PM 교체)</th><th>5년차(손대지 않은 해)</th></tr></thead><tbody>
+<tr><td>제안자</td><td>2,000만</td><td>2,000만</td><td>2,000만</td></tr>
+<tr><td>원 기여</td><td>3,000만</td><td>3,000만</td><td>3,000만</td></tr>
+<tr><td>진행 기여</td><td>5,000만 — PM · 운영 · 소규모 개선</td><td>5,000만 — 추가 개발자 · 신임 PM(8개월) · 전임 PM(4개월) · 운영</td><td><b>미지급</b></td></tr>
+<tr><td>그해 합계</td><td>1억</td><td>1억</td><td>5,000만</td></tr>
+</tbody></table>
+<h3>5.5 제품 단위 보상 풀</h3>
+<p>제품 하나에 <b>보상 풀 하나</b>를 둔다 — 제품의 연간 순매출 × 위원회 요율. 원 프로젝트와 후속 개선 프로젝트가 누적 기여로 그 풀을 나누되 <b>원 프로젝트 하한 50%</b> 를 보장한다. 개선 프로젝트가 몇 개 생겨도 회사가 내는 총액은 변하지 않는다.</p>
+<h2 id="s6">제6부 · 제안 권리와 법무</h2>
+<table class="tight">
+<colgroup><col style="width:16%"><col style="width:58%"><col style="width:26%"></colgroup>
+<thead><tr><th>층</th><th>무엇이 정해지나</th><th>적용</th></tr></thead><tbody>
+<tr><td><b>1층 접수</b></td><td>심사 목적의 사용권만. 권리는 제안자에게 남는다</td><td>모든 제안</td></tr>
+<tr><td><b>2층 채택 · 보상금 지급</b></td><td>제안 내용과 용역 산출물의 <b>사업화 권리(실시권 포함)가 회사에 귀속</b>한다. 제안자가 이전부터 보유한 <b>배경 IP 는 제외</b>하고 회사는 그에 대해 통상실시권만 받는다</td><td>채택되어 보상금이 지급된 제안</td></tr>
+<tr><td><b>3층 미채택</b></td><td>권리는 제안자에게 남고 회사는 일정 기간(첫 값 2년) 그 내용을 쓰지 않는다. 독자 개발은 기록으로 입증한다</td><td>채택되지 않은 제안</td></tr>
+</tbody></table>
+<h3>6.1 법무 확인 목록</h3>
+<p class="small">아래는 설계 관점에서 정리한 쟁점이다. <b>도입 전에 법무 · 노무 · 세무 검토를 받아야 한다</b> — 이 문서가 법률 의견을 대신하지 않는다.</p>
+<table class="tight">
+<colgroup><col style="width:14%"><col style="width:34%"><col style="width:38%"><col style="width:14%"></colgroup>
+<thead><tr><th>쟁점</th><th>무엇이 문제인가</th><th>설계에서 한 대응</th><th>확인 주체</th></tr></thead><tbody>
+<tr><td><b>직무발명 보상</b></td><td>직원 제안이 직무발명이면 발명진흥법상 정당한 보상 의무가 따로 있다. 채택 보상금으로 갈음되지 않는다</td><td>사내 규정에 <b>채택 보상금과 직무발명 보상은 별개</b>임을 명시하고 상계 여부를 정한다</td><td>법무 · 특허</td></tr>
+<tr><td><b>직무 외 제안</b></td><td>직무와 무관한 제안은 회사가 일방적으로 권리를 가져올 수 없다</td><td>접수 때 직무 관련성을 기록하고, 직무 외 제안은 별도 양도 합의로만 2층에 넣는다</td><td>법무</td></tr>
+<tr><td><b>업무상 저작물</b></td><td>법인 명의 공표 등 요건을 갖추면 회사가 저작자이나 요건을 못 갖추면 개인에게 남는다</td><td>제안서 양식 · 공표 명의를 회사로 두고, 그와 별개로 양도 조항을 함께 둔다</td><td>법무</td></tr>
+<tr><td><b>저작인격권</b></td><td>성명표시권 등은 양도되지 않는다</td><td>행사하지 않는다는 특약으로 처리한다</td><td>법무</td></tr>
+<tr><td><b>기술자료 유용</b></td><td>수급사업자의 기술자료를 부당하게 요구 · 유용하는 행위는 금지된다. 소액 보상에 권리 전부 이전은 기술 탈취로 비친다</td><td>권리 범위를 <b>산출물</b>로 한정하고 배경 IP 를 제외한다(2층). 사업화 보상으로 대가의 균형을 맞춘다</td><td>법무 · 구매</td></tr>
+<tr><td><b>아이디어 부정 사용</b></td><td>제안 · 입찰 과정에서 받은 아이디어를 부정하게 쓰면 부정경쟁행위가 될 수 있다</td><td>미채택 제안 비사용 기간(3층)과 독자 개발 입증 절차를 둔다</td><td>법무</td></tr>
+<tr><td><b>약관 불공정</b></td><td>개인 · 소규모 제안자에게 소액 보상으로 광범위한 권리 이전을 강제하면 불공정 시비가 생긴다</td><td>상한 500만 원과 짝을 이루는 <b>사업화 보상</b>(순매출 3% 이내)을 제도로 둔다</td><td>법무</td></tr>
+<tr><td><b>출원 전 공개</b></td><td>제안서 제출로 공개되면 특허 신규성이 깨질 수 있다</td><td>NDA 선행 · 필요 시 출원 뒤 제출 안내</td><td>특허</td></tr>
+<tr><td><b>제3자 권리</b></td><td>제안 내용이 타인의 권리를 침해하면 회사가 분쟁에 휘말린다</td><td>제안자의 보증 · 면책 조항과 배경 IP 신고</td><td>법무</td></tr>
+<tr><td><b>근로자성 · 위장도급</b></td><td>외부 인력에게 지휘 · 감독을 하면 근로자성 시비가 생긴다. 개인 제안자일수록 위험이 크다</td><td>산출물 단위 계약 · 장소 · 시간 지정 금지 · 상주 금지 · 1억 원 초과는 사업자 요구</td><td>노무</td></tr>
+<tr><td><b>보상금의 임금성</b></td><td>직원 채택 보상금 · 사업화 보상이 임금에 해당하면 평균임금 산입 등 영향이 있다</td><td>지급 규정을 명확히 하고 평균임금 산입 여부를 확인한다</td><td>노무 · 세무</td></tr>
+<tr><td><b>세무</b></td><td>직원은 근로소득, 외부 개인은 기타 · 사업소득, 사업자는 세금계산서. 권리 양도 대가의 소득 구분도 갈린다</td><td>보상 종류별 소득 구분과 원천징수 방식을 미리 정한다</td><td>세무</td></tr>
+</tbody></table>
+<h2 id="s7">제7부 · 사전 점검에 더하는 것</h2>
+<table class="tight">
+<colgroup><col style="width:7%"><col style="width:7%"><col style="width:16%"><col style="width:38%"><col style="width:20%"><col style="width:12%"></colgroup>
+<thead><tr><th>코드</th><th>등급</th><th>이름</th><th>무엇을 보나</th><th>기준</th><th>근거</th></tr></thead><tbody>
+<tr><td><b class="mono">K-18</b></td><td>차단</td><td>외부 제안 자격</td><td>외부 신청이면 제안자 등록 · 자격 심사 통과와 NDA 동의</td><td>모두 있을 것</td><td>5.4.23</td></tr>
+<tr><td><b class="mono">K-19</b></td><td>차단</td><td>용역비 근거</td><td>외부 신청의 용역비 총액과 산출 근거(견적 · 단가 · 공수)</td><td>빠짐 0</td><td>5.4.24</td></tr>
+<tr><td><b class="mono">K-20</b></td><td>차단</td><td>권리 · 배경 IP 신고</td><td>2층 권리 귀속 동의와 배경 IP 목록(없으면 없음 표시)</td><td>비어 있지 않을 것</td><td>5.4.25</td></tr>
+<tr><td><b class="mono">W-16</b></td><td>경고</td><td>용역비 적정성</td><td>용역비 ÷ 사내 환산 비용(또는 유사 실적)</td><td>0.7 ~ 1.3 — 과소도 본다</td><td>5.4.24</td></tr>
+<tr><td><b class="mono">W-17</b></td><td>경고</td><td>소관 부서 의견</td><td>외부 신청의 소관 부서 의견</td><td>있을 것 — 없으면 심의에 올리지 않는다</td><td>5.4.23</td></tr>
+</tbody></table>
+<p class="small">사전 점검은 32 → <b>37종</b>(차단 20 · 경고 17)이 된다.</p>
+<h2 id="s8">제8부 · 영향과 다음 차수</h2>
+<table>
+<colgroup><col style="width:24%"><col style="width:30%"><col style="width:46%"></colgroup>
+<thead><tr><th>항목</th><th>지금</th><th>D19 반영 뒤</th></tr></thead><tbody>
+<tr><td>업무영역</td><td>18</td><td><b>19</b> — D19 신설</td></tr>
+<tr><td>업무코드</td><td>546</td><td><b>574</b> — 신설 28</td></tr>
+<tr><td>1회 수행 토큰 합</td><td>9,255</td><td><b>9,486</b></td></tr>
+<tr><td>관리 최소집합</td><td>D12 5건</td><td><b>그대로</b> — 이관하지 않는다</td></tr>
+<tr><td>기존 실행 이력 · 토큰</td><td>—</td><td><b>그대로</b> — 옛 업무코드를 폐지하지 않는다</td></tr>
+</tbody></table>
+<table>
+<colgroup><col style="width:16%"><col style="width:38%"><col style="width:46%"></colgroup>
+<thead><tr><th>차수</th><th>산출물</th><th>무엇을</th></tr></thead><tbody>
+<tr><td><b>1차</b>(이 문서 포함)</td><td>설계지시문 v5.11 · 코드체계 설계서 v3.14 · <b>이 문서</b></td><td>제도 확정 — 외부 개방(회사별) · 보상 2종 · 권리 3층 · D19 업무코드 정의 · 용어 통일</td></tr>
+<tr><td>2차</td><td>DB 테이블설계서 v3.12 · 실행순서 v2.5 · 업무스킬설계서 D19 v1.0 · D12 v2.5 · 부속 표 4종</td><td>외부 당사자 · 공모 · 제안 접수 · 용역 조건 · 보상 DB Table, 28건의 단계 · 수단 등록</td></tr>
+<tr><td>3차</td><td>프로젝트 생성 신청 자료 · UI 설계서 v1.8 · 시제품</td><td>외부 포털 화면 · 신청자 구분 · 조사 승인자 분리 · 용역비 입력과 점검</td></tr>
+</tbody></table>
+<footer>MyBee D19 프로젝트기획·생성 — 업무코드 명세서 v1.0 · MB-D19-2026-001 · 2026-09-23<br>
+근거 : MyBee 설계지시문 v5.10 · 코드체계 설계서 v3.13 · DB 테이블설계서 v3.9 · AI 사전 조사 구현 설계서 v1.0.
+법무 · 노무 · 세무 쟁점은 확인 목록이며 법률 의견이 아니다. 예시 수치는 예시다. DBMS 실행 검증은 하지 않았다.</footer>
+</div></body></html>

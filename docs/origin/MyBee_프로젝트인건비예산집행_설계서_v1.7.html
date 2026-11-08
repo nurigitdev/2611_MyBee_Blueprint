@@ -1,0 +1,1129 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>MyBee 프로젝트 인건비 예산·집행 설계서 v1.7</title><style>
+@page { size: A4; margin: 18mm 16mm 20mm 16mm; }
+@page :first { margin: 0; }
+* { box-sizing: border-box; }
+body { font-family: "Malgun Gothic","맑은 고딕",sans-serif; font-size: 10pt; line-height: 1.65;
+       color: #16181d; margin: 0; }
+h1 { font-size: 19pt; margin: 26px 0 10px; padding-bottom: 7px; border-bottom: 2.5px solid #1b3a6b;
+     color: #12315c; page-break-before: always; page-break-after: avoid; }
+h1.first { page-break-before: avoid; }
+h2 { font-size: 14pt; margin: 22px 0 8px; color: #1b3a6b; padding-left: 9px;
+     border-left: 4px solid #2d6cb5; page-break-after: avoid; }
+h3 { font-size: 11.5pt; margin: 16px 0 6px; color: #24406b; page-break-after: avoid; }
+h4 { font-size: 10.5pt; margin: 12px 0 4px; color: #33475f; page-break-after: avoid; }
+p { margin: 6px 0; text-align: justify; }
+ul, ol { margin: 6px 0 6px 18px; padding-left: 8px; }
+li { margin: 3px 0; }
+table { width: 100%; border-collapse: collapse; margin: 10px 0 14px; font-size: 8.6pt;
+        page-break-inside: auto; }
+thead { display: table-header-group; }
+tr { page-break-inside: avoid; }
+th { background: #e8eef7; border: 1px solid #9fb4d0; padding: 5px 6px; text-align: left;
+     font-weight: 600; color: #12315c; }
+td { border: 1px solid #c6d2e2; padding: 4px 6px; vertical-align: top; }
+td.num { text-align: right; font-variant-numeric: tabular-nums; }
+tbody tr:nth-child(even) { background: #f7f9fc; }
+code, .mono { font-family: Consolas,"D2Coding",monospace; font-size: 8.6pt; }
+pre { font-family: Consolas,"D2Coding",monospace; font-size: 8.3pt; background: #f4f6fa;
+      border: 1px solid #d6deea; border-left: 3px solid #2d6cb5; padding: 8px 10px;
+      white-space: pre-wrap; word-break: break-all; page-break-inside: avoid; margin: 8px 0; }
+.cover { height: 297mm; display: flex; flex-direction: column; justify-content: center;
+         align-items: center; text-align: center; background: linear-gradient(160deg,#12315c,#2d6cb5 70%,#4a8fd4);
+         color: #fff; page-break-after: always; }
+.cover .sys { font-size: 15pt; letter-spacing: 7px; opacity: .85; }
+.cover .title { font-size: 34pt; font-weight: 700; margin: 18px 0 6px; }
+.cover .sub { font-size: 13pt; opacity: .9; }
+.cover .rule { width: 110px; height: 3px; background: rgba(255,255,255,.7); margin: 26px 0; }
+.cover .meta { font-size: 10pt; opacity: .88; line-height: 2; }
+.note { background: #fff8e6; border: 1px solid #e8d59a; border-left: 4px solid #d9a441;
+        padding: 8px 11px; margin: 10px 0; font-size: 9.2pt; page-break-inside: avoid; }
+.warn { background: #fdeceb; border: 1px solid #eab4ae; border-left: 4px solid #c0392b;
+        padding: 8px 11px; margin: 10px 0; font-size: 9.2pt; page-break-inside: avoid; }
+.ok { background: #ecf7ee; border: 1px solid #a9d4b2; border-left: 4px solid #2e8b57;
+      padding: 8px 11px; margin: 10px 0; font-size: 9.2pt; page-break-inside: avoid; }
+.kv { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+.kv > div { flex: 1 1 150px; border: 1px solid #c6d2e2; border-top: 3px solid #2d6cb5;
+          padding: 8px 10px; background: #fafcff; }
+.kv .k { font-size: 8.4pt; color: #5a6b80; }
+.kv .v { font-size: 15pt; font-weight: 700; color: #12315c; }
+.toc a { text-decoration: none; color: #16181d; }
+.toc li { margin: 2px 0; }
+figure { margin: 12px 0; page-break-inside: avoid; text-align: center; }
+figcaption { font-size: 8.8pt; color: #5a6b80; margin-top: 5px; }
+svg { max-width: 100%; height: auto; }
+.small { font-size: 8.6pt; color: #5a6b80; }
+.tbl-tight td, .tbl-tight th { padding: 3px 5px; font-size: 8pt; }
+.pass { color: #2e8b57; font-weight: 600; }
+.fail { color: #c0392b; font-weight: 600; }
+
+@media screen {
+  html { scroll-behavior: auto; }
+  body { background: #eef1f6; }
+  #toc { position: fixed; top: 0; left: 0; bottom: 0; width: 300px; display: flex; flex-direction: column; background: #fff;
+         border-right: 1px solid #d6deea; font-size: 9.2pt; line-height: 1.4; z-index: 20; }
+  #toc .hd { padding: 12px 12px 8px; border-bottom: 1px solid #e3e8f0; }
+  #toc .tt { font-size: 10pt; color: #12315c; margin-bottom: 7px; }
+  #toc input { width: 100%; font: inherit; padding: 5px 8px; border: 1px solid #b9c7dc; border-radius: 5px; }
+  #toc .n { font-size: 8.4pt; color: #5a6b80; margin-top: 4px; min-height: 1em; }
+  #toc ul { list-style: none; margin: 0; padding: 4px 0 40px; overflow-y: auto; flex: 1; }
+  #toc li { margin: 0; }
+  #toc li a { display: block; padding: 2px 12px; color: #16181d; text-decoration: none; white-space: nowrap; overflow: hidden;
+              text-overflow: ellipsis; border-left: 3px solid transparent; }
+  #toc li a:hover { background: #f1f5fb; }
+  #toc li.l1 a { font-weight: 600; color: #12315c; margin-top: 5px; }
+  #toc li.l2 a { padding-left: 24px; }
+  #toc li.l3 { display: none; }
+  #toc li.l3 a { padding-left: 36px; color: #33475f; font-size: 8.8pt; }
+  #toc.searching li { display: none; }
+  #toc.searching li.hit { display: block; }
+  #toc li a.on { background: #e8eef7; border-left-color: #2d6cb5; }
+  #doc { margin-left: 300px; max-width: 1180px; padding: 0 36px 80px; background: #fff; min-height: 100vh;
+         box-shadow: 0 0 0 1px #dde3ec; }
+  #doc .cover { height: auto; min-height: 520px; margin: 0 -36px 10px; }
+  h1, h2, h3 { scroll-margin-top: 14px; }
+  h1 { padding-top: 18px; }
+  table { font-size: 9pt; }
+  .tbl-tight td, .tbl-tight th { font-size: 8.6pt; }
+}
+@media screen and (max-width: 980px) {
+  #toc { position: static; width: auto; max-height: 48vh; border-right: 0; border-bottom: 1px solid #d6deea; }
+  #doc { margin-left: 0; padding: 0 14px 60px; }
+  #doc .cover { margin: 0 -14px 10px; }
+}
+@media print {
+  #toc { display: none !important; }
+  #doc { margin: 0; padding: 0; max-width: none; box-shadow: none; min-height: 0; }
+}
+
+.gloss{border:1px solid #c6d2e2;border-radius:8px;background:#fbfcfe;padding:14px 16px;margin:18px 0}
+.gloss h3{margin:0 0 8px;font-size:15px;color:#12315c}
+.gloss table{width:100%;border-collapse:collapse;font-size:12.5px}
+.gloss td{border-top:1px solid #e6ecf4;padding:6px 8px;vertical-align:top}
+.gloss td:first-child{width:22%;font-weight:700;color:#12315c;white-space:nowrap}
+.gloss td:last-child{width:34%;color:#5a6b80}
+@media(max-width:760px){.gloss td:first-child{white-space:normal}}
+</style></head><body><nav id="toc" aria-label="목차"><div class="hd"><div class="tt">프로젝트 인건비 예산·집행 설계서 <b>v1.1</b></div><input id="tocq" type="search" placeholder="목차 검색" autocomplete="off"><div id="tocn" class="n"></div></div><ul id="tocl"><li class="l1"><a href="#s1" title="1. 이 문서가 푸는 문제">1. 이 문서가 푸는 문제</a></li><li class="l2"><a href="#s2" title="1.1 받은 요구 7건">1.1 받은 요구 7건</a></li><li class="l2"><a href="#s3" title="1.2 확정 전제 4건">1.2 확정 전제 4건</a></li><li class="l1"><a href="#s4" title="2. 요구를 그대로 옮길 수 없었던 곳 6건">2. 요구를 그대로 옮길 수 없었던 곳 6건</a></li><li class="l2"><a href="#s5" title="2.1 ①③④ 의 어긋남 — 배정된 일수와 일할 수 있는 일수">2.1 ①③④ 의 어긋남 — 배정된 일수와 일할 수 있는 일수</a></li><li class="l2"><a href="#s6" title="2.2 ④⑤ 의 개인정보 역산">2.2 ④⑤ 의 개인정보 역산</a></li><li class="l2"><a href="#s7" title="2.3 ④ 의 분자·분모 비대칭">2.3 ④ 의 분자·분모 비대칭</a></li><li class="l2"><a href="#s8" title="2.4 ⑦ 의 「연말 정산」이 가리키는 시점">2.4 ⑦ 의 「연말 정산」이 가리키는 시점</a></li><li class="l2"><a href="#s9" title="2.5 ⑦ 의 「수정한다」가 무엇을 수정하는가">2.5 ⑦ 의 「수정한다」가 무엇을 수정하는가</a></li><li class="l2"><a href="#s10" title="2.6 ⑥ 의 「동시에」">2.6 ⑥ 의 「동시에」</a></li><li class="l1"><a href="#s11" title="3. 산출 공식">3. 산출 공식</a></li><li class="l1"><a href="#s12" title="4. 로직 흐름 — 네 단계">4. 로직 흐름 — 네 단계</a></li><li class="l1"><a href="#s13" title="5. 데이터 모델 — 신설 12 DB Table">5. 데이터 모델 — 신설 12 DB Table</a></li><li class="l2"><a href="#s14" title="5.1 단가 계층 (mbhr) — 요구 ④ · P-01 · P-03">5.1 단가 계층 (mbhr) — 요구 ④ · P-01 · P-03</a></li><li class="l3"><a href="#s15" title="mbhr.workday_baseline — 소정근무일 기준판">mbhr.workday_baseline — 소정근무일 기준판</a></li><li class="l3"><a href="#s16" title="mbhr.employee_workday_estimate — 임직원 예상 실근무일수">mbhr.employee_workday_estimate — 임직원 예상 실근무일수</a></li><li class="l3"><a href="#s17" title="mbhr.employee_cost_estimate — 임직원 연간 인건비 버전">mbhr.employee_cost_estimate — 임직원 연간 인건비 버전</a></li><li class="l3"><a href="#s18" title="mbhr.employee_cost_component — 인건비 구성 항목">mbhr.employee_cost_component — 인건비 구성 항목</a></li><li class="l3"><a href="#s19" title="mbhr.labor_day_rate — 일당 인건비 단가">mbhr.labor_day_rate — 일당 인건비 단가</a></li><li class="l2"><a href="#s20" title="5.2 계획·예산 계층 (mbproj) — 요구 ②③⑤ · P-04">5.2 계획·예산 계층 (mbproj) — 요구 ②③⑤ · P-04</a></li><li class="l3"><a href="#s21" title="mbproj.project_labor_plan — 프로젝트 인력투입계획">mbproj.project_labor_plan — 프로젝트 인력투입계획</a></li><li class="l3"><a href="#s22" title="mbproj.project_labor_plan_line — 인력투입계획 라인">mbproj.project_labor_plan_line — 인력투입계획 라인</a></li><li class="l3"><a href="#s23" title="mbproj.project_labor_plan_month — 인력투입 월 분해">mbproj.project_labor_plan_month — 인력투입 월 분해</a></li><li class="l2"><a href="#s24" title="5.3 집행 계층 (mbhr · mbacct) — 요구 ⑥⑦ · P-02">5.3 집행 계층 (mbhr · mbacct) — 요구 ⑥⑦ · P-02</a></li><li class="l3"><a href="#s25" title="mbhr.payslip_project_cost — 급여 프로젝트 귀속">mbhr.payslip_project_cost — 급여 프로젝트 귀속</a></li><li class="l3"><a href="#s26" title="mbacct.budget_execution_line — 예산 집행 라인">mbacct.budget_execution_line — 예산 집행 라인</a></li><li class="l3"><a href="#s27" title="mbacct.budget_balance — 예산 잔액">mbacct.budget_balance — 예산 잔액</a></li><li class="l3"><a href="#s28" title="mbhr.labor_cost_actual_close — 연말 인건비 확정">mbhr.labor_cost_actual_close — 연말 인건비 확정</a></li><li class="l2"><a href="#s29" title="5.4 기존 표 변경 4건">5.4 기존 표 변경 4건</a></li><li class="l1"><a href="#s30" title="6. 정합성 규칙 R-LB-01 ~ R-LB-16">6. 정합성 규칙 R-LB-01 ~ R-LB-16</a></li><li class="l1"><a href="#s31" title="7. 로직도구와 스킬">7. 로직도구와 스킬</a></li><li class="l2"><a href="#s32" title="7.1 로직도구 11개">7.1 로직도구 11개</a></li><li class="l2"><a href="#s33" title="7.2 스킬 7종 — 신설 업무코드">7.2 스킬 7종 — 신설 업무코드</a></li><li class="l1"><a href="#s34" title="8. 권한과 개인정보 통제">8. 권한과 개인정보 통제</a></li><li class="l1"><a href="#s35" title="9. 검증 시나리오 16건">9. 검증 시나리오 16건</a></li><li class="l1"><a href="#s39" title="9A. 공용 인력 배분">9A. 공용 인력 배분</a></li><li class="l1"><a href="#s36" title="10. 이 버전에서 정하지 않은 것">10. 이 버전에서 정하지 않은 것</a></li><li class="l1"><a href="#s38" title="11. 개정 이력">11. 개정 이력</a></li><li class="l1"><a href="#s37" title="부록 · DDL">부록 · DDL</a></li></ul></nav><div id="doc"><div class="cover"><div class="sys">M Y B E E &nbsp; P L A T F O R M</div>
+<div class="title">프로젝트 인건비<br>예산·집행 설계서</div>
+<div class="sub">업무코드별 투입 일수로 예산을 세우고 · 매월 급여와 함께 집행하고 · 이듬해 4월에 확정한다</div>
+<div class="rule"></div><div class="meta">문서번호 : MB-LBC-2026-001<br>버전 : v1.7<br>작성일 : 2026-10-28<br>
+기준 문서 : MyBee_설계지시문 v5.13 제12.7조 &nbsp;·&nbsp; 산출물 번호 S-17<br>
+근거 버전 : MyBee_설계지시문 v5.12 · MyBee_코드체계_설계서 v3.15 · MyBee_DB테이블설계서 v3.13(제0I부)<br>동시 개정 : DB테이블_업무코드매핑 v3.2 ·
+DB한글명매핑 v3.1 · DB커버리지검토 v3.2 · DB상관관계분석표 v3.1 · 업무코드_스킬·로직도구_실행순서 v2.6<br>
+업무스킬설계서 D04 v1.9 · D07 v1.8 · D08 v1.6 · D12 v2.5<br>
+검증 범위 : 설계 모델 정적 정합성 검사 · 문서 간 대조 — DBMS 실행 검증 제외<br>이번 버전 : v1.7 — 공용 인력 배분(설계지시문 v5.24 제12.10.16 ~ 12.10.24조 · DB 테이블설계서 v3.28 제0AI부 · R42) 반영. 제9A장을 더했다</div></div>
+<div class="ok"><b>이번 버전(v1.7)에서 고친 것 — 공용 인력 배분</b><br>
+한 사람이 여러 프로젝트에 투입될 때 프로젝트마다 인력투입계획을 따로 확정하던 것을, 그 사람의 투입을 <b>공용 인력 배분안</b>(mbacct.cost_share_plan · cost_kind = LABOR) 하나로 묶어 한 번 확정하도록 바꾸었다(제9A장). 신설 12 DB Table · 규칙 R-LB-01 ~ 16 · 로직도구 · 금액 노출 규칙은 그대로다. 결재권자는 투입 일수 · 비율만 보고 금액은 급여 권한자만 본다(제12.7.11조).</div>
+<div class="ok"><b>이전 버전(v1.3)에서 고친 것 — 근거 버전 맞춤</b><br>
+동반 문서가 같은 날 한 번 더 올라가(설계지시문 v4.6 · 코드체계 v3.2 · DB 테이블설계서 v3.2 · 실행순서 v1.9 · 업무코드매핑 · 커버리지검토 v3.0) 표지 · 제5장 · 제7.2절 · 부록 DDL 머리의 근거 버전 표기를 맞췄다. 인건비 업무코드 7건의 스킬 · 로직도구 등록은 실행순서 v1.9 에서도 바뀌지 않았다. 문서 끝 꼬리말이 v1.1 버전 표기(설계지시문 v4.3 · 코드체계 v3.0 · DB v3.0)로 남아 있던 것도 고쳤다. DB Table · 컬럼 · 제약 · 로직도구 · 시나리오 · 금액 노출 규칙은 v1.2 와 같다.</div>
+<div class="ok"><b>이전 버전(v1.2)에서 고친 것 — 전체 문서 정합성 3차 검증</b><br>
+<b>① 금액 노출 규칙이 지시문과 달랐다.</b> 제8장은 「인원이 임계(기본 3명) 미만인 프로젝트는 금액을 상위 승인자에게만 보인다」고 적었으나, 설계지시문 제12.7.11조는 「사람 라인이 <b>둘 미만</b>인 프로젝트 · 업무코드는 <b>합계도 보이지 아니하고 예산 대비 집행률만</b> 보인다」고 정한다. 임계 · 대상 · 보이는 것이 모두 달랐다. 제8장 · 규칙 R-LB-16 · 제10장 미결 사항을 조항 문장에 맞추었다 — 하한은 2명이며 고객사는 이보다 <b>높게만</b> 정할 수 있다(더 낮추면 조항 위반).<br>
+<b>② 근거 버전 표기.</b> 표지 · 제5장 · 제7.2절이 설계지시문 v4.3 · DB 테이블설계서 v2.9 · 실행순서 v1.5 · v1.6 · D04 v1.7 을 가리키던 것을 현행(v4.5 · v3.1 · v1.8 · D04 v1.9 · D07 v1.8 · D08 v1.6 · D12 v1.8)으로 고쳤다. 부록 DDL 머리의 「DB 테이블설계서 v2.8(테이블 473)」은 이 DDL 이 얹히는 <b>출발점</b>이라 그대로 두고, 12표를 더한 뒤가 485표라는 것을 함께 적었다.<br>
+DB Table · 컬럼 · 제약 · 로직도구 · 시나리오는 바뀌지 않았다.</div>
+<div class="ok"><b>이전 버전(v1.1)에서 고친 것 — 설계지시문 v4.3 논리 모순 정정 반영(crs-05 · S-17)</b><br>
+<b>① 예산 원장의 소유.</b> 제4장 [2단계]가 「FL0012008 예산 배정 &rarr; mbacct.budget」으로 적어
+<b>D12 프로젝트수행업무가 회계(D04)가 소유한 예산 원장에 직접 쓰는 것</b>으로 읽혔다.
+설계지시문 제10.1.1조(원장 단독 소유 · 다른 영역은 제안만)와 DB 테이블설계서의 대응표
+(<span class="mono">mbacct.budget</span> 을 「만든다」는 <span class="mono">FL0004012</span> 예산 편성 하나,
+<span class="mono">FL0012008</span> 은 「읽는다」)와 어긋나 바로잡았다 — D12 는
+<span class="mono">mbproj.project_budget</span> 에 배정을 적고 <span class="mono">mbacct.budget</span> 은 읽기만 한다
+(제4장 [2단계] · 제2.6절 · 제5.4절 C-03 · 제7.1절 · 부록 DDL 주석).<br>
+<b>② 산출물 번호.</b> 설계지시문 v4.3 에서 이 문서의 산출물 번호가 S-16 에서 <b>S-17</b> 로 바뀌었다
+(S-16 은 홍보·IR · 감사 연계 설계서다). 제9장의 S-01 ~ S-16 은 이 문서 안의 검증 시나리오 번호로 다른 계열이다.<br>
+<b>③ 근거 버전.</b> 설계지시문 v4.3 · 코드체계_설계서 v3.0 · DB테이블설계서 v3.0 으로 고쳐 적었다.
+신설 12 DB Table · 규칙 16건 · 로직도구 11개 · 스킬 7종과 컬럼 명세는 v1.0 과 같다.</div>
+<h1 id="s1" class="first">1. 이 문서가 푸는 문제</h1>
+<p>프로젝트를 수행하는 임직원의 인건비를 <b>예산 안에서 관리하고 매월 집행액을 쌓아 보이게</b> 하는 것이 요구였다.
+요구는 일곱 가지였고, 그대로 옮길 수 없는 곳이 여섯 군데 있었다. 이 문서는 그 여섯 군데를 어떻게 처리했는지와
+그 결과로 만들어진 표 12개 · 규칙 16개 · 로직도구 11개 · 스킬 7개를 적는다.</p>
+<h2 id="s2">1.1 받은 요구 7건</h2>
+<table class="tbl-tight"><colgroup><col style="width:6%"><col style="width:94%"></colgroup>
+<thead><tr><th>번호</th><th>요구</th></tr></thead><tbody>
+<tr><td>①</td><td>모든 임직원은 1개 이상의 프로젝트를 수행하여야 한다</td></tr>
+<tr><td>②</td><td>프로젝트를 등록하면서 각 업무코드를 수행하는 주체가 사람인지 에이전트인지 구분한다</td></tr>
+<tr><td>③</td><td>주체가 사람이면 사번을 매칭하고 그 임직원이 해당 업무코드를 수행하는 데 드는 일수(man-day)를 입력한다</td></tr>
+<tr><td>④</td><td>회사가 그 임직원에게 지급하는 총액을 실제 근무 일수(법정휴일 · 월차 · 연차 · 출산휴가 등을 예상해 제외한 일수)로 나누어 하루치 인건비를 낸다</td></tr>
+<tr><td>⑤</td><td>사람이 필요한 모든 업무코드 인건비의 합이 그 프로젝트의 인건비 예산이 된다</td></tr>
+<tr><td>⑥</td><td>매월 인건비가 집행되면 프로젝트별로 인건비 전표를 발행해 프로젝트별 지출 현황을 볼 수 있게 한다</td></tr>
+<tr><td>⑦</td><td>프로젝트별 집행금액은 예산을 초과하거나 미달하는 것을 허용하되, 연말 정산이 완료되면 실제 집행 금액으로 수정한다</td></tr>
+</tbody></table>
+<h2 id="s3">1.2 확정 전제 4건</h2>
+<div class="ok"><b>P-01</b> 예산 산출 단가는 직급별 표준임률이 아니라 <b>임직원 개인의 실제 예상단가</b>를 쓴다. &nbsp;
+<b>P-02</b> 실제 확정은 <b>이듬해 4월 한 번</b>만 한다. &nbsp;
+<b>P-03</b> 단가의 분자는 <b>회사가 그 개인에게 지출한 모든 비용</b>이다 — 퇴직급여충당금과 복리후생을 포함한다. &nbsp;
+<b>P-04</b> <b>사내상시업무도 예산을 편성하는 정식 프로젝트</b>다.</div>
+<h1 id="s4">2. 요구를 그대로 옮길 수 없었던 곳 6건</h1>
+<h2 id="s5">2.1 ①③④ 의 어긋남 — 배정된 일수와 일할 수 있는 일수</h2>
+<p>요구 ④ 는 단가의 분모를 <b>그 사람의 실근무일수 전체</b>로 잡는다. 그런데 요구 ③ 의 투입 일수는
+<b>프로젝트에 배정된 일수</b>다. 한 사람의 전 프로젝트 배정 합이 240일인데 실근무일수가 220일이면 과배정이고,
+180일이면 <b>40일치 인건비가 갈 곳이 없다</b>.</p>
+<p>두 장치로 묶었다. <b>가용일수 제약</b>(규칙 R-LB-01) — 한 사람의 전 프로젝트 투입 일수 합이 예상 실근무일수를 넘으면
+계획을 승인하지 않는다. <b>잔여 흡수</b>(확정전제 P-04) — 부서마다 상시 업무 프로젝트를 하나 두고 미배정 일수를 흡수한다.
+그 결과 두 값은 <b>부등식이 아니라 항등식</b>이 되고, 요구 ① 도 자동으로 충족된다.</p>
+<div class="ok"><b>이 항등식이 주는 것.</b> 전 프로젝트 인건비 예산의 합 = 전 임직원 연간 인건비의 합(규칙 R-LB-02).
+전사 인건비가 프로젝트로 <b>완전분해</b>되므로, 어느 프로젝트에도 잡히지 않고 새는 인건비가 구조적으로 없다.</div>
+<h2 id="s6">2.2 ④⑤ 의 개인정보 역산</h2>
+<div class="warn">프로젝트 예산이 <b>개인 단가 × 투입 일수</b>의 합이면, 한 사람이 단독으로 수행하는 업무코드에서는
+<b>라인 금액 ÷ 투입 일수 = 그 사람의 연봉</b>이 그대로 나온다. 프로젝트 책임자가 팀원 연봉을 계산할 수 있다.</div>
+<p>표준임률로 예산을 세우면 이 문제가 사라지지만, 발주자는 <b>개인 실제 예상단가</b>를 택했다(P-01).
+따라서 구조가 아니라 <b>권한</b>으로 막는다 — 단가와 계획 라인 금액은 급여 권한자만 보고,
+프로젝트 책임자와 PA 에게는 <b>프로젝트 합계와 투입 일수만</b> 보인다(규칙 R-LB-16 · 제12.7.11조).</p>
+<h2 id="s7">2.3 ④ 의 분자·분모 비대칭</h2>
+<p>분모에서 출산전후휴가를 빼면 그 사람의 하루치 인건비가 뛰고, 그를 투입한 프로젝트만 비싸진다.
+출산전후휴가 기간은 고용보험이 부담하거나 무급이어서 회사가 실제로 지급하지 않는데도 그렇다.</p>
+<p>그래서 규칙을 못 박았다 — <b>분모에서 제외한 기간의 인건비는 분자에서도 제외한다</b>(R-LB-11).
+제외 일수는 <span class="mono">mbhr.employee_workday_estimate.unpaid_excluded_days</span> 에,
+같은 금액은 <span class="mono">mbhr.employee_cost_estimate.unpaid_period_amount</span> 에 남겨 짝을 이룬다.</p>
+<h2 id="s8">2.4 ⑦ 의 「연말 정산」이 가리키는 시점</h2>
+<p>근로소득세 연말정산은 <b>소득세의 정산</b>이지 회사가 부담한 인건비 총액을 확정하지 않는다. 확정 시점은 따로 있다.</p>
+<table class="tbl-tight"><colgroup><col style="width:16%"><col style="width:84%"></colgroup>
+<thead><tr><th>시점</th><th>확정되는 것</th></tr></thead><tbody>
+<tr><td>12월 급여 지급</td><td>급여 · 수당 본체</td></tr>
+<tr><td>2월</td><td>근로소득세 연말정산 — <b>회사 부담과 무관하다</b></td></tr>
+<tr><td>3월</td><td>고용 · 산재 보수총액 신고</td></tr>
+<tr><td>4월</td><td>건강보험 · 장기요양 정산 — <b>회사부담분이 여기서 추가징수 · 환급된다</b></td></tr>
+<tr><td>결산</td><td>퇴직급여충당부채 확정</td></tr>
+</tbody></table>
+<p>다섯 가지를 모두 마친 <b>이듬해 4월에 한 번</b> 확정한다(P-02 · R-LB-15). 2월과 4월에 두 번 조정하면
+프로젝트 실적이 두 번 흔들리고, 어느 값이 맞는지 가릴 근거가 사라진다.</p>
+<h2 id="s9">2.5 ⑦ 의 「수정한다」가 무엇을 수정하는가</h2>
+<p>두 가지를 갈랐다. <b>수정 대상은 예산이 아니라 집행액</b>이다 — 예산을 사후에 실제값으로 바꾸면
+「예산 대비 실적」이라는 개념 자체가 사라진다. 그리고 <b>과거 행을 고치지 않는다</b> —
+이미 마감된 기간의 전표와 집행 줄을 고치면 감사 추적이 끊긴다.
+차액은 <b>조정 줄과 조정 전표</b>로 확정월에 당기 인식한다(R-LB-13 · 제12.7.10조).</p>
+<h2 id="s10">2.6 ⑥ 의 「동시에」</h2>
+<div class="warn"><b>급여 트랜잭션에서 예산 집행액을 직접 더하면 예산 원장과 회계 원장이 서로 다른 값을 갖게 된다.</b>
+두 원장이 같은 사실을 각각 누적하면 반드시 틀어지고, 틀어진 뒤에는 어느 쪽이 맞는지 가릴 근거가 없다.</div>
+<p>집행의 사실은 <b>전표 하나</b>에만 두고, 예산 쪽은 그 전표를 읽어 만든 <b>투영</b>으로 둔다(R-LB-06 · R-LB-07).
+설계지시문 제12.4조 트랜잭션 원장 원칙을 인건비에 적용한 형태다.</p>
+<p>같은 이유로 기존 설계의 <b>이중 예산 원장</b>도 없앴다 —
+<span class="mono">mbacct.budget</span> 과 <span class="mono">mbproj.project_budget</span> 이 각각 약정액 · 실적액을
+누적하고 있었다. 금액의 정본을 <span class="mono">mbacct.budget</span> 하나로 모으고(그 행을 만들고 바꾸는 것은 회계(D04)의 <span class="mono">FL0004012</span> 예산 편성이다. D12 는 읽기만 한다 — 설계지시문 제10.1.1조)
+<span class="mono">mbproj.project_budget</span> 은 배정 링크로 축소했다(변경 C-03).</p>
+<h1 id="s11">3. 산출 공식</h1>
+<pre>예상 실근무일수 = 재직일수 − 주휴·법정공휴일 − 연차 − 월차 − 예상 특별휴가(출산·육아·병가·공가)
+
+연간 인건비    = 급여·수당·상여·인센티브
+                 + 4대보험 회사부담(국민연금·건강·장기요양·고용·산재)
+                 + 퇴직급여충당 전입액(또는 확정기여형 부담금)
+                 + 복리후생(식대·차량·단체보험·건강검진·경조)
+                 + 개인 귀속 기타 지출(교육훈련·개인 배정 장비·소프트웨어)
+                 − [분모에서 뺀 무지급 구간의 인건비]          ← R-LB-11
+
+day 단가       = 연간 인건비 ÷ 예상 실근무일수                  ← 단수 처리 정책 적용
+
+업무코드 라인  = 계획 투입 일수 × day 단가                      (사람)
+                 예상 실행 횟수 × 실행 단가                      (에이전트 — 인건비가 아니라 운영비)
+
+프로젝트 인건비 예산 = Σ(사람 라인 금액), 회계연도별로 나눈다    ← R-LB-12
+프로젝트 총예산      = 인건비 예산 + 에이전트 운영비 예산</pre>
+<p><b>개인에게 귀속시킬 수 없는 비용은 분자에서 뺀다.</b> 사무실 임차료처럼 공용으로 쓰는 비용은
+인건비가 아니라 간접비다. 항목마다 귀속 가능 여부를
+<span class="mono">mbhr.employee_cost_component.is_personal_attributable</span> 로 남겨,
+그 경계를 문장이 아니라 데이터로 가른다.</p>
+<div class="note"><b>단가가 연도 판인 이유.</b> 연봉 인상 · 승진으로 단가는 연중에도 바뀐다.
+그래서 단가는 유효 구간을 갖는 버전이고, 계획 라인은 <b>승인 시점의 단가를 굳혀 적는다</b>
+(<span class="mono">day_rate_snapshot</span>). 이후 단가가 바뀌어도 승인된 예산은 흔들리지 않고,
+집행은 실제 단가로 이루어져 자연히 차이가 난다 — 요구 ⑦ 이 초과 · 미달을 허용하므로 이 차이는 문제가 아니라 정보다.</div>
+<h1 id="s12">4. 로직 흐름 — 네 단계</h1>
+<pre>[1단계] 연초 — D07 인사 · D08 급여
+  FL0007030 예상 실근무일수 산정   → 분모(사람별 일수 버전)
+  FL0008021 일당 인건비 단가 확정  → 분자(연간 인건비 버전) → 나눗셈 → 단가 버전 LOCK
+  ※ 프로젝트 등록보다 먼저 끝나 있어야 한다. 단가가 없으면 예산을 만들 수 없다.
+
+[2단계] 프로젝트 등록 — D12
+  FL0012044 인력투입계획 확정
+     업무코드마다 수행주체 구분(사람 / 에이전트)            ← 요구 ②
+     사람이면 사번 + 계획 투입 일수                          ← 요구 ③
+     가용일수 항등식 검사 → 초과는 거절, 부족분은 상시 업무로  ← R-LB-01 · 요구 ①
+     라인 금액 = 투입 일수 × 단가 → 프로젝트 인건비 예산      ← 요구 ⑤
+     월 분해 → 월별 예산 곡선
+  FL0012008 예산 배정 → mbproj.project_budget(프로젝트 배정 · budget_no 로 연결)
+     인건비 예산 금액의 편성은 D04 의 FL0004012 예산 편성이
+     mbacct.budget(budget_kind = PERSONNEL)에 만들며 D12 는 읽기만 한다  ← 10.1.1 원장 단독 소유
+  ※ 승인 전에는 프로젝트를 진행 상태로 올리지 않는다.
+  ※ 계획이 바뀌면 FL0012045 로 새 버전을 세운다. 이전 버전은 고치지 않는다.
+
+[3단계] 매월 — D08 급여 → D04 회계                            ← 요구 ⑥
+  FL0008005 급여 계산 실행    → 급여 명세 확정
+  FL0008022 인건비 프로젝트 배부
+     배부 기준 ① 그 달의 실적 공수 ② 없으면 월 계획 일수 ③ 없으면 참여율
+     비율 합 = 1 · 금액 합 = 인건비 총원가 · 잔차는 한 줄이 흡수  ← R-LB-04 · R-LB-05
+  FL0008013 급여 전표 제안 → 전표 제안함에 중복 실행 방지 키와 함께 제안(10.1.1)
+                            → FL0004009 회계업무가 전표를 기표한다   ← 12.7.6
+     전표 A (1장)  급여 총액   차) 인건비 가계정 / 대) 미지급급여 · 예수금
+     전표 B (N장)  원가 대체   차) 프로젝트별 인건비 / 대) 인건비 가계정   ← 프로젝트별 인건비 전표
+  FL0004052 프로젝트 인건비 집행 기록
+     전표에서 예산 집행 라인을 만든다(중복 실행 방지 키) → 잔액 재계산 → 초과 표시 · 통지
+  ※ 초과해도 급여 지급을 막지 않는다.                           ← 요구 ⑦
+
+[4단계] 이듬해 4월 — D08 → D04                                 ← 요구 ⑦ · P-02
+  선행 ① 12월 급여 ② 소득세 연말정산 ③ 고용산재 보수총액 ④ 건강보험 정산 ⑤ 퇴직급여충당 확정
+  FL0008021 (ACTUAL 버전)   실제 지출로 연간 인건비 버전 · 단가 버전을 새로 세운다
+  FL0004053 연말 인건비 확정 배부
+     확정 단가로 그 해 12개월을 다시 배부 → 기집행액과의 차액
+     조정 줄(YEAREND_ADJUST) + 조정 전표를 확정월에 당기 인식     ← R-LB-13
+     예산은 승인 당시 값으로 동결하고 차이는 차이로 남긴다</pre>
+<div class="note"><b>두 갈래 전표를 쓰는 이유.</b> 급여 총액 전표와 프로젝트별 원가 대체 전표를 갈라 두면
+급여 대사(총액 = 지급액 + 공제액)와 프로젝트 원가(프로젝트별 차변 합)가 <b>둘 다 성립</b>한다.
+프로젝트마다 급여 전표를 따로 끊으면 급여 총액을 한 장으로 대사할 수 없고,
+한 장에 모두 담으면 프로젝트별 전표를 볼 수 없다.</div>
+<h1 id="s13">5. 데이터 모델 — 신설 12 DB Table</h1><p>DB 테이블설계서 v3.2 제0I부(v2.9 에서 신설)와 같은 내용이며, 여기에는 <b>컬럼 전수 명세</b>를 싣는다. 모든 표에는 기존 표와 같은 공통 15컬럼(<span class="mono">tenant_id</span> … <span class="mono">deleted_by</span>)이 붙는다.</p>
+<h2 id="s14">5.1 단가 계층 (mbhr) — 요구 ④ · P-01 · P-03</h2>
+<h3 id="s15">mbhr.workday_baseline — 소정근무일 기준판</h3>
+<p class='small'>법인·연도별 소정근로일수 기준판. mbcore.holiday 에서 집계해 만들고 승인으로 굳힌다. 개인 단가 분모의 출발점이다. (컬럼 14개 + 공통 15 = 29)</p>
+<p style="font-size:8.4pt;margin:3px 0 5px;padding:5px 8px;background:#f4f7fc;border-left:3px solid #12315c"><b>업무영역</b> D07 인사업무 &nbsp;·&nbsp; <b>관련 업무코드</b> <span class="mono">FL0007030</span> 예상 실근무일수 산정<span style="color:#2e7d5b">(만든다)</span> &nbsp;<span class="mono">FL0008021</span> 일당 인건비 단가 확정<span style="color:#2d6cb5">(읽는다)</span> &nbsp;<span class="mono">FL0012044</span> 인력투입계획 확정<span style="color:#2d6cb5">(읽는다)</span></p>
+<table class="tbl-tight"><colgroup><col style="width:15%"><col style="width:14%"><col style="width:11%"><col style="width:4%"><col style="width:15%"><col style="width:41%"></colgroup><thead><tr><th>컬럼</th><th>한글 이름</th><th>타입</th><th>N</th><th>키</th><th>설명</th></tr></thead><tbody><tr><td class='mono'>id</td><td>식별자</td><td class='mono'>uuid</td><td>N</td><td class='mono'>PK</td><td>대리키(UUIDv7). 시간 순 단조 증가하도록 마이크로초까지 채운다.</td></tr><tr><td class='mono'>baseline_no</td><td>기준판 번호</td><td class='mono'>varchar(40)</td><td>N</td><td class='mono'>UK</td><td>기준판 번호.</td></tr><tr><td class='mono'>company_id</td><td>회사 ID</td><td class='mono'>uuid</td><td>N</td><td class='mono'>FK→mbcore.company(id)</td><td>적용 법인.</td></tr><tr><td class='mono'>fiscal_year</td><td>회계연도</td><td class='mono'>smallint</td><td>N</td><td class='mono'></td><td>적용 회계연도.</td></tr><tr><td class='mono'>calendar_days</td><td>역일수</td><td class='mono'>smallint</td><td>N</td><td class='mono'></td><td>역일수. 평년 365, 윤년 366.</td></tr><tr><td class='mono'>weekend_days</td><td>주휴 일수</td><td class='mono'>numeric(5,1)</td><td>N</td><td class='mono'></td><td>주휴일수. 주 5일제면 토·일 합계다.</td></tr><tr><td class='mono'>statutory_holiday_days</td><td>법정공휴일 일수</td><td class='mono'>numeric(5,1)</td><td>N</td><td class='mono'></td><td>법정공휴일수. mbcore.holiday 의 STATUTORY 중 is_working_day 가 false 인 날.</td></tr><tr><td class='mono'>company_holiday_days</td><td>회사 휴일 일수</td><td class='mono'>numeric(5,1)</td><td>N</td><td class='mono'></td><td>회사 휴일·집단휴무 일수. holiday_type 이 COMPANY·SHUTDOWN 인 날.</td></tr><tr><td class='mono'>standard_working_days</td><td>소정근로일수</td><td class='mono'>numeric(5,1)</td><td>N</td><td class='mono'></td><td>소정근로일수. 역일 − 주휴 − 법정공휴일 − 회사휴일. 0 보다 커야 한다.</td></tr><tr><td class='mono'>default_annual_leave_days</td><td>기본 연차 부여일수</td><td class='mono'>numeric(5,1)</td><td>N</td><td class='mono'></td><td>근속 무관 기본 연차 부여일수. 개인별 부여일수는 mbhr.leave_balance 가 이긴다.</td></tr><tr><td class='mono'>holiday_source_note</td><td>휴일 집계 근거</td><td class='mono'>varchar(400)</td><td>Y</td><td class='mono'></td><td>휴일 집계의 근거 메모. 대체공휴일 적용 여부 등을 적는다.</td></tr><tr><td class='mono'>criteria_version_ref</td><td>판정 기준 버전 참조</td><td class='mono'>varchar(80)</td><td>Y</td><td class='mono'>FK→mbauth.criteria_version(version_ref)</td><td>이 기준판이 따르는 판정 기준 버전.</td></tr><tr><td class='mono'>status</td><td>상태</td><td class='mono'>varchar(20)</td><td>N</td><td class='mono'></td><td>상태. DRAFT/APPROVED/LOCKED. LOCKED 이후에는 새 버전으로만 고친다.</td></tr><tr><td class='mono'>approved_at</td><td>승인 시각</td><td class='mono'>timestamptz</td><td>Y</td><td class='mono'></td><td>승인 시각.</td></tr></tbody></table>
+
+<h3 id="s16">mbhr.employee_workday_estimate — 임직원 예상 실근무일수</h3>
+<p class='small'>임직원 한 사람의 그 해 예상 실근무일수. day 단가의 분모다. 법정휴일·연차·월차·출산휴가 예상을 모두 뺀 값이다. (컬럼 22개 + 공통 15 = 37)</p>
+<p style="font-size:8.4pt;margin:3px 0 5px;padding:5px 8px;background:#f4f7fc;border-left:3px solid #12315c"><b>업무영역</b> D07 인사업무 &nbsp;·&nbsp; <b>관련 업무코드</b> <span class="mono">FL0007030</span> 예상 실근무일수 산정<span style="color:#2e7d5b">(만든다)</span> &nbsp;<span class="mono">FL0008021</span> 일당 인건비 단가 확정<span style="color:#2d6cb5">(읽는다)</span> &nbsp;<span class="mono">FL0012044</span> 인력투입계획 확정<span style="color:#2d6cb5">(읽는다)</span> &nbsp;<span class="mono">FL0004053</span> 연말 인건비 확정 배부<span style="color:#2d6cb5">(읽는다)</span></p>
+<table class="tbl-tight"><colgroup><col style="width:15%"><col style="width:14%"><col style="width:11%"><col style="width:4%"><col style="width:15%"><col style="width:41%"></colgroup><thead><tr><th>컬럼</th><th>한글 이름</th><th>타입</th><th>N</th><th>키</th><th>설명</th></tr></thead><tbody><tr><td class='mono'>id</td><td>식별자</td><td class='mono'>uuid</td><td>N</td><td class='mono'>PK</td><td>대리키(UUIDv7). 시간 순 단조 증가하도록 마이크로초까지 채운다.</td></tr><tr><td class='mono'>employee_id</td><td>임직원 ID</td><td class='mono'>uuid</td><td>N</td><td class='mono'>FK→mbcore.employee(id)</td><td>대상 임직원.</td></tr><tr><td class='mono'>fiscal_year</td><td>회계연도</td><td class='mono'>smallint</td><td>N</td><td class='mono'></td><td>대상 회계연도.</td></tr><tr><td class='mono'>estimate_kind</td><td>버전 종류</td><td class='mono'>varchar(20)</td><td>N</td><td class='mono'></td><td>버전 종류. ESTIMATE(연초 예상)/REVISED(연중 개정)/ACTUAL(연말 확정).</td></tr><tr><td class='mono'>baseline_id</td><td>기준판 ID</td><td class='mono'>uuid</td><td>N</td><td class='mono'>FK→mbhr.workday_baseline(id)</td><td>적용한 소정근무일 기준판.</td></tr><tr><td class='mono'>hire_date</td><td>입사일</td><td class='mono'>date</td><td>Y</td><td class='mono'></td><td>당해 입사일. 중도 입사면 채운다.</td></tr><tr><td class='mono'>leave_date</td><td>퇴사일</td><td class='mono'>date</td><td>Y</td><td class='mono'></td><td>당해 퇴사일. 중도 퇴사면 채운다.</td></tr><tr><td class='mono'>employed_ratio</td><td>재직 비율</td><td class='mono'>numeric(7,4)</td><td>N</td><td class='mono'></td><td>재직 비율 0~1. 중도 입·퇴사를 일할로 반영한다.</td></tr><tr><td class='mono'>standard_working_days</td><td>소정근로일수</td><td class='mono'>numeric(5,1)</td><td>N</td><td class='mono'></td><td>기준판 소정근로일수에 재직 비율을 곱한 값.</td></tr><tr><td class='mono'>annual_leave_days</td><td>연차 일수</td><td class='mono'>numeric(5,1)</td><td>N</td><td class='mono'></td><td>연차 부여일수. mbhr.leave_balance 의 granted_days 를 가져온다.</td></tr><tr><td class='mono'>monthly_leave_days</td><td>월차 일수</td><td class='mono'>numeric(5,1)</td><td>N</td><td class='mono'></td><td>월차 일수.</td></tr><tr><td class='mono'>maternity_leave_days</td><td>출산전후휴가 일수</td><td class='mono'>numeric(5,1)</td><td>N</td><td class='mono'></td><td>출산전후휴가 예상 일수.</td></tr><tr><td class='mono'>childcare_leave_days</td><td>육아휴직 일수</td><td class='mono'>numeric(5,1)</td><td>N</td><td class='mono'></td><td>육아휴직 예상 일수.</td></tr><tr><td class='mono'>sick_leave_days</td><td>병가 일수</td><td class='mono'>numeric(5,1)</td><td>N</td><td class='mono'></td><td>병가 예상 일수.</td></tr><tr><td class='mono'>military_leave_days</td><td>공가 일수</td><td class='mono'>numeric(5,1)</td><td>N</td><td class='mono'></td><td>예비군·민방위 등 공가 일수.</td></tr><tr><td class='mono'>other_excluded_days</td><td>기타 제외 일수</td><td class='mono'>numeric(5,1)</td><td>N</td><td class='mono'></td><td>파견·휴직 등 그 밖의 제외 일수.</td></tr><tr><td class='mono'>estimated_working_days</td><td>예상 실근무일수</td><td class='mono'>numeric(5,1)</td><td>N</td><td class='mono'></td><td>예상 실근무일수. day 단가의 분모이며 0 보다 커야 한다.</td></tr><tr><td class='mono'>unpaid_excluded_days</td><td>무지급 제외 일수</td><td class='mono'>numeric(5,1)</td><td>N</td><td class='mono'></td><td>분모에서 뺀 날 가운데 회사가 급여를 지급하지 않는 구간. 같은 금액을 분자에서도 빼야 단가가 부풀지 않는다(규칙 R-LB-11).</td></tr><tr><td class='mono'>source_note</td><td>산출 근거 메모</td><td class='mono'>varchar(400)</td><td>Y</td><td class='mono'></td><td>산출 근거 메모. 예상 특별휴가의 출처를 적는다.</td></tr><tr><td class='mono'>criteria_version_ref</td><td>판정 기준 버전 참조</td><td class='mono'>varchar(80)</td><td>Y</td><td class='mono'>FK→mbauth.criteria_version(version_ref)</td><td>산정에 쓴 판정 기준 버전.</td></tr><tr><td class='mono'>status</td><td>상태</td><td class='mono'>varchar(20)</td><td>N</td><td class='mono'></td><td>상태. DRAFT/APPROVED/LOCKED/SUPERSEDED.</td></tr><tr><td class='mono'>approved_at</td><td>승인 시각</td><td class='mono'>timestamptz</td><td>Y</td><td class='mono'></td><td>승인 시각.</td></tr></tbody></table>
+
+<h3 id="s17">mbhr.employee_cost_estimate — 임직원 연간 인건비 버전</h3>
+<p class='small'>회사가 그 임직원 한 사람에게 한 해 동안 지출하는 모든 비용의 합. day 단가의 분자다. 퇴직급여충당금과 복리후생을 포함한다. (컬럼 18개 + 공통 15 = 33)</p>
+<p style="font-size:8.4pt;margin:3px 0 5px;padding:5px 8px;background:#f4f7fc;border-left:3px solid #12315c"><b>업무영역</b> D08 급여업무 &nbsp;·&nbsp; <b>관련 업무코드</b> <span class="mono">FL0008021</span> 일당 인건비 단가 확정<span style="color:#2e7d5b">(만든다)</span> &nbsp;<span class="mono">FL0004053</span> 연말 인건비 확정 배부<span style="color:#2d6cb5">(읽는다)</span> &nbsp;<span class="mono">FL0012044</span> 인력투입계획 확정<span style="color:#2d6cb5">(읽는다)</span></p>
+<table class="tbl-tight"><colgroup><col style="width:15%"><col style="width:14%"><col style="width:11%"><col style="width:4%"><col style="width:15%"><col style="width:41%"></colgroup><thead><tr><th>컬럼</th><th>한글 이름</th><th>타입</th><th>N</th><th>키</th><th>설명</th></tr></thead><tbody><tr><td class='mono'>id</td><td>식별자</td><td class='mono'>uuid</td><td>N</td><td class='mono'>PK</td><td>대리키(UUIDv7). 시간 순 단조 증가하도록 마이크로초까지 채운다.</td></tr><tr><td class='mono'>estimate_no</td><td>추정치 번호</td><td class='mono'>varchar(40)</td><td>N</td><td class='mono'>UK</td><td>인건비 버전 번호.</td></tr><tr><td class='mono'>employee_id</td><td>임직원 ID</td><td class='mono'>uuid</td><td>N</td><td class='mono'>FK→mbcore.employee(id)</td><td>대상 임직원.</td></tr><tr><td class='mono'>fiscal_year</td><td>회계연도</td><td class='mono'>smallint</td><td>N</td><td class='mono'></td><td>대상 회계연도.</td></tr><tr><td class='mono'>estimate_kind</td><td>버전 종류</td><td class='mono'>varchar(20)</td><td>N</td><td class='mono'></td><td>버전 종류. ESTIMATE(연초 예상)/REVISED(연중 개정)/ACTUAL(연말 확정).</td></tr><tr><td class='mono'>annual_salary_id</td><td>연봉 결정 ID</td><td class='mono'>uuid</td><td>Y</td><td class='mono'>FK→mbnvt.annual_salary(id)</td><td>근거가 된 연봉 결정.</td></tr><tr><td class='mono'>gross_pay_amount</td><td>급여·수당 합계</td><td class='mono'>numeric(20,4)</td><td>N</td><td class='mono'></td><td>급여·수당·상여·인센티브 예상 합계.</td></tr><tr><td class='mono'>employer_burden_amount</td><td>회사 부담 금액</td><td class='mono'>numeric(20,4)</td><td>N</td><td class='mono'></td><td>4대보험 회사부담 합계. 국민연금·건강·장기요양·고용·산재.</td></tr><tr><td class='mono'>severance_amount</td><td>퇴직급여 금액</td><td class='mono'>numeric(20,4)</td><td>N</td><td class='mono'></td><td>퇴직급여충당 전입액 또는 확정기여형 부담금.</td></tr><tr><td class='mono'>welfare_amount</td><td>복리후생 금액</td><td class='mono'>numeric(20,4)</td><td>N</td><td class='mono'></td><td>복리후생 합계. 식대·차량·단체보험·건강검진·경조 등 개인 귀속분.</td></tr><tr><td class='mono'>other_personal_amount</td><td>기타 개인 귀속 금액</td><td class='mono'>numeric(20,4)</td><td>N</td><td class='mono'></td><td>그 밖에 개인에게 귀속되는 지출. 교육훈련비, 개인 배정 장비·소프트웨어 상각 등.</td></tr><tr><td class='mono'>unpaid_period_amount</td><td>무지급 구간 차감액</td><td class='mono'>numeric(20,4)</td><td>N</td><td class='mono'></td><td>분모에서 뺀 무지급 구간에 대응하는 차감액. 분자와 분모의 대칭을 지킨다.</td></tr><tr><td class='mono'>total_cost_amount</td><td>인건비 총원가</td><td class='mono'>numeric(20,4)</td><td>N</td><td class='mono'></td><td>분자. 위 다섯 항목의 합에서 무지급 차감액을 뺀 값.</td></tr><tr><td class='mono'>currency_code</td><td>통화 코드</td><td class='mono'>char(3)</td><td>N</td><td class='mono'></td><td>통화.</td></tr><tr><td class='mono'>criteria_version_ref</td><td>판정 기준 버전 참조</td><td class='mono'>varchar(80)</td><td>Y</td><td class='mono'>FK→mbauth.criteria_version(version_ref)</td><td>산정에 쓴 판정 기준 버전.</td></tr><tr><td class='mono'>supersedes_estimate_id</td><td>대체 대상 인건비 버전 ID</td><td class='mono'>uuid</td><td>Y</td><td class='mono'>FK→mbhr.employee_cost_estimate(id)</td><td>이 버전이 대체하는 이전 버전.</td></tr><tr><td class='mono'>status</td><td>상태</td><td class='mono'>varchar(20)</td><td>N</td><td class='mono'></td><td>상태. DRAFT/APPROVED/LOCKED/SUPERSEDED.</td></tr><tr><td class='mono'>approved_at</td><td>승인 시각</td><td class='mono'>timestamptz</td><td>Y</td><td class='mono'></td><td>승인 시각.</td></tr></tbody></table>
+
+<h3 id="s18">mbhr.employee_cost_component — 인건비 구성 항목</h3>
+<p class='small'>연간 인건비 버전을 이루는 항목 한 줄. 복리후생 항목이 회사마다 다르므로 컬럼이 아니라 행으로 둔다. 항목이 늘어도 표 구조를 바꾸지 않는다. (컬럼 11개 + 공통 15 = 26)</p>
+<p style="font-size:8.4pt;margin:3px 0 5px;padding:5px 8px;background:#f4f7fc;border-left:3px solid #12315c"><b>업무영역</b> D08 급여업무 &nbsp;·&nbsp; <b>관련 업무코드</b> <span class="mono">FL0008021</span> 일당 인건비 단가 확정<span style="color:#2e7d5b">(만든다)</span> &nbsp;<span class="mono">FL0004053</span> 연말 인건비 확정 배부<span style="color:#2d6cb5">(읽는다)</span> &nbsp;<span class="mono">FL0018011</span> 재무제표 분석적 검토<span style="color:#2d6cb5">(읽는다)</span></p>
+<table class="tbl-tight"><colgroup><col style="width:15%"><col style="width:14%"><col style="width:11%"><col style="width:4%"><col style="width:15%"><col style="width:41%"></colgroup><thead><tr><th>컬럼</th><th>한글 이름</th><th>타입</th><th>N</th><th>키</th><th>설명</th></tr></thead><tbody><tr><td class='mono'>id</td><td>식별자</td><td class='mono'>uuid</td><td>N</td><td class='mono'>PK</td><td>대리키(UUIDv7). 시간 순 단조 증가하도록 마이크로초까지 채운다.</td></tr><tr><td class='mono'>cost_estimate_id</td><td>인건비 버전 ID</td><td class='mono'>uuid</td><td>N</td><td class='mono'>FK→mbhr.employee_cost_estimate(id)</td><td>소속 인건비 버전.</td></tr><tr><td class='mono'>seq</td><td>순번</td><td class='mono'>smallint</td><td>N</td><td class='mono'></td><td>항목 순번.</td></tr><tr><td class='mono'>component_code</td><td>구성 항목 코드</td><td class='mono'>varchar(40)</td><td>N</td><td class='mono'></td><td>항목 코드. 항목의 정의는 mbcore.code_item 에 둔다. 코드 항목은 (묶음, 항목) 쌍에만 유일성이 있어 외래키를 걸지 않는다.</td></tr><tr><td class='mono'>component_group</td><td>구성 항목 묶음</td><td class='mono'>varchar(30)</td><td>N</td><td class='mono'></td><td>항목 묶음. GROSS_PAY/EMPLOYER_BURDEN/SEVERANCE/WELFARE/OTHER_PERSONAL/UNPAID_DEDUCT.</td></tr><tr><td class='mono'>amount</td><td>금액</td><td class='mono'>numeric(20,4)</td><td>N</td><td class='mono'></td><td>항목 금액.</td></tr><tr><td class='mono'>calc_basis</td><td>계산 근거</td><td class='mono'>varchar(400)</td><td>Y</td><td class='mono'></td><td>산출 근거. 요율과 기준 금액을 사람이 읽을 말로 적는다.</td></tr><tr><td class='mono'>source_kind</td><td>출처 구분</td><td class='mono'>varchar(30)</td><td>N</td><td class='mono'></td><td>값의 출처. ANNUAL_SALARY/FORMULA/HISTORICAL_AVG/CONTRACT/PAYROLL_ACTUAL/MANUAL.</td></tr><tr><td class='mono'>source_ref</td><td>출처 참조</td><td class='mono'>varchar(80)</td><td>Y</td><td class='mono'></td><td>출처 참조. 연봉 결정 번호나 계약 번호 등.</td></tr><tr><td class='mono'>is_personal_attributable</td><td>개인 귀속 가능 여부</td><td class='mono'>boolean</td><td>N</td><td class='mono'></td><td>개인에게 귀속시킬 수 있는 비용인지 여부. false 인 행(사무실 임차료 같은 공용 간접비)은 분자 합산에서 뺀다.</td></tr><tr><td class='mono'>is_estimated</td><td>예상값 여부</td><td class='mono'>boolean</td><td>N</td><td class='mono'></td><td>예상값 여부. 연말 확정 버전에서는 false 로 바뀐다.</td></tr></tbody></table>
+
+<h3 id="s19">mbhr.labor_day_rate — 일당 인건비 단가</h3>
+<p class='small'>임직원 한 사람의 하루치 인건비. 연간 인건비 버전을 예상 실근무일수로 나눈 값이다. 프로젝트 인건비 예산과 집행 배부가 모두 이 단가를 쓴다. (컬럼 18개 + 공통 15 = 33)</p>
+<p style="font-size:8.4pt;margin:3px 0 5px;padding:5px 8px;background:#f4f7fc;border-left:3px solid #12315c"><b>업무영역</b> D08 급여업무 &nbsp;·&nbsp; <b>관련 업무코드</b> <span class="mono">FL0008021</span> 일당 인건비 단가 확정<span style="color:#2e7d5b">(만든다)</span> &nbsp;<span class="mono">FL0012044</span> 인력투입계획 확정<span style="color:#2d6cb5">(읽는다)</span> &nbsp;<span class="mono">FL0008022</span> 인건비 프로젝트 배부<span style="color:#2d6cb5">(읽는다)</span></p>
+<table class="tbl-tight"><colgroup><col style="width:15%"><col style="width:14%"><col style="width:11%"><col style="width:4%"><col style="width:15%"><col style="width:41%"></colgroup><thead><tr><th>컬럼</th><th>한글 이름</th><th>타입</th><th>N</th><th>키</th><th>설명</th></tr></thead><tbody><tr><td class='mono'>id</td><td>식별자</td><td class='mono'>uuid</td><td>N</td><td class='mono'>PK</td><td>대리키(UUIDv7). 시간 순 단조 증가하도록 마이크로초까지 채운다.</td></tr><tr><td class='mono'>employee_id</td><td>임직원 ID</td><td class='mono'>uuid</td><td>N</td><td class='mono'>FK→mbcore.employee(id)</td><td>대상 임직원.</td></tr><tr><td class='mono'>fiscal_year</td><td>회계연도</td><td class='mono'>smallint</td><td>N</td><td class='mono'></td><td>대상 회계연도.</td></tr><tr><td class='mono'>rate_kind</td><td>단가 버전 종류</td><td class='mono'>varchar(20)</td><td>N</td><td class='mono'></td><td>버전 종류. ESTIMATE(연초 예상)/REVISED(연중 개정)/ACTUAL(이듬해 4월 확정).</td></tr><tr><td class='mono'>rate_seq</td><td>단가 버전 순번</td><td class='mono'>integer</td><td>N</td><td class='mono'></td><td>같은 버전 종류 안에서의 순번. 연봉 인상·승진으로 연중에 바뀌면 증가한다.</td></tr><tr><td class='mono'>effective_from</td><td>적용 시작일</td><td class='mono'>date</td><td>N</td><td class='mono'></td><td>유효 시작일.</td></tr><tr><td class='mono'>effective_to</td><td>적용 종료일</td><td class='mono'>date</td><td>N</td><td class='mono'></td><td>유효 종료일. 같은 임직원·버전 종류의 유효 구간은 겹칠 수 없다.</td></tr><tr><td class='mono'>cost_estimate_id</td><td>인건비 버전 ID</td><td class='mono'>uuid</td><td>N</td><td class='mono'>FK→mbhr.employee_cost_estimate(id)</td><td>분자로 쓴 연간 인건비 버전.</td></tr><tr><td class='mono'>workday_estimate_id</td><td>예상 실근무일수 ID</td><td class='mono'>uuid</td><td>N</td><td class='mono'>FK→mbhr.employee_workday_estimate(id)</td><td>분모로 쓴 예상 실근무일수.</td></tr><tr><td class='mono'>numerator_amount</td><td>분자 금액</td><td class='mono'>numeric(20,4)</td><td>N</td><td class='mono'></td><td>분자 금액을 굳혀 적은 값.</td></tr><tr><td class='mono'>denominator_days</td><td>분모 일수</td><td class='mono'>numeric(5,1)</td><td>N</td><td class='mono'></td><td>분모 일수를 굳혀 적은 값. 0 보다 커야 한다.</td></tr><tr><td class='mono'>day_rate</td><td>일당 인건비 단가</td><td class='mono'>numeric(20,4)</td><td>N</td><td class='mono'></td><td>하루치 인건비. 분자 ÷ 분모에 단수 처리를 적용한 값이다.</td></tr><tr><td class='mono'>rounding_policy</td><td>단수 처리 정책</td><td class='mono'>varchar(30)</td><td>N</td><td class='mono'></td><td>단수 처리 방식. ROUND_4/ROUND_0/FLOOR 중 하나.</td></tr><tr><td class='mono'>currency_code</td><td>통화 코드</td><td class='mono'>char(3)</td><td>N</td><td class='mono'></td><td>통화.</td></tr><tr><td class='mono'>criteria_version_ref</td><td>판정 기준 버전 참조</td><td class='mono'>varchar(80)</td><td>Y</td><td class='mono'>FK→mbauth.criteria_version(version_ref)</td><td>산정에 쓴 판정 기준 버전.</td></tr><tr><td class='mono'>supersedes_rate_id</td><td>대체 대상 단가 버전 ID</td><td class='mono'>uuid</td><td>Y</td><td class='mono'>FK→mbhr.labor_day_rate(id)</td><td>이 버전이 대체하는 이전 단가 버전.</td></tr><tr><td class='mono'>status</td><td>상태</td><td class='mono'>varchar(20)</td><td>N</td><td class='mono'></td><td>상태. DRAFT/APPROVED/LOCKED/SUPERSEDED.</td></tr><tr><td class='mono'>approved_at</td><td>승인 시각</td><td class='mono'>timestamptz</td><td>Y</td><td class='mono'></td><td>승인 시각.</td></tr></tbody></table>
+
+<h2 id="s20">5.2 계획·예산 계층 (mbproj) — 요구 ②③⑤ · P-04</h2>
+<h3 id="s21">mbproj.project_labor_plan — 프로젝트 인력투입계획</h3>
+<p class='small'>프로젝트 한 건의 연도별 인력투입계획 버전. 이 버전의 계산 결과가 곧 프로젝트 인건비 예산이다. 단가가 연도 버전이므로 계획도 연도로 나뉜다. (컬럼 19개 + 공통 15 = 34)</p>
+<p style="font-size:8.4pt;margin:3px 0 5px;padding:5px 8px;background:#f4f7fc;border-left:3px solid #12315c"><b>업무영역</b> D12 프로젝트수행업무 &nbsp;·&nbsp; <b>관련 업무코드</b> <span class="mono">FL0012044</span> 인력투입계획 확정<span style="color:#2e7d5b">(만든다)</span> &nbsp;<span class="mono">FL0012045</span> 인력투입계획 변경<span style="color:#8a5a12">(바꾼다)</span> &nbsp;<span class="mono">FL0012008</span> 예산 배정<span style="color:#2d6cb5">(읽는다)</span> &nbsp;<span class="mono">FL0004052</span> 프로젝트 인건비 집행 기록<span style="color:#2d6cb5">(읽는다)</span></p>
+<table class="tbl-tight"><colgroup><col style="width:15%"><col style="width:14%"><col style="width:11%"><col style="width:4%"><col style="width:15%"><col style="width:41%"></colgroup><thead><tr><th>컬럼</th><th>한글 이름</th><th>타입</th><th>N</th><th>키</th><th>설명</th></tr></thead><tbody><tr><td class='mono'>id</td><td>식별자</td><td class='mono'>uuid</td><td>N</td><td class='mono'>PK</td><td>대리키(UUIDv7). 시간 순 단조 증가하도록 마이크로초까지 채운다.</td></tr><tr><td class='mono'>plan_no</td><td>계획 번호</td><td class='mono'>varchar(40)</td><td>N</td><td class='mono'>UK</td><td>계획 버전 번호.</td></tr><tr><td class='mono'>project_id</td><td>프로젝트 ID</td><td class='mono'>uuid</td><td>N</td><td class='mono'>FK→mbproj.project(id)</td><td>대상 프로젝트.</td></tr><tr><td class='mono'>fiscal_year</td><td>회계연도</td><td class='mono'>smallint</td><td>N</td><td class='mono'></td><td>대상 회계연도. 여러 해에 걸친 프로젝트는 해마다 버전을 둔다.</td></tr><tr><td class='mono'>plan_seq</td><td>계획 버전 순번</td><td class='mono'>integer</td><td>N</td><td class='mono'></td><td>같은 프로젝트·연도 안에서의 버전 순번. 계획이 바뀌면 증가한다.</td></tr><tr><td class='mono'>rate_basis_kind</td><td>단가 기준 구분</td><td class='mono'>varchar(30)</td><td>N</td><td class='mono'></td><td>단가 기준. ACTUAL_ESTIMATE(임직원 개인 실제 예상단가). 확정 전제 P-01 에 따라 표준임률은 쓰지 않는다.</td></tr><tr><td class='mono'>total_human_man_day</td><td>사람 투입 일수 합계</td><td class='mono'>numeric(11,2)</td><td>N</td><td class='mono'></td><td>사람이 수행하는 업무코드의 투입 일수 합계.</td></tr><tr><td class='mono'>total_labor_budget_amount</td><td>인건비 예산 총액</td><td class='mono'>numeric(20,4)</td><td>N</td><td class='mono'></td><td>인건비 예산. 사람 라인 금액의 합이다.</td></tr><tr><td class='mono'>total_agent_cost_amount</td><td>에이전트 운영비 총액</td><td class='mono'>numeric(20,4)</td><td>N</td><td class='mono'></td><td>에이전트 운영비 예산. 인건비가 아니므로 계정이 다르다.</td></tr><tr><td class='mono'>total_budget_amount</td><td>총 예산 금액</td><td class='mono'>numeric(20,4)</td><td>N</td><td class='mono'></td><td>총 예산. 인건비 예산과 에이전트 운영비 예산의 합.</td></tr><tr><td class='mono'>headcount</td><td>인원 수</td><td class='mono'>integer</td><td>N</td><td class='mono'></td><td>참여 인원 수. 금액 노출 임계 판정에 쓴다.</td></tr><tr><td class='mono'>budget_no</td><td>예산 번호</td><td class='mono'>varchar(40)</td><td>Y</td><td class='mono'>FK→mbacct.budget(budget_no)</td><td>이 계획에서 산출된 편성 예산.</td></tr><tr><td class='mono'>capacity_check_passed</td><td>가용일수 검증 통과 여부</td><td class='mono'>boolean</td><td>N</td><td class='mono'></td><td>가용일수 검증 통과 여부. 통과하지 않은 계획은 승인될 수 없다.</td></tr><tr><td class='mono'>capacity_check_at</td><td>가용일수 검증 시각</td><td class='mono'>timestamptz</td><td>Y</td><td class='mono'></td><td>가용일수 검증 시각.</td></tr><tr><td class='mono'>approval_request_no</td><td>승인 요청 번호</td><td class='mono'>varchar(40)</td><td>Y</td><td class='mono'>FK→mbtxn.approval_request(request_no)</td><td>계획 확정을 건 결재 요청.</td></tr><tr><td class='mono'>criteria_version_ref</td><td>판정 기준 버전 참조</td><td class='mono'>varchar(80)</td><td>Y</td><td class='mono'>FK→mbauth.criteria_version(version_ref)</td><td>산출에 쓴 판정 기준 버전.</td></tr><tr><td class='mono'>supersedes_plan_id</td><td>대체 대상 계획 버전 ID</td><td class='mono'>uuid</td><td>Y</td><td class='mono'>FK→mbproj.project_labor_plan(id)</td><td>이 버전이 대체하는 이전 계획 버전.</td></tr><tr><td class='mono'>status</td><td>상태</td><td class='mono'>varchar(20)</td><td>N</td><td class='mono'></td><td>상태. DRAFT/SUBMITTED/APPROVED/SUPERSEDED/CLOSED.</td></tr><tr><td class='mono'>approved_at</td><td>승인 시각</td><td class='mono'>timestamptz</td><td>Y</td><td class='mono'></td><td>승인 시각.</td></tr></tbody></table>
+
+<h3 id="s22">mbproj.project_labor_plan_line — 인력투입계획 라인</h3>
+<p class='small'>업무코드 하나를 누가 수행하고 며칠이 드는지 적은 줄. 수행 주체가 사람인지 에이전트인지를 여기서 가른다. (컬럼 19개 + 공통 15 = 34)</p>
+<p style="font-size:8.4pt;margin:3px 0 5px;padding:5px 8px;background:#f4f7fc;border-left:3px solid #12315c"><b>업무영역</b> D12 프로젝트수행업무 &nbsp;·&nbsp; <b>관련 업무코드</b> <span class="mono">FL0012044</span> 인력투입계획 확정<span style="color:#2e7d5b">(만든다)</span> &nbsp;<span class="mono">FL0012045</span> 인력투입계획 변경<span style="color:#8a5a12">(바꾼다)</span> &nbsp;<span class="mono">FL0008022</span> 인건비 프로젝트 배부<span style="color:#2d6cb5">(읽는다)</span> &nbsp;<span class="mono">FL0004053</span> 연말 인건비 확정 배부<span style="color:#2d6cb5">(읽는다)</span></p>
+<table class="tbl-tight"><colgroup><col style="width:15%"><col style="width:14%"><col style="width:11%"><col style="width:4%"><col style="width:15%"><col style="width:41%"></colgroup><thead><tr><th>컬럼</th><th>한글 이름</th><th>타입</th><th>N</th><th>키</th><th>설명</th></tr></thead><tbody><tr><td class='mono'>id</td><td>식별자</td><td class='mono'>uuid</td><td>N</td><td class='mono'>PK</td><td>대리키(UUIDv7). 시간 순 단조 증가하도록 마이크로초까지 채운다.</td></tr><tr><td class='mono'>plan_id</td><td>계획 ID</td><td class='mono'>uuid</td><td>N</td><td class='mono'>FK→mbproj.project_labor_plan(id)</td><td>소속 계획 버전.</td></tr><tr><td class='mono'>line_no</td><td>라인 번호</td><td class='mono'>smallint</td><td>N</td><td class='mono'></td><td>줄 번호.</td></tr><tr><td class='mono'>work_code</td><td>업무코드</td><td class='mono'>varchar(20)</td><td>N</td><td class='mono'>FK→mbcode.work_code(work_code)</td><td>수행할 업무코드.</td></tr><tr><td class='mono'>executor_kind</td><td>실행 주체 구분</td><td class='mono'>varchar(20)</td><td>N</td><td class='mono'></td><td>수행 주체 구분. HUMAN(사람)/AGENT(에이전트). 프로젝트 등록 때 업무코드마다 정한다.</td></tr><tr><td class='mono'>employee_id</td><td>임직원 ID</td><td class='mono'>uuid</td><td>Y</td><td class='mono'>FK→mbcore.employee(id)</td><td>수행 임직원. 주체가 사람이면 반드시 채운다.</td></tr><tr><td class='mono'>agent_kind</td><td>에이전트 종류</td><td class='mono'>varchar(20)</td><td>Y</td><td class='mono'></td><td>수행 에이전트 종류. IA/PA/EA/VA/TA/TR. 주체가 에이전트이면 채운다.</td></tr><tr><td class='mono'>agent_profile_code</td><td>에이전트 분야 코드</td><td class='mono'>varchar(40)</td><td>Y</td><td class='mono'></td><td>전문가 에이전트의 분야 코드.</td></tr><tr><td class='mono'>planned_man_day</td><td>계획 투입 일수</td><td class='mono'>numeric(9,2)</td><td>Y</td><td class='mono'></td><td>계획 투입 일수. 주체가 사람이면 반드시 채운다.</td></tr><tr><td class='mono'>day_rate_id</td><td>일당 단가 ID</td><td class='mono'>uuid</td><td>Y</td><td class='mono'>FK→mbhr.labor_day_rate(id)</td><td>적용한 일당 인건비 단가 버전.</td></tr><tr><td class='mono'>day_rate_snapshot</td><td>적용 단가 스냅숏</td><td class='mono'>numeric(20,4)</td><td>Y</td><td class='mono'></td><td>승인 시점의 단가를 굳혀 적은 값. 이후 단가 버전이 바뀌어도 이 예산은 흔들리지 않는다.</td></tr><tr><td class='mono'>planned_run_count</td><td>계획 실행 횟수</td><td class='mono'>integer</td><td>Y</td><td class='mono'></td><td>에이전트 라인의 예상 실행 횟수.</td></tr><tr><td class='mono'>unit_cost_amount</td><td>실행 단가</td><td class='mono'>numeric(20,6)</td><td>Y</td><td class='mono'></td><td>에이전트 라인의 1회 실행 단가. mbops.unit_cost_baseline 에서 가져온다.</td></tr><tr><td class='mono'>line_amount</td><td>라인 금액</td><td class='mono'>numeric(20,4)</td><td>N</td><td class='mono'></td><td>줄 금액. 사람 라인은 계획 일수 × 단가, 에이전트 라인은 실행 횟수 × 실행 단가.</td></tr><tr><td class='mono'>account_code</td><td>계정과목 코드</td><td class='mono'>varchar(20)</td><td>N</td><td class='mono'>FK→mbacct.account(account_code)</td><td>예산이 걸리는 계정과목. 사람은 인건비, 에이전트는 운영비다.</td></tr><tr><td class='mono'>cost_center_code</td><td>코스트센터 코드</td><td class='mono'>varchar(20)</td><td>Y</td><td class='mono'></td><td>코스트센터.</td></tr><tr><td class='mono'>assignment_id</td><td>배정 ID</td><td class='mono'>uuid</td><td>Y</td><td class='mono'>FK→mbproj.project_work_assignment(id)</td><td>실행 단계의 업무 배정.</td></tr><tr><td class='mono'>is_standing_absorber</td><td>상시 업무 잔여 흡수 여부</td><td class='mono'>boolean</td><td>N</td><td class='mono'></td><td>사내상시업무의 잔여 흡수 줄인지 여부. 배정되지 않은 일수를 담는다.</td></tr><tr><td class='mono'>note</td><td>비고</td><td class='mono'>varchar(400)</td><td>Y</td><td class='mono'></td><td>산정 근거 메모.</td></tr></tbody></table>
+
+<h3 id="s23">mbproj.project_labor_plan_month — 인력투입 월 분해</h3>
+<p class='small'>계획 라인 하나를 달마다 나눈 줄. 월별 예산 곡선과 매월 인건비 배부의 기준이 된다. 합계는 라인의 계획 일수와 같아야 한다. (컬럼 5개 + 공통 15 = 20)</p>
+<p style="font-size:8.4pt;margin:3px 0 5px;padding:5px 8px;background:#f4f7fc;border-left:3px solid #12315c"><b>업무영역</b> D12 프로젝트수행업무 &nbsp;·&nbsp; <b>관련 업무코드</b> <span class="mono">FL0012044</span> 인력투입계획 확정<span style="color:#2e7d5b">(만든다)</span> &nbsp;<span class="mono">FL0012045</span> 인력투입계획 변경<span style="color:#8a5a12">(바꾼다)</span> &nbsp;<span class="mono">FL0008022</span> 인건비 프로젝트 배부<span style="color:#2d6cb5">(읽는다)</span></p>
+<table class="tbl-tight"><colgroup><col style="width:15%"><col style="width:14%"><col style="width:11%"><col style="width:4%"><col style="width:15%"><col style="width:41%"></colgroup><thead><tr><th>컬럼</th><th>한글 이름</th><th>타입</th><th>N</th><th>키</th><th>설명</th></tr></thead><tbody><tr><td class='mono'>id</td><td>식별자</td><td class='mono'>uuid</td><td>N</td><td class='mono'>PK</td><td>대리키(UUIDv7). 시간 순 단조 증가하도록 마이크로초까지 채운다.</td></tr><tr><td class='mono'>plan_line_id</td><td>계획 라인 ID</td><td class='mono'>uuid</td><td>N</td><td class='mono'>FK→mbproj.project_labor_plan_line(id)</td><td>소속 계획 라인.</td></tr><tr><td class='mono'>period_code</td><td>기간 코드</td><td class='mono'>varchar(20)</td><td>N</td><td class='mono'>FK→mbcore.calendar_period(period_code)</td><td>대상 월.</td></tr><tr><td class='mono'>planned_man_day</td><td>계획 투입 일수</td><td class='mono'>numeric(9,2)</td><td>N</td><td class='mono'></td><td>그 달의 계획 투입 일수.</td></tr><tr><td class='mono'>planned_amount</td><td>계획 금액</td><td class='mono'>numeric(20,4)</td><td>N</td><td class='mono'></td><td>그 달의 계획 금액.</td></tr></tbody></table>
+
+<h2 id="s24">5.3 집행 계층 (mbhr · mbacct) — 요구 ⑥⑦ · P-02</h2>
+<h3 id="s25">mbhr.payslip_project_cost — 급여 프로젝트 귀속</h3>
+<p class='small'>급여 명세 한 건을 프로젝트별로 나눈 줄. 매월 인건비 집행의 근거이며 프로젝트별 인건비 전표의 원천이다. (컬럼 21개 + 공통 15 = 36)</p>
+<p style="font-size:8.4pt;margin:3px 0 5px;padding:5px 8px;background:#f4f7fc;border-left:3px solid #12315c"><b>업무영역</b> D08 급여업무 &nbsp;·&nbsp; <b>관련 업무코드</b> <span class="mono">FL0008022</span> 인건비 프로젝트 배부<span style="color:#2e7d5b">(만든다)</span> &nbsp;<span class="mono">FL0008013</span> 급여 전표 제안<span style="color:#2d6cb5">(읽는다)</span> &nbsp;<span class="mono">FL0004052</span> 프로젝트 인건비 집행 기록<span style="color:#2d6cb5">(읽는다)</span> &nbsp;<span class="mono">FL0004053</span> 연말 인건비 확정 배부<span style="color:#2d6cb5">(읽는다)</span></p>
+<table class="tbl-tight"><colgroup><col style="width:15%"><col style="width:14%"><col style="width:11%"><col style="width:4%"><col style="width:15%"><col style="width:41%"></colgroup><thead><tr><th>컬럼</th><th>한글 이름</th><th>타입</th><th>N</th><th>키</th><th>설명</th></tr></thead><tbody><tr><td class='mono'>id</td><td>식별자</td><td class='mono'>uuid</td><td>N</td><td class='mono'>PK</td><td>대리키(UUIDv7). 시간 순 단조 증가하도록 마이크로초까지 채운다.</td></tr><tr><td class='mono'>payslip_id</td><td>급여 명세 ID</td><td class='mono'>uuid</td><td>N</td><td class='mono'>FK→mbhr.payslip(id)</td><td>소속 급여 명세.</td></tr><tr><td class='mono'>seq</td><td>순번</td><td class='mono'>smallint</td><td>N</td><td class='mono'></td><td>줄 순번.</td></tr><tr><td class='mono'>project_id</td><td>프로젝트 ID</td><td class='mono'>uuid</td><td>N</td><td class='mono'>FK→mbproj.project(id)</td><td>귀속 프로젝트. 미배정 일수는 사내상시업무 프로젝트로 간다.</td></tr><tr><td class='mono'>work_code</td><td>업무코드</td><td class='mono'>varchar(20)</td><td>Y</td><td class='mono'>FK→mbcode.work_code(work_code)</td><td>원가 귀속 업무코드.</td></tr><tr><td class='mono'>plan_line_id</td><td>계획 라인 ID</td><td class='mono'>uuid</td><td>Y</td><td class='mono'>FK→mbproj.project_labor_plan_line(id)</td><td>근거가 된 인력투입계획 라인.</td></tr><tr><td class='mono'>period_code</td><td>기간 코드</td><td class='mono'>varchar(20)</td><td>N</td><td class='mono'>FK→mbcore.calendar_period(period_code)</td><td>근로 귀속월. 지급월이 아니라 일한 달이다.</td></tr><tr><td class='mono'>basis_kind</td><td>배부 기준 구분</td><td class='mono'>varchar(30)</td><td>N</td><td class='mono'></td><td>배부 기준. ACTUAL_EFFORT(실적 공수)/PLAN_MAN_DAY(계획 공수)/MEMBER_RATE(참여율)/STANDING_RESIDUAL(잔여 흡수).</td></tr><tr><td class='mono'>basis_value</td><td>배부 기준값</td><td class='mono'>numeric(24,8)</td><td>N</td><td class='mono'></td><td>배부 기준 실측치.</td></tr><tr><td class='mono'>ratio</td><td>배부 비율</td><td class='mono'>numeric(9,8)</td><td>N</td><td class='mono'></td><td>배부 비율 0~1. 한 급여 명세 안에서 합이 1 이어야 한다.</td></tr><tr><td class='mono'>direct_cost_amount</td><td>급여 귀속 금액</td><td class='mono'>numeric(20,4)</td><td>N</td><td class='mono'></td><td>급여·수당 귀속분.</td></tr><tr><td class='mono'>employer_burden_amount</td><td>회사 부담 금액</td><td class='mono'>numeric(20,4)</td><td>N</td><td class='mono'></td><td>4대보험 회사부담 귀속분.</td></tr><tr><td class='mono'>severance_amount</td><td>퇴직급여 금액</td><td class='mono'>numeric(20,4)</td><td>N</td><td class='mono'></td><td>퇴직급여충당 귀속분.</td></tr><tr><td class='mono'>welfare_amount</td><td>복리후생 금액</td><td class='mono'>numeric(20,4)</td><td>N</td><td class='mono'></td><td>복리후생 귀속분.</td></tr><tr><td class='mono'>total_cost_amount</td><td>인건비 총원가</td><td class='mono'>numeric(20,4)</td><td>N</td><td class='mono'></td><td>인건비 총원가 귀속분. 위 네 항목의 합이다.</td></tr><tr><td class='mono'>is_residual_absorber</td><td>단수차 흡수 여부</td><td class='mono'>boolean</td><td>N</td><td class='mono'></td><td>단수 잔차를 흡수하는 줄인지 여부. 한 급여 명세에 한 줄만 true 다.</td></tr><tr><td class='mono'>budget_no</td><td>예산 번호</td><td class='mono'>varchar(40)</td><td>N</td><td class='mono'>FK→mbacct.budget(budget_no)</td><td>집행 대상 예산.</td></tr><tr><td class='mono'>journal_no</td><td>전표 번호</td><td class='mono'>varchar(40)</td><td>Y</td><td class='mono'>FK→mbacct.journal(journal_no)</td><td>이 줄이 실린 프로젝트별 인건비 전표.</td></tr><tr><td class='mono'>execution_line_id</td><td>예산 집행 라인 ID</td><td class='mono'>uuid</td><td>Y</td><td class='mono'>FK→mbacct.budget_execution_line(id)</td><td>대응하는 예산 집행 라인.</td></tr><tr><td class='mono'>allocation_run_id</td><td>배부 실행 ID</td><td class='mono'>uuid</td><td>N</td><td class='mono'></td><td>배부 실행 식별자. 재계산 때 같은 값이면 같은 결과가 나온다.</td></tr><tr><td class='mono'>rate_kind_used</td><td>적용 단가 버전 종류</td><td class='mono'>varchar(20)</td><td>N</td><td class='mono'></td><td>배부에 쓴 단가 버전 종류. 연말 확정 전에는 ESTIMATE 다.</td></tr></tbody></table>
+
+<h3 id="s26">mbacct.budget_execution_line — 예산 집행 라인</h3>
+<p class='small'>예산이 실제로 쓰인 사실 한 줄. 추가만 되고 수정되지 않는다. 취소는 반대 부호 줄로, 연말 확정은 조정 줄로 남긴다. (컬럼 22개 + 공통 15 = 37)</p>
+<p style="font-size:8.4pt;margin:3px 0 5px;padding:5px 8px;background:#f4f7fc;border-left:3px solid #12315c"><b>업무영역</b> D04 회계업무 &nbsp;·&nbsp; <b>관련 업무코드</b> <span class="mono">FL0004052</span> 프로젝트 인건비 집행 기록<span style="color:#2e7d5b">(만든다)</span> &nbsp;<span class="mono">FL0004053</span> 연말 인건비 확정 배부<span style="color:#2e7d5b">(만든다)</span> &nbsp;<span class="mono">FL0004010</span> 전표 역분개<span style="color:#2e7d5b">(만든다)</span> &nbsp;<span class="mono">FL0004014</span> 예산 대비 실적 집계<span style="color:#2d6cb5">(읽는다)</span> &nbsp;<span class="mono">FL0018011</span> 재무제표 분석적 검토<span style="color:#2d6cb5">(읽는다)</span></p>
+<table class="tbl-tight"><colgroup><col style="width:15%"><col style="width:14%"><col style="width:11%"><col style="width:4%"><col style="width:15%"><col style="width:41%"></colgroup><thead><tr><th>컬럼</th><th>한글 이름</th><th>타입</th><th>N</th><th>키</th><th>설명</th></tr></thead><tbody><tr><td class='mono'>id</td><td>식별자</td><td class='mono'>uuid</td><td>N</td><td class='mono'>PK</td><td>대리키(UUIDv7). 시간 순 단조 증가하도록 마이크로초까지 채운다.</td></tr><tr><td class='mono'>budget_no</td><td>예산 번호</td><td class='mono'>varchar(40)</td><td>N</td><td class='mono'>FK→mbacct.budget(budget_no)</td><td>집행 대상 예산.</td></tr><tr><td class='mono'>period_code</td><td>기간 코드</td><td class='mono'>varchar(20)</td><td>N</td><td class='mono'>FK→mbcore.calendar_period(period_code)</td><td>근로 귀속 기간. 지급월이 아니다.</td></tr><tr><td class='mono'>project_id</td><td>프로젝트 ID</td><td class='mono'>uuid</td><td>N</td><td class='mono'>FK→mbproj.project(id)</td><td>귀속 프로젝트.</td></tr><tr><td class='mono'>account_code</td><td>계정과목 코드</td><td class='mono'>varchar(20)</td><td>N</td><td class='mono'>FK→mbacct.account(account_code)</td><td>계정과목.</td></tr><tr><td class='mono'>work_code</td><td>업무코드</td><td class='mono'>varchar(20)</td><td>Y</td><td class='mono'>FK→mbcode.work_code(work_code)</td><td>원가 귀속 업무코드.</td></tr><tr><td class='mono'>employee_id</td><td>임직원 ID</td><td class='mono'>uuid</td><td>Y</td><td class='mono'>FK→mbcore.employee(id)</td><td>귀속 임직원. 개인 단가가 드러나는 자리이므로 조회 권한을 따로 건다.</td></tr><tr><td class='mono'>direction</td><td>적용 방향</td><td class='mono'>varchar(30)</td><td>N</td><td class='mono'></td><td>줄 종류. ACTUAL(집행)/REVERSAL(취소)/YEAREND_ADJUST(연말 확정 조정).</td></tr><tr><td class='mono'>source_kind</td><td>출처 구분</td><td class='mono'>varchar(30)</td><td>N</td><td class='mono'></td><td>집행 원천. PAYROLL/PAYROLL_RETRO/PAYROLL_BONUS/PAYROLL_SEVERANCE_ACCRUAL/AGENT_COST/YEAREND_TRUEUP.</td></tr><tr><td class='mono'>source_ref</td><td>출처 참조</td><td class='mono'>varchar(40)</td><td>Y</td><td class='mono'></td><td>원천 번호. 급여 회차 번호나 확정 번호.</td></tr><tr><td class='mono'>source_line_id</td><td>원천 라인 ID</td><td class='mono'>uuid</td><td>Y</td><td class='mono'></td><td>원천 줄 식별자. 급여 프로젝트 귀속 줄을 가리킨다.</td></tr><tr><td class='mono'>amount</td><td>금액</td><td class='mono'>numeric(20,4)</td><td>N</td><td class='mono'></td><td>부호 있는 금액. 취소와 환입은 음수다.</td></tr><tr><td class='mono'>currency_code</td><td>통화 코드</td><td class='mono'>char(3)</td><td>N</td><td class='mono'></td><td>통화.</td></tr><tr><td class='mono'>journal_no</td><td>전표 번호</td><td class='mono'>varchar(40)</td><td>N</td><td class='mono'>FK→mbacct.journal(journal_no)</td><td>근거 전표. 집행의 정본은 전표이며 이 줄은 그 투영이다.</td></tr><tr><td class='mono'>journal_line_no</td><td>전표 라인 번호</td><td class='mono'>smallint</td><td>Y</td><td class='mono'></td><td>근거 전표의 줄 번호.</td></tr><tr><td class='mono'>rate_kind_used</td><td>적용 단가 버전 종류</td><td class='mono'>varchar(20)</td><td>Y</td><td class='mono'></td><td>배부에 쓴 단가 버전 종류.</td></tr><tr><td class='mono'>criteria_version_ref</td><td>판정 기준 버전 참조</td><td class='mono'>varchar(80)</td><td>Y</td><td class='mono'>FK→mbauth.criteria_version(version_ref)</td><td>판정에 쓴 기준 버전.</td></tr><tr><td class='mono'>idempotency_key</td><td>중복 실행 방지 키</td><td class='mono'>varchar(200)</td><td>N</td><td class='mono'>UK</td><td>중복 실행 방지 키. 같은 급여를 다시 계산해도 줄이 겹쳐 쌓이지 않게 막는다.</td></tr><tr><td class='mono'>posted_at</td><td>기표 시각</td><td class='mono'>timestamptz</td><td>N</td><td class='mono'></td><td>기록 시각.</td></tr><tr><td class='mono'>reversal_of_line_id</td><td>취소 대상 라인 ID</td><td class='mono'>uuid</td><td>Y</td><td class='mono'>FK→mbacct.budget_execution_line(id)</td><td>취소 대상 줄. 줄 종류가 REVERSAL 이면 반드시 채운다.</td></tr><tr><td class='mono'>hash_prev</td><td>직전 행 해시</td><td class='mono'>char(64)</td><td>Y</td><td class='mono'></td><td>직전 줄의 해시. 사슬을 이뤄 사후 변조를 드러낸다.</td></tr><tr><td class='mono'>hash_self</td><td>자기 내용 해시</td><td class='mono'>char(64)</td><td>Y</td><td class='mono'></td><td>이 줄 내용의 해시.</td></tr></tbody></table>
+
+<h3 id="s27">mbacct.budget_balance — 예산 잔액</h3>
+<p class='small'>예산과 집행의 현재 대조표. 집행 라인에서 다시 계산할 수 있는 투영이며 정본이 아니다. 재계산 값과 다르면 결산 점검표에 오른다. (컬럼 14개 + 공통 15 = 29)</p>
+<p style="font-size:8.4pt;margin:3px 0 5px;padding:5px 8px;background:#f4f7fc;border-left:3px solid #12315c"><b>업무영역</b> D04 회계업무 &nbsp;·&nbsp; <b>관련 업무코드</b> <span class="mono">FL0004052</span> 프로젝트 인건비 집행 기록<span style="color:#8a5a12">(바꾼다)</span> &nbsp;<span class="mono">FL0004053</span> 연말 인건비 확정 배부<span style="color:#8a5a12">(바꾼다)</span> &nbsp;<span class="mono">FL0004014</span> 예산 대비 실적 집계<span style="color:#2d6cb5">(읽는다)</span> &nbsp;<span class="mono">FL0012044</span> 인력투입계획 확정<span style="color:#2d6cb5">(읽는다)</span></p>
+<table class="tbl-tight"><colgroup><col style="width:15%"><col style="width:14%"><col style="width:11%"><col style="width:4%"><col style="width:15%"><col style="width:41%"></colgroup><thead><tr><th>컬럼</th><th>한글 이름</th><th>타입</th><th>N</th><th>키</th><th>설명</th></tr></thead><tbody><tr><td class='mono'>id</td><td>식별자</td><td class='mono'>uuid</td><td>N</td><td class='mono'>PK</td><td>대리키(UUIDv7). 시간 순 단조 증가하도록 마이크로초까지 채운다.</td></tr><tr><td class='mono'>budget_no</td><td>예산 번호</td><td class='mono'>varchar(40)</td><td>N</td><td class='mono'>FK→mbacct.budget(budget_no)</td><td>대상 예산.</td></tr><tr><td class='mono'>period_code</td><td>기간 코드</td><td class='mono'>varchar(20)</td><td>N</td><td class='mono'>FK→mbcore.calendar_period(period_code)</td><td>대상 기간.</td></tr><tr><td class='mono'>project_id</td><td>프로젝트 ID</td><td class='mono'>uuid</td><td>Y</td><td class='mono'>FK→mbproj.project(id)</td><td>대상 프로젝트. NULL 이면 법인 합계 행이다.</td></tr><tr><td class='mono'>account_code</td><td>계정과목 코드</td><td class='mono'>varchar(20)</td><td>N</td><td class='mono'>FK→mbacct.account(account_code)</td><td>계정과목.</td></tr><tr><td class='mono'>budget_amount</td><td>배정 예산액</td><td class='mono'>numeric(20,4)</td><td>N</td><td class='mono'></td><td>편성 예산액. 승인 당시 값으로 굳어 있다.</td></tr><tr><td class='mono'>actual_amount</td><td>집행 실적액</td><td class='mono'>numeric(20,4)</td><td>N</td><td class='mono'></td><td>집행액 누계.</td></tr><tr><td class='mono'>adjust_amount</td><td>조정 금액</td><td class='mono'>numeric(20,4)</td><td>N</td><td class='mono'></td><td>연말 확정 조정액 누계.</td></tr><tr><td class='mono'>variance_amount</td><td>증감 금액</td><td class='mono'>numeric(20,4)</td><td>N</td><td class='mono'></td><td>차이. 예산 − (집행 + 조정)이며 음수면 초과다.</td></tr><tr><td class='mono'>variance_rate</td><td>차이 비율</td><td class='mono'>numeric(9,6)</td><td>Y</td><td class='mono'></td><td>차이 비율.</td></tr><tr><td class='mono'>is_overrun</td><td>예산 초과 여부</td><td class='mono'>boolean</td><td>N</td><td class='mono'></td><td>초과 여부. 초과해도 급여를 막지 않는다. 표시와 통지만 한다.</td></tr><tr><td class='mono'>is_final</td><td>종결 메시지 여부</td><td class='mono'>boolean</td><td>N</td><td class='mono'></td><td>연말 확정이 끝났는지 여부.</td></tr><tr><td class='mono'>last_line_id</td><td>마지막 반영 라인 ID</td><td class='mono'>uuid</td><td>Y</td><td class='mono'>FK→mbacct.budget_execution_line(id)</td><td>마지막으로 반영한 집행 라인.</td></tr><tr><td class='mono'>recomputed_at</td><td>재계산 시각</td><td class='mono'>timestamptz</td><td>N</td><td class='mono'></td><td>마지막 재계산 시각.</td></tr></tbody></table>
+
+<h3 id="s28">mbhr.labor_cost_actual_close — 연말 인건비 확정</h3>
+<p class='small'>한 회계연도의 실제 인건비를 확정하는 버전. 이듬해 4월에 한 번 닫는다. 선행 5건이 모두 끝나기 전에는 확정으로 넘어갈 수 없다. (컬럼 25개 + 공통 15 = 40)</p>
+<p style="font-size:8.4pt;margin:3px 0 5px;padding:5px 8px;background:#f4f7fc;border-left:3px solid #12315c"><b>업무영역</b> D08 급여업무 · D04 회계업무 &nbsp;·&nbsp; <b>관련 업무코드</b> <span class="mono">FL0004053</span> 연말 인건비 확정 배부<span style="color:#2e7d5b">(만든다)</span> &nbsp;<span class="mono">FL0008015</span> 지급명세서 제출<span style="color:#2d6cb5">(읽는다)</span> &nbsp;<span class="mono">FL0018011</span> 재무제표 분석적 검토<span style="color:#2d6cb5">(읽는다)</span></p>
+<table class="tbl-tight"><colgroup><col style="width:15%"><col style="width:14%"><col style="width:11%"><col style="width:4%"><col style="width:15%"><col style="width:41%"></colgroup><thead><tr><th>컬럼</th><th>한글 이름</th><th>타입</th><th>N</th><th>키</th><th>설명</th></tr></thead><tbody><tr><td class='mono'>id</td><td>식별자</td><td class='mono'>uuid</td><td>N</td><td class='mono'>PK</td><td>대리키(UUIDv7). 시간 순 단조 증가하도록 마이크로초까지 채운다.</td></tr><tr><td class='mono'>close_no</td><td>확정 번호</td><td class='mono'>varchar(40)</td><td>N</td><td class='mono'>UK</td><td>확정 번호.</td></tr><tr><td class='mono'>company_id</td><td>회사 ID</td><td class='mono'>uuid</td><td>N</td><td class='mono'>FK→mbcore.company(id)</td><td>대상 법인.</td></tr><tr><td class='mono'>fiscal_year</td><td>회계연도</td><td class='mono'>smallint</td><td>N</td><td class='mono'></td><td>확정 대상 회계연도.</td></tr><tr><td class='mono'>target_close_date</td><td>확정 예정일</td><td class='mono'>date</td><td>N</td><td class='mono'></td><td>확정 예정일. 이듬해 4월로 둔다.</td></tr><tr><td class='mono'>adjust_period_code</td><td>조정 인식 기간 코드</td><td class='mono'>varchar(20)</td><td>N</td><td class='mono'>FK→mbcore.calendar_period(period_code)</td><td>조정을 인식하는 기간. 마감한 기간을 되돌리지 않고 확정월에 당기 인식한다.</td></tr><tr><td class='mono'>payroll_december_done</td><td>12월 급여 완료 여부</td><td class='mono'>boolean</td><td>N</td><td class='mono'></td><td>선행 ① 12월 급여 지급 완료 여부.</td></tr><tr><td class='mono'>payroll_december_ref</td><td>12월 급여 참조</td><td class='mono'>varchar(40)</td><td>Y</td><td class='mono'></td><td>선행 ① 근거. 급여 회차 번호.</td></tr><tr><td class='mono'>income_tax_settlement_done</td><td>소득세 연말정산 완료 여부</td><td class='mono'>boolean</td><td>N</td><td class='mono'></td><td>선행 ② 근로소득세 연말정산 완료 여부. 2월에 끝난다.</td></tr><tr><td class='mono'>income_tax_settlement_ref</td><td>소득세 연말정산 참조</td><td class='mono'>varchar(40)</td><td>Y</td><td class='mono'></td><td>선행 ② 근거. 원천징수 이행 상황 신고 번호.</td></tr><tr><td class='mono'>employment_insurance_report_done</td><td>고용·산재 보수총액 신고 완료 여부</td><td class='mono'>boolean</td><td>N</td><td class='mono'></td><td>선행 ③ 고용·산재 보수총액 신고 완료 여부. 3월에 끝난다.</td></tr><tr><td class='mono'>employment_insurance_report_ref</td><td>고용·산재 신고 참조</td><td class='mono'>varchar(40)</td><td>Y</td><td class='mono'></td><td>선행 ③ 근거. 신고 번호.</td></tr><tr><td class='mono'>health_insurance_settlement_done</td><td>건강보험 정산 완료 여부</td><td class='mono'>boolean</td><td>N</td><td class='mono'></td><td>선행 ④ 건강보험·장기요양 정산 완료 여부. 4월에 끝나며 회사부담이 여기서 바뀐다.</td></tr><tr><td class='mono'>health_insurance_settlement_ref</td><td>건강보험 정산 참조</td><td class='mono'>varchar(40)</td><td>Y</td><td class='mono'></td><td>선행 ④ 근거. 정산 통보 번호.</td></tr><tr><td class='mono'>severance_confirm_done</td><td>퇴직급여충당 확정 여부</td><td class='mono'>boolean</td><td>N</td><td class='mono'></td><td>선행 ⑤ 퇴직급여충당부채 확정 여부. 결산에서 끝난다.</td></tr><tr><td class='mono'>severance_confirm_ref</td><td>퇴직급여충당 확정 참조</td><td class='mono'>varchar(40)</td><td>Y</td><td class='mono'></td><td>선행 ⑤ 근거. 결산 실행 번호.</td></tr><tr><td class='mono'>prerequisite_all_met</td><td>선행 조건 충족 여부</td><td class='mono'>boolean</td><td>N</td><td class='mono'></td><td>선행 5건이 모두 충족되었는지. 다섯 값의 논리곱과 같아야 한다.</td></tr><tr><td class='mono'>headcount</td><td>인원 수</td><td class='mono'>integer</td><td>N</td><td class='mono'></td><td>확정 대상 인원.</td></tr><tr><td class='mono'>total_actual_cost_amount</td><td>실제 인건비 총액</td><td class='mono'>numeric(20,4)</td><td>N</td><td class='mono'></td><td>확정된 실제 인건비 총액.</td></tr><tr><td class='mono'>total_executed_amount</td><td>기집행 총액</td><td class='mono'>numeric(20,4)</td><td>N</td><td class='mono'></td><td>그 해에 이미 집행된 인건비 합계.</td></tr><tr><td class='mono'>total_adjust_amount</td><td>조정 총액</td><td class='mono'>numeric(20,4)</td><td>N</td><td class='mono'></td><td>조정액. 실제 − 기집행이며 음수일 수 있다.</td></tr><tr><td class='mono'>adjust_journal_no</td><td>조정 전표 번호</td><td class='mono'>varchar(40)</td><td>Y</td><td class='mono'>FK→mbacct.journal(journal_no)</td><td>조정 전표 번호.</td></tr><tr><td class='mono'>approval_request_no</td><td>승인 요청 번호</td><td class='mono'>varchar(40)</td><td>Y</td><td class='mono'>FK→mbtxn.approval_request(request_no)</td><td>확정을 건 결재 요청.</td></tr><tr><td class='mono'>status</td><td>상태</td><td class='mono'>varchar(20)</td><td>N</td><td class='mono'></td><td>상태. OPEN/PREREQ_MET/CALCULATED/APPROVED/POSTED/CLOSED.</td></tr><tr><td class='mono'>closed_at</td><td>종료 시각</td><td class='mono'>timestamptz</td><td>Y</td><td class='mono'></td><td>확정 종료 시각.</td></tr></tbody></table>
+
+<h2 id="s29">5.4 기존 표 변경 4건</h2>
+<table class="tbl-tight"><colgroup><col style="width:8%"><col style="width:24%"><col style="width:68%"></colgroup>
+<thead><tr><th>번호</th><th>테이블</th><th>무엇을 왜 바꾸었나</th></tr></thead><tbody>
+<tr><td>C-01</td><td><span class="mono">mbhr.payslip</span></td><td><b>컬럼 폐지</b> <span class="mono">project_allocation</span>(jsonb) —
+프로젝트별 인건비 배분 <b>금액</b>이 jsonb 에 있었다. 무중단 확장의 <span class="mono">ext</span> 는 부속 항목을 담는 자리이지
+집계 · 외래키 · 부분수정 · 대사가 걸리는 업무 사실을 담는 자리가 아니다. <span class="mono">mbhr.payslip_project_cost</span> 로 옮겼다</td></tr>
+<tr><td>C-02</td><td><span class="mono">mbproj.project</span></td><td><b>컬럼 1개 추가 · 설명 확장</b> <span class="mono">standing_cost_center_code</span> —
+상시 업무 프로젝트는 이미 <span class="mono">is_operational</span> 로 구분하고 있어 새 구분 컬럼을 만들지 않고 뜻을 넓혔다.
+이 프로젝트도 인건비 예산을 편성하고 미배정 일수를 흡수한다(P-04)</td></tr>
+<tr><td>C-03</td><td><span class="mono">mbproj.project_budget</span></td><td><b>컬럼 2개 폐지 · 1개 추가</b>
+<span class="mono">committed_amount</span> · <span class="mono">actual_amount</span> 폐지, <span class="mono">budget_no</span> 추가 —
+예산 원장이 둘이면 반드시 틀어진다. 금액의 정본을 <span class="mono">mbacct.budget</span> 으로 모았다. 그 행을 만드는 것은 D04 의 <span class="mono">FL0004012</span> 예산 편성이고, D12 의 <span class="mono">FL0012008</span> 예산 배정은 <span class="mono">budget_no</span> 로 연결해 읽는다</td></tr>
+<tr><td>C-04</td><td><span class="mono">mbproj.project_work_assignment</span></td><td><b>컬럼 3개 추가</b>
+<span class="mono">actual_man_day</span> · <span class="mono">actual_man_day_source</span> · <span class="mono">actual_man_day_confirmed_at</span> —
+배부 기준에 공수를 쓰려면 원천이 있어야 하는데 프로젝트별 공수를 담는 표가 없었다.
+MyBee 는 <span class="mono">mbtxn.project_transaction</span> 에 모든 행위가 프로젝트 · 업무코드와 함께 쌓이므로
+<b>타임시트를 따로 입력받지 않고</b> 여기서 역산해 굳힌다</td></tr>
+</tbody></table>
+<h1 id="s30">6. 정합성 규칙 R-LB-01 ~ R-LB-16</h1><p>한 행만 보아서는 지킬 수 없는 규칙이다. 검사 함수로 두고 결산 점검표에 올린다.</p><table class="tbl-tight"><colgroup><col style="width:9%"><col style="width:16%"><col style="width:52%"><col style="width:23%"></colgroup><thead><tr><th>규칙</th><th>이름</th><th>내용</th><th>강제 수단</th></tr></thead><tbody><tr><td class="mono">R-LB-01</td><td>가용일수 항등식</td><td>한 임직원의 전 프로젝트 계획 투입 일수 합 = 그 사람의 예상 실근무일수. 초과는 거절하고 부족분은 상시 업무 프로젝트가 흡수한다</td><td class="mono">mbhr.ck_capacity_identity</td></tr><tr><td class="mono">R-LB-02</td><td>전사 완전분해</td><td>전 프로젝트 인건비 예산의 합 = 전 임직원 연간 인건비의 합</td><td class="mono">mbacct.ck_labor_budget_exhaustive</td></tr><tr><td class="mono">R-LB-03</td><td>월 분해 합치</td><td>계획 라인의 월 분해 합 = 그 라인의 계획 투입 일수</td><td class="mono">CHECK · 배치</td></tr><tr><td class="mono">R-LB-04</td><td>배부 비율 합</td><td>한 급여 명세의 프로젝트 배부 비율 합 = 1</td><td class="mono">mbhr.ck_allocation_closure</td></tr><tr><td class="mono">R-LB-05</td><td>배부 금액 합</td><td>한 급여 명세의 배부 금액 합 = 그 명세의 인건비 총원가. 단수 잔차는 흡수 줄 하나가 받는다</td><td class="mono">mbhr.ck_allocation_closure</td></tr><tr><td class="mono">R-LB-06</td><td>집행 = 전표</td><td>예산 집행 라인의 프로젝트별 합 = 전표의 프로젝트별 인건비 차변 합</td><td class="mono">mbacct.ck_execution_matches_journal</td></tr><tr><td class="mono">R-LB-07</td><td>잔액 투영 일치</td><td>예산 잔액의 저장값 = 집행 라인에서 다시 계산한 값. 다르면 결산 점검 항목이 된다</td><td class="mono">mbacct.ck_balance_projection</td></tr><tr><td class="mono">R-LB-08</td><td>주체 배타</td><td>계획 라인은 사람이거나 에이전트이며 둘 다일 수 없다</td><td class="mono">CHECK ck_plan_line_human · ck_plan_line_agent</td></tr><tr><td class="mono">R-LB-09</td><td>계정 분리</td><td>에이전트 라인은 인건비 계정을 쓸 수 없다</td><td class="mono">mbproj.ck_agent_account_separation</td></tr><tr><td class="mono">R-LB-10</td><td>단가 구간 비중첩</td><td>같은 임직원 · 같은 버전 종류의 단가 유효 구간은 겹칠 수 없다</td><td class="mono">EXCLUDE ex_labor_day_rate_overlap</td></tr><tr><td class="mono">R-LB-11</td><td>분자·분모 대칭</td><td>분모에서 뺀 무지급 구간의 인건비는 분자에서도 뺀다</td><td class="mono">CHECK ck_emp_cost_est_sum · 배치 대사</td></tr><tr><td class="mono">R-LB-12</td><td>연도 분할</td><td>계획 라인은 하나의 회계연도에만 속한다 — 단가 버전이 연도 버전이기 때문이다</td><td class="mono">UK uk_proj_labor_plan_seq</td></tr><tr><td class="mono">R-LB-13</td><td>무수정</td><td>집행 라인은 고치지 않는다. 취소는 반대 부호 줄, 연말 확정은 조정 줄로 남긴다</td><td class="mono">RULE r_budget_exec_no_update · no_delete</td></tr><tr><td class="mono">R-LB-14</td><td>중복 실행 방지</td><td>같은 급여를 다시 계산해도 집행 줄이 겹쳐 쌓이지 않는다</td><td class="mono">UK uk_budget_exec_idem</td></tr><tr><td class="mono">R-LB-15</td><td>확정 선행</td><td>12월 급여 · 소득세 연말정산 · 고용산재 보수총액 신고 · 건강보험 정산 · 퇴직급여충당 확정 다섯 가지를 모두 채우기 전에는 확정으로 넘어갈 수 없다</td><td class="mono">CHECK ck_labor_close_prereq · ck_labor_close_status</td></tr><tr><td class="mono">R-LB-16</td><td>금액 노출 제한</td><td>개인 단가와 계획 라인 금액은 급여 권한자만 본다. 프로젝트 책임자 · PA 에게는 합계와 투입 일수만 보인다. 사람 라인이 둘 미만(headcount &lt; 2)인 프로젝트 · 업무코드는 합계도 감추고 예산 대비 집행률만 보인다(제12.7.11조)</td><td class="mono">권한 3분할 · RLS · 조회 뷰</td></tr></tbody></table>
+<h1 id="s31">7. 로직도구와 스킬</h1><div class="warn"><b>금액 계산은 전부 결정적 함수가 한다.</b> 배부 비율을 LLM 이 정하게 두면 매달 다른 답이 나오고 감사에서 재현할 수 없다. 스킬은 기준 선택 · 이상 설명 · 승인 요청문 작성만 한다.</div><h2 id="s32">7.1 로직도구 11개</h2><table class="tbl-tight"><colgroup><col style="width:20%"><col style="width:16%"><col style="width:24%"><col style="width:20%"><col style="width:20%"></colgroup><thead><tr><th>함수</th><th>입력</th><th>산출</th><th>중복 실행 방지 키</th><th>하는 일</th></tr></thead><tbody><tr><td class="mono">fn_workday_baseline_build</td><td class="mono">company_id, fiscal_year</td><td class="mono">mbhr.workday_baseline</td><td>회사 · 연도</td><td>휴일 달력에서 소정근로일수를 집계한다</td></tr><tr><td class="mono">fn_workday_estimate</td><td class="mono">fiscal_year, employee_id, kind</td><td class="mono">mbhr.employee_workday_estimate</td><td>회사 · 연도 · 버전 종류 · 임직원</td><td>분모를 낸다. 무지급 구간을 함께 적는다</td></tr><tr><td class="mono">fn_cost_estimate_build</td><td class="mono">fiscal_year, kind</td><td class="mono">mbhr.employee_cost_estimate(+component)</td><td>회사 · 연도 · 버전 종류 · 임직원</td><td>분자를 항목 라인으로 세운다</td></tr><tr><td class="mono">fn_labor_day_rate_build</td><td class="mono">fiscal_year, kind</td><td class="mono">mbhr.labor_day_rate</td><td>연도 · 임직원 · 버전 종류 · 버전 순번</td><td>분자 ÷ 분모. 유효 구간 겹침을 막는다</td></tr><tr><td class="mono">fn_capacity_reconcile</td><td class="mono">fiscal_year</td><td class="mono">계획 라인(상시 업무 흡수 라인 생성)</td><td>연도 · 임직원</td><td>초과는 거절하고 부족분을 상시 업무로 보낸다</td></tr><tr><td class="mono">fn_labor_budget_calc</td><td class="mono">plan_id</td><td>계획 라인 금액 · 예산 편성 요청값(<span class="mono">mbacct.budget</span> 은 D04 가 만든다)</td><td>프로젝트 · 연도 · 버전 순번</td><td>라인 금액과 예산을 계산한다</td></tr><tr><td class="mono">fn_labor_allocate</td><td class="mono">payroll_no</td><td class="mono">mbhr.payslip_project_cost</td><td>급여 회차 · 급여 명세 · 배부 실행</td><td>급여를 프로젝트별로 가른다. 잔차를 흡수시킨다</td></tr><tr><td class="mono">fn_budget_post</td><td class="mono">journal_no</td><td class="mono">mbacct.budget_execution_line</td><td>전표 번호 · 전표 줄 · 예산 번호 · 줄 종류</td><td>전표에서 집행 라인을 만든다</td></tr><tr><td class="mono">fn_labor_rate_actualize</td><td class="mono">fiscal_year</td><td class="mono">ACTUAL 버전(인건비 · 단가)</td><td>연도 · 임직원 · ACTUAL</td><td>실제 지출로 버전을 새로 세운다</td></tr><tr><td class="mono">fn_labor_reallocate_year</td><td class="mono">fiscal_year</td><td class="mono">YEAREND_ADJUST 라인 · 조정 전표</td><td>확정 번호 · 프로젝트 · 줄 종류</td><td>확정 차액을 확정월에 인식한다</td></tr><tr><td class="mono">fn_budget_balance_rebuild</td><td class="mono">period_code</td><td class="mono">mbacct.budget_balance</td><td>예산 번호 · 기간 · 계정</td><td>집행 라인에서 잔액을 다시 만든다</td></tr></tbody></table>
+<h2 id="s33">7.2 스킬 7종 — 신설 업무코드</h2><table class="tbl-tight"><colgroup><col style="width:12%"><col style="width:7%"><col style="width:24%"><col style="width:16%"><col style="width:41%"></colgroup><thead><tr><th>업무코드</th><th>영역</th><th>업무명</th><th>대표 수단</th><th>사람이 결정하는 곳</th></tr></thead><tbody><tr><td class="mono">FL0007030</td><td>D07</td><td>예상 실근무일수 산정</td><td>T4 집계</td><td>휴가 예상의 타당성은 인사 담당자가 확정한다(T1)</td></tr><tr><td class="mono">FL0008021</td><td>D08</td><td>일당 인건비 단가 확정</td><td>T4 집계</td><td>개인 보상 값이므로 급여 책임자 승인(T1) · 자율 상한 L1</td></tr><tr><td class="mono">FL0008022</td><td>D08</td><td>인건비 프로젝트 배부</td><td>T4 배부 엔진</td><td>사람 단계 없음 · 자율 상한 L3</td></tr><tr><td class="mono">FL0012044</td><td>D12</td><td>인력투입계획 확정</td><td>T4 집계</td><td>투입 규모는 PM 의 책임 판단(T1). 라인 금액은 PM 에게 보이지 않는다</td></tr><tr><td class="mono">FL0012045</td><td>D12</td><td>인력투입계획 변경</td><td>T4 집계</td><td>이전 버전을 고치지 않고 새 버전을 세운다</td></tr><tr><td class="mono">FL0004052</td><td>D04</td><td>프로젝트 인건비 집행 기록</td><td>T8 플랫폼 기본</td><td>전표에서 파생된 기록 · 자율 상한 L3</td></tr><tr><td class="mono">FL0004053</td><td>D04</td><td>연말 인건비 확정 배부</td><td>T4 집계</td><td>선행 5건 판정(T6) 뒤 회계 책임자 승인(T1)</td></tr></tbody></table><p>단계별 상세는 업무스킬설계서 D04 v1.9 · D07 v1.8 · D08 v1.6 · D12 v2.5 에, 스킬 · 로직도구 실행 순서는 <span class="mono">MyBee_업무코드_스킬·로직도구_실행순서_v1.9</span> 에 있다.</p>
+<h1 id="s34">8. 권한과 개인정보 통제</h1>
+<p>확정전제 P-01 이 개인 실제 단가를 쓰기로 했으므로, 이 설계에서 가장 조심해야 할 것은 <b>연봉 역산</b>이다.</p>
+<table class="tbl-tight"><colgroup><col style="width:34%"><col style="width:22%"><col style="width:44%"></colgroup>
+<thead><tr><th>값</th><th>볼 수 있는 역할</th><th>이유</th></tr></thead><tbody>
+<tr><td><span class="mono">mbhr.labor_day_rate.day_rate</span> · <span class="mono">numerator_amount</span></td><td>급여 권한자</td><td>연봉 그 자체다</td></tr>
+<tr><td><span class="mono">mbhr.employee_cost_estimate</span> · <span class="mono">employee_cost_component</span> 전체</td><td>급여 권한자</td><td>분자의 구성이 곧 보상 명세다</td></tr>
+<tr><td><span class="mono">mbproj.project_labor_plan_line.line_amount</span> · <span class="mono">day_rate_snapshot</span></td><td>급여 권한자</td><td>투입 일수로 나누면 단가가 나온다</td></tr>
+<tr><td><span class="mono">mbhr.payslip_project_cost</span> 개인 줄</td><td>급여 권한자</td><td>월 단위 개인 급여다</td></tr>
+<tr><td><span class="mono">mbacct.budget_execution_line.employee_id</span></td><td>급여 권한자 · 감사</td><td>집행 줄에서 개인을 되짚을 수 있다</td></tr>
+<tr><td>프로젝트 합계 · 투입 일수 · 예산 대비 차이</td><td>PM · PA · 회계</td><td>관리에 필요하고 개인을 가리키지 않는다</td></tr>
+</tbody></table>
+<div class="warn"><b>합계만 보여도 새는 곳.</b> 참여 인원이 한 명인 프로젝트는 합계가 곧 그 사람의 금액이다.
+<span class="mono">mbproj.project_labor_plan.headcount</span> 를 두어, <b>사람 라인이 둘 미만</b>인 프로젝트 · 업무코드는
+프로젝트 책임자 · PA 에게 <b>합계도 보이지 않고 예산 대비 집행률만</b> 보이도록 조회 정책을 건다(제12.7.11조). 임계 2명은 하한이다 — 고객사는 3명 이상으로 <b>높일 수만</b> 있다. 급여 권한자의 조회는 이 임계와 관계없다.</div>
+<p>권한은 MyBee 의 3분할(동사 × 범위 × 대상)로 표현한다 — 동사 <span class="mono">VIEW_AMOUNT</span>,
+범위 <span class="mono">PROJECT</span> 또는 <span class="mono">COMPANY</span>, 대상 위 표의 컬럼 묶음.
+행 수준 보안(RLS)은 테넌트 격리에 더해 <span class="mono">employee_id</span> 조건을 얹는다.</p>
+<h1 id="s35">9. 검증 시나리오 16건</h1><p>이 버전은 설계 모델의 정적 정합성 검사와 문서 간 대조로 검증했다. 아래는 <b>DBMS 실행 검증을 하게 될 때</b> 반드시 넣어야 할 시나리오다. 이 중 <b>S-04 · S-07 · S-13 · S-15</b> 는 실행에서만 결함이 드러나는 자리다. 아래의 S-01 ~ S-16 은 <b>이 문서 안의 검증 시나리오 번호</b>이며, 설계지시문의 산출물 번호(이 문서는 <b>S-17</b>)와는 다른 계열이다.</p><table class="tbl-tight"><colgroup><col style="width:8%"><col style="width:22%"><col style="width:70%"></colgroup><thead><tr><th>번호</th><th>상황</th><th>무엇을 보아야 하는가</th></tr></thead><tbody><tr><td class="mono">S-01</td><td>가용일수 초과 배정</td><td>한 사람의 전 프로젝트 투입 일수 합이 예상 실근무일수를 넘으면 계획이 승인되지 않는다</td></tr><tr><td class="mono">S-02</td><td>미배정 잔여의 흡수</td><td>배정하지 않은 일수가 상시 업무 프로젝트 라인으로 가고 전사 합이 항등식을 만족한다</td></tr><tr><td class="mono">S-03</td><td>월중 입·퇴사</td><td>재직 비율로 소정근로일이 일할되고 그 사람의 단가가 다른 사람과 같은 방식으로 나온다</td></tr><tr><td class="mono">S-04</td><td>출산휴가자 단가</td><td>분모에서 뺀 무지급 구간이 분자에서도 빠져 단가가 부풀지 않는다</td></tr><tr><td class="mono">S-05</td><td>연중 연봉 인상</td><td>새 단가 버전이 유효 구간을 나누어 세워지고 이전 버전과 겹치지 않는다</td></tr><tr><td class="mono">S-06</td><td>2개년 프로젝트</td><td>계획이 회계연도별로 나뉘고 각 해의 단가가 그 해 라인에만 적용된다</td></tr><tr><td class="mono">S-07</td><td>1인 3프로젝트 잔차</td><td>배부 비율 합이 정확히 1 이고 단수 1원이 흡수 줄 하나로 들어간다</td></tr><tr><td class="mono">S-08</td><td>에이전트 업무코드</td><td>에이전트 라인이 인건비 계정에 섞이지 않고 운영비로 간다</td></tr><tr><td class="mono">S-09</td><td>소급 급여(RETRO)</td><td>근로 귀속월이 아니라 당월 예산에 PAYROLL_RETRO 로 흡수된다</td></tr><tr><td class="mono">S-10</td><td>상여 회차(BONUS)</td><td>정기 급여와 같은 기준으로 배부되고 총원가 합이 맞는다</td></tr><tr><td class="mono">S-11</td><td>예산 초과 허용</td><td>초과해도 급여 지급이 막히지 않고 초과 표시와 통지만 일어난다</td></tr><tr><td class="mono">S-12</td><td>전표 역분개</td><td>반대 부호 줄이 추가되고 기존 줄은 그대로 남는다</td></tr><tr><td class="mono">S-13</td><td>급여 재계산 중복 실행 방지</td><td>같은 회차를 다시 배부해도 집행 줄이 겹쳐 쌓이지 않는다</td></tr><tr><td class="mono">S-14</td><td>연말 확정 선행 미충족</td><td>건강보험 정산 전에는 확정으로 넘어가지 않는다</td></tr><tr><td class="mono">S-15</td><td>연말 확정 중복 실행 방지</td><td>확정을 두 번 돌려도 조정 줄이 한 번만 생긴다</td></tr><tr><td class="mono">S-16</td><td>확정 후 4자 대사</td><td>급여 명세 합 = 프로젝트 귀속 합 = 전표 인건비 차변 합 = 집행 라인 합</td></tr></tbody></table>
+<h1 id="s39">9A. 공용 인력 배분 — 한 사람 · 여러 프로젝트 (v1.7)</h1>
+<p>설계지시문 v5.24 제12.10.16 ~ 12.10.24조는 여러 프로젝트가 함께 쓰는 비용을 결재 대상 하나 · 사람 결재 한 번으로 처리하고 귀속은 배분 줄로 나누게 한다. 인건비에서는 <b>사람 한 명</b>이 그 단위다.</p>
+<table class="tbl-tight"><colgroup><col style="width:18%"><col style="width:82%"></colgroup><thead><tr><th>단계</th><th>하는 일</th></tr></thead><tbody>
+<tr><td>업무 BOM</td><td>공용 부품이 제품 BOM × MPS 로 자동 배분되듯, 인건비의 계획 기준값은 <b>업무 BOM</b> — 이 프로젝트 업무 구성의 업무코드 × 업무코드 표준시간 × 예정 수행 횟수 — 으로 자동 제안된다. 사람은 조정만 하고 조정에는 사유를 남긴다. 실적은 업무코드 수행 기록(WORK_TXN)에서 역산하며, 배분 줄마다 계획 · 실적 출처를 남긴다(R42-13 · R42-14).</td></tr>
+<tr><td>계획 · 확정</td><td>인력투입계획 확정(FL0012044) 4단계 가용일수 판정을 통과한 그 사람의 프로젝트별 투입 일수가 공용 인력 배분안의 계획 기준값(EFFORT_HOURS)이 된다. 남는 일수는 상시 업무 프로젝트 줄(OPERATING)이다. 배분안은 모든 프로젝트를 덮는 가장 좁은 권한자가 <b>한 번</b> 확정한다 — 프로젝트마다 PM 이 따로 확정하지 않는다(R42-01 · R42-03). 프로젝트별 계획 라인은 배분 줄의 원천이며 배분 줄은 그 투영이다(R42-08).</td></tr>
+<tr><td>월 집행</td><td>인건비 프로젝트 배부(FL0008022)가 실적 공수로 배분 줄의 실적 기준값 · 금액을 채우고, 프로젝트 인건비 집행 기록(FL0004052)은 그 실적 금액으로 집행 라인을 만든다.</td></tr>
+<tr><td>재결재 판정</td><td>원가 배부(FL0004015)가 실적 비율과 계획 비율을 견주어 모든 줄이 허용 오차 안이면 그대로, 밖이면 배분안만 다시 확정한다(R42-06).</td></tr>
+<tr><td>연말 확정</td><td>연말 인건비 확정 배부(FL0004053)가 확정 단가로 배분 줄의 실적을 다시 계산하고 조정 줄을 남긴다. 기존 줄은 고치지 않는다.</td></tr>
+<tr><td>사람 매개 연쇄</td><td>공간 · SW 라이선스처럼 사람이 쓰는 비용은 이 사람의 공용 인력 배분 비율을 이어받는다(LABOR_SHARE). 이 배분안이 정산 · 재결재되면 이어받은 줄도 다시 계산된다(R42-13) — 인건비 배분이 정확할수록 간접비 배분도 정확해진다.</td></tr>
+<tr><td>금액 노출</td><td>배분안 결재 화면에는 투입 일수 · 비율만 보이고 금액은 급여 권한자만 본다. 사람 라인이 둘 미만인 프로젝트는 합계도 감추고 집행률만 보인다(제8장 · 제12.7.11조 그대로).</td></tr>
+</tbody></table>
+<h1 id="s36">10. 이 버전에서 정하지 않은 것</h1>
+<ul>
+<li><b>개인 귀속 불가 비용의 경계</b> — 복리후생 가운데 어디까지를 개인에게 귀속시킬지는 고객사가 정한다.
+설계는 항목마다 귀속 가능 여부를 데이터로 남길 자리(<span class="mono">is_personal_attributable</span>)만 둔다.</li>
+<li><b>실적 공수의 역산 규칙</b> — 프로젝트 트랜잭션에서 그 달의 투입 일수를 어떻게 환산할지는 스킬 설계에서 정한다.
+이 버전은 역산 결과를 굳히는 자리(<span class="mono">actual_man_day_confirmed_at</span>)만 둔다.</li>
+<li><b>금액 노출 임계 인원</b> — 하한 2명은 제12.7.11조가 정했다. 고객사가 정하는 것은 그보다 높은 값(예: 3명)을 쓸지뿐이다.</li>
+<li><b>DBMS 실행 검증</b> — 이번 범위가 아니다. 제9장의 시나리오 16건이 그 준비다.</li>
+</ul>
+<h1 id="s38">11. 개정 이력</h1>
+<table class="tbl-tight"><colgroup><col style="width:8%"><col style="width:12%"><col style="width:80%"></colgroup>
+<thead><tr><th>버전</th><th>일자</th><th>바뀐 것</th></tr></thead><tbody>
+<tr><td>v1.7</td><td>2026-10-28</td><td><b>공용 인력 배분</b> — 제9A장 신설(설계지시문 v5.24 · DB 테이블설계서 v3.28 제0AI부 · R42). 한 사람의 여러 프로젝트 투입을 업무 BOM 으로 자동 제안된 공용 인력 배분안 하나로 한 번 확정하고, 업무코드 수행 기록으로 정산한다. 공간 · 라이선스는 이 비율을 이어받는다. 동시 개정: 업무스킬설계서 D04 v2.0 · D08 v1.7 · D12 v2.8. 기존 12 DB Table · 규칙 · 로직도구는 그대로다</td></tr>
+<tr><td>v1.3</td><td>2026-09-16</td><td><b>근거 버전 맞춤</b> — 설계지시문 v4.6 · 코드체계 v3.2 · DB 테이블설계서 v3.2 · 실행순서 v1.9 · 업무코드매핑 · 커버리지검토 v3.0(동반 문서가 같은 날 한 번 더 올라갔다). 본문 · 표 · 규칙은 v1.2 와 같다</td></tr>
+<tr><td>v1.2</td><td>2026-09-16</td><td><b>전체 문서 정합성 3차 검증 정정</b> — ① 금액 노출 규칙(제8장 · R-LB-16 · 제10장)을 제12.7.11조에 맞춤: 임계 3명 → <b>사람 라인 둘 미만</b>, 상위 승인자에게만 → <b>합계도 감추고 예산 대비 집행률만</b>, 고객사는 임계를 높일 수만 있음 ② 근거 버전 표기 — 설계지시문 v4.5 · 코드체계 v3.1 · DB 테이블설계서 v3.1 · 실행순서 v1.8 · 스킬설계서 D04 v1.9 · D07 v1.8 · D08 v1.6 · D12 v1.8 ③ 제5장 「기존 473 DB Table」 · 부록 DDL 머리 주석의 표 수를 출발점과 현재로 나누어 적음. DB Table · 컬럼 · 제약 · 로직도구는 바뀌지 않았다</td></tr>
+<tr><td>v1.1</td><td>2026-09-16</td><td><b>설계지시문 v4.3 논리 모순 정정 반영(crs-05 · S-17)</b> —
+① 제4장 [2단계]의 「FL0012008 예산 배정 &rarr; mbacct.budget(budget_kind = PERSONNEL)」을
+「FL0012008 예산 배정 &rarr; mbproj.project_budget(프로젝트 배정 · budget_no 로 연결). 인건비 예산 금액의 편성은
+D04 의 FL0004012 예산 편성이 mbacct.budget 에 만들며 D12 는 읽기만 한다」로 고침(제10.1.1조 원장 단독 소유)
+② 제7.1절 <span class="mono">fn_labor_budget_calc</span> 의 산출 칸을
+「계획 라인 금액 · 예산 편성 요청값(mbacct.budget 은 D04 가 만든다)」으로 고침
+③ 같은 뜻으로 읽히던 제2.6절 · 제5.4절 C-03 · 부록 DDL 로직도구 서명 주석을 함께 고침
+④ 제4장 [3단계]를 제12.7.6조(전표 제안함에 제안하고 회계업무가 기표한 전표에서 집행 라인을 만든다)에 맞춤
+⑤ 산출물 번호 S-16 &rarr; <b>S-17</b> 표기, 제9장 시나리오 번호가 다른 계열임을 밝힘
+⑥ 근거 버전 표기를 설계지시문 v4.3 · 코드체계 v3.0 · DB테이블설계서 v3.0 으로 고침.
+DB Table · 컬럼 · 규칙 · 제약은 바뀌지 않았다</td></tr>
+<tr><td>v1.0</td><td>2026-09-16</td><td>초판 — 요구 7건 · 확정 전제 4건 · 신설 12 DB Table · 기존 표 변경 4건 ·
+정합성 규칙 R-LB-01 ~ 16 · 로직도구 11개 · 스킬 7종 · 검증 시나리오 16건. 설계지시문 v4.2 제12.7조 기준</td></tr>
+</tbody></table>
+<h1 id="s37">부록 · DDL</h1><p>설계 표현용이다. 공통 15컬럼은 주석으로 표시했고, 열거값은 코드 항목(<span class="mono">mbcore.code_item</span>)으로 둔다.</p><div class="note"><b>이번 버전에서 고친 곳.</b> 로직도구 서명 주석 가운데 <span class="mono">fn_labor_budget_calc</span> 의 산출 한 줄을 원장 소유(제10.1.1조)에 맞게 고쳐 실었다. 테이블 · 제약 · 함수 본문은 v1.0 과 같다. 소스 파일 <span class="mono">labor_budget_ddl_v1.0.sql</span> 은 이번 버전에서 고치지 않았으므로 다음 DDL 버전에서 같은 줄(로직도구 서명 주석)을 함께 고쳐야 한다.</div><pre>-- =====================================================================
+-- MyBee Platform — 프로젝트 인건비 예산·집행 설계 v1.0
+-- 신설 12테이블 · 기존 변경 4건 · 정합성 제약 · 로직도구 서명
+-- 기준 : MyBee_DB테이블설계서 v2.8 (스키마 33 · 테이블 473) — 이 DDL 의 출발점. 12표를 더한 현재는 485 DB Table(DB 테이블설계서 v3.2)
+-- 주의 : 이 버전은 설계 표현용이다. DBMS 실행 검증은 이번 버전의 범위가 아니다.
+-- =====================================================================
+--
+-- [공통 컬럼 규약]
+--   모든 신설 업무 테이블에는 기존 테이블(출발점 473 DB Table)과 동일한 공통 15컬럼을 부여한다.
+--     tenant_id · created_at · created_by · created_actor · updated_at · updated_by
+--     deleted_at · is_deleted · row_version · trace_id · schema_ver · source_system
+--     ext(jsonb) · updated_actor · deleted_by
+--   아래 DDL 에서는 업무 컬럼만 적고 공통 컬럼은 주석으로 표시한다.
+--
+-- [Zero-DDL 규약]
+--   1) 모든 표에 ext jsonb DEFAULT '{}' + GIN jsonb_path_ops
+--   2) 열거값은 ENUM 이 아니라 mbcore.code_group / code_item
+--   3) FK 대상은 반드시 PK 또는 UK          (설계결함 D-01 교훈)
+--   4) 설명이 유일성을 주장하면 UK 를 실제로 건다 (D-02 교훈)
+--   5) 열거 토큰 최대 길이 &lt; 컬럼 길이       (D-03 교훈)
+--        최장 토큰 : EMPLOYMENT_INSURANCE_REPORT(28) → varchar(40)
+--                    PAYROLL_SEVERANCE_ACCRUAL(25)  → varchar(30)
+--                    STANDING_RESIDUAL(17)          → varchar(30)
+--
+-- =====================================================================
+-- 1. 단가 계층 (mbhr) — 규칙 4 · 확정전제 P-01 P-03
+-- =====================================================================
+
+-- ---------------------------------------------------------------------
+-- 1.1 법인·연도 소정근무일 기준판
+-- ---------------------------------------------------------------------
+CREATE TABLE mbhr.workday_baseline (
+  id                         uuid         NOT NULL DEFAULT uuidv7(),
+  baseline_no                varchar(40)  NOT NULL,
+  company_id                 uuid         NOT NULL,
+  fiscal_year                smallint     NOT NULL,
+  calendar_days              smallint     NOT NULL,
+  weekend_days               numeric(5,1) NOT NULL,
+  statutory_holiday_days     numeric(5,1) NOT NULL,
+  company_holiday_days       numeric(5,1) NOT NULL,
+  standard_working_days      numeric(5,1) NOT NULL,
+  default_annual_leave_days  numeric(5,1) NOT NULL,
+  holiday_source_note        varchar(400),
+  criteria_version_ref       varchar(80),
+  status                     varchar(20)  NOT NULL DEFAULT 'DRAFT',
+  approved_at                timestamptz,
+  -- ▼ 공통 15컬럼
+  CONSTRAINT pk_workday_baseline           PRIMARY KEY (id),
+  CONSTRAINT uk_workday_baseline_no        UNIQUE (baseline_no),
+  CONSTRAINT uk_workday_baseline_year      UNIQUE (company_id, fiscal_year),
+  CONSTRAINT fk_workday_baseline_company   FOREIGN KEY (company_id)
+       REFERENCES mbcore.company(id),
+  CONSTRAINT fk_workday_baseline_criteria  FOREIGN KEY (criteria_version_ref)
+       REFERENCES mbauth.criteria_version(version_ref),
+  CONSTRAINT ck_workday_baseline_days      CHECK (standard_working_days &gt; 0),
+  CONSTRAINT ck_workday_baseline_sum       CHECK (
+       standard_working_days
+       = calendar_days - weekend_days - statutory_holiday_days - company_holiday_days)
+);
+COMMENT ON TABLE  mbhr.workday_baseline IS
+  '법인·연도별 소정근로일수 기준판. mbcore.holiday 에서 집계해 만들고 승인으로 굳힌다.';
+COMMENT ON COLUMN mbhr.workday_baseline.standard_working_days IS
+  '소정근로일수 = 역일 − 주휴 − 법정공휴일 − 회사휴일. 개인 단가 분모의 출발점이다.';
+
+-- ---------------------------------------------------------------------
+-- 1.2 임직원별 예상 실근무일수  (day 단가의 분모)
+-- ---------------------------------------------------------------------
+CREATE TABLE mbhr.employee_workday_estimate (
+  id                       uuid         NOT NULL DEFAULT uuidv7(),
+  employee_id              uuid         NOT NULL,
+  fiscal_year              smallint     NOT NULL,
+  estimate_kind            varchar(20)  NOT NULL DEFAULT 'ESTIMATE', -- ESTIMATE/REVISED/ACTUAL
+  baseline_id              uuid         NOT NULL,
+  hire_date                date,
+  leave_date               date,
+  employed_ratio           numeric(7,4) NOT NULL DEFAULT 1.0,
+  standard_working_days    numeric(5,1) NOT NULL,
+  annual_leave_days        numeric(5,1) NOT NULL DEFAULT 0,
+  monthly_leave_days       numeric(5,1) NOT NULL DEFAULT 0,
+  maternity_leave_days     numeric(5,1) NOT NULL DEFAULT 0,
+  childcare_leave_days     numeric(5,1) NOT NULL DEFAULT 0,
+  sick_leave_days          numeric(5,1) NOT NULL DEFAULT 0,
+  military_leave_days      numeric(5,1) NOT NULL DEFAULT 0,
+  other_excluded_days      numeric(5,1) NOT NULL DEFAULT 0,
+  estimated_working_days   numeric(5,1) NOT NULL,
+  unpaid_excluded_days     numeric(5,1) NOT NULL DEFAULT 0,
+  source_note              varchar(400),
+  criteria_version_ref     varchar(80),
+  status                   varchar(20)  NOT NULL DEFAULT 'DRAFT',
+  approved_at              timestamptz,
+  -- ▼ 공통 15컬럼
+  CONSTRAINT pk_emp_workday_est        PRIMARY KEY (id),
+  CONSTRAINT uk_emp_workday_est        UNIQUE (employee_id, fiscal_year, estimate_kind),
+  CONSTRAINT fk_emp_workday_est_emp    FOREIGN KEY (employee_id)
+       REFERENCES mbcore.employee(id),
+  CONSTRAINT fk_emp_workday_est_base   FOREIGN KEY (baseline_id)
+       REFERENCES mbhr.workday_baseline(id),
+  CONSTRAINT ck_emp_workday_est_pos    CHECK (estimated_working_days &gt; 0),
+  CONSTRAINT ck_emp_workday_est_sum    CHECK (
+       estimated_working_days
+       = standard_working_days - annual_leave_days - monthly_leave_days
+       - maternity_leave_days - childcare_leave_days - sick_leave_days
+       - military_leave_days - other_excluded_days)
+);
+COMMENT ON COLUMN mbhr.employee_workday_estimate.unpaid_excluded_days IS
+  '분모에서 뺀 날 중 회사가 급여를 지급하지 않는 구간(출산휴가 고용보험 부담분·육아휴직 등).
+   같은 금액을 분자에서도 빼야 단가가 왜곡되지 않는다. 규칙 R-LB-11 의 짝이다.';
+
+-- ---------------------------------------------------------------------
+-- 1.3 임직원 연간 총 인건비 버전  (day 단가의 분자, 헤더)
+-- ---------------------------------------------------------------------
+CREATE TABLE mbhr.employee_cost_estimate (
+  id                      uuid         NOT NULL DEFAULT uuidv7(),
+  estimate_no             varchar(40)  NOT NULL,
+  employee_id             uuid         NOT NULL,
+  fiscal_year             smallint     NOT NULL,
+  estimate_kind           varchar(20)  NOT NULL DEFAULT 'ESTIMATE', -- ESTIMATE/REVISED/ACTUAL
+  annual_salary_id        uuid,
+  gross_pay_amount        numeric(20,4) NOT NULL DEFAULT 0,
+  employer_burden_amount  numeric(20,4) NOT NULL DEFAULT 0,
+  severance_amount        numeric(20,4) NOT NULL DEFAULT 0,
+  welfare_amount          numeric(20,4) NOT NULL DEFAULT 0,
+  other_personal_amount   numeric(20,4) NOT NULL DEFAULT 0,
+  unpaid_period_amount    numeric(20,4) NOT NULL DEFAULT 0,
+  total_cost_amount       numeric(20,4) NOT NULL,
+  currency_code           char(3)      NOT NULL DEFAULT 'KRW',
+  criteria_version_ref    varchar(80),
+  supersedes_estimate_id  uuid,
+  status                  varchar(20)  NOT NULL DEFAULT 'DRAFT',
+  approved_at             timestamptz,
+  -- ▼ 공통 15컬럼
+  CONSTRAINT pk_emp_cost_est        PRIMARY KEY (id),
+  CONSTRAINT uk_emp_cost_est_no     UNIQUE (estimate_no),
+  CONSTRAINT uk_emp_cost_est_key    UNIQUE (employee_id, fiscal_year, estimate_kind),
+  CONSTRAINT fk_emp_cost_est_emp    FOREIGN KEY (employee_id)
+       REFERENCES mbcore.employee(id),
+  CONSTRAINT fk_emp_cost_est_sal    FOREIGN KEY (annual_salary_id)
+       REFERENCES mbnvt.annual_salary(id),
+  CONSTRAINT fk_emp_cost_est_prev   FOREIGN KEY (supersedes_estimate_id)
+       REFERENCES mbhr.employee_cost_estimate(id),
+  CONSTRAINT ck_emp_cost_est_sum    CHECK (
+       total_cost_amount = gross_pay_amount + employer_burden_amount
+       + severance_amount + welfare_amount + other_personal_amount
+       - unpaid_period_amount)
+);
+COMMENT ON TABLE mbhr.employee_cost_estimate IS
+  '회사가 그 개인에게 1년 동안 지출하는 모든 비용의 합(확정전제 P-03). day 단가의 분자다.';
+
+-- ---------------------------------------------------------------------
+-- 1.4 총 인건비 구성 라인  (항목 추가에 ALTER 가 필요 없도록 라인으로 둔다)
+-- ---------------------------------------------------------------------
+CREATE TABLE mbhr.employee_cost_component (
+  id                       uuid          NOT NULL DEFAULT uuidv7(),
+  cost_estimate_id         uuid          NOT NULL,
+  seq                      smallint      NOT NULL,
+  component_code           varchar(40)   NOT NULL,
+  component_group          varchar(30)   NOT NULL,
+     -- GROSS_PAY / EMPLOYER_BURDEN / SEVERANCE / WELFARE / OTHER_PERSONAL / UNPAID_DEDUCT
+  amount                   numeric(20,4) NOT NULL,
+  calc_basis               varchar(400),
+  source_kind              varchar(30)   NOT NULL,
+     -- ANNUAL_SALARY / FORMULA / HISTORICAL_AVG / CONTRACT / PAYROLL_ACTUAL / MANUAL
+  source_ref               varchar(80),
+  is_personal_attributable boolean       NOT NULL DEFAULT true,
+  is_estimated             boolean       NOT NULL DEFAULT true,
+  -- ▼ 공통 15컬럼
+  CONSTRAINT pk_emp_cost_comp      PRIMARY KEY (id),
+  CONSTRAINT uk_emp_cost_comp_seq  UNIQUE (cost_estimate_id, seq),
+  CONSTRAINT fk_emp_cost_comp_hdr  FOREIGN KEY (cost_estimate_id)
+       REFERENCES mbhr.employee_cost_estimate(id),
+  CONSTRAINT fk_emp_cost_comp_code FOREIGN KEY (component_code)
+       REFERENCES mbcore.code_item(code_item_code)
+);
+COMMENT ON COLUMN mbhr.employee_cost_component.is_personal_attributable IS
+  '개인에게 귀속시킬 수 있는 비용인지. false 인 행(사무실 임차료 등 공용 간접비)은
+   total_cost_amount 합산에서 제외한다. 인건비와 간접비의 경계를 데이터로 남기는 자리다.';
+
+-- ---------------------------------------------------------------------
+-- 1.5 day 단가 버전
+-- ---------------------------------------------------------------------
+CREATE TABLE mbhr.labor_day_rate (
+  id                     uuid          NOT NULL DEFAULT uuidv7(),
+  employee_id            uuid          NOT NULL,
+  fiscal_year            smallint      NOT NULL,
+  rate_kind              varchar(20)   NOT NULL DEFAULT 'ESTIMATE', -- ESTIMATE/REVISED/ACTUAL
+  rate_seq               integer       NOT NULL DEFAULT 1,
+  effective_from         date          NOT NULL,
+  effective_to           date          NOT NULL,
+  cost_estimate_id       uuid          NOT NULL,
+  workday_estimate_id    uuid          NOT NULL,
+  numerator_amount       numeric(20,4) NOT NULL,
+  denominator_days       numeric(5,1)  NOT NULL,
+  day_rate               numeric(20,4) NOT NULL,
+  rounding_policy        varchar(30)   NOT NULL DEFAULT 'ROUND_4',
+  currency_code          char(3)       NOT NULL DEFAULT 'KRW',
+  criteria_version_ref   varchar(80),
+  supersedes_rate_id     uuid,
+  status                 varchar(20)   NOT NULL DEFAULT 'DRAFT',
+  approved_at            timestamptz,
+  -- ▼ 공통 15컬럼
+  CONSTRAINT pk_labor_day_rate       PRIMARY KEY (id),
+  CONSTRAINT uk_labor_day_rate       UNIQUE (employee_id, fiscal_year, rate_kind, rate_seq),
+  CONSTRAINT fk_labor_day_rate_emp   FOREIGN KEY (employee_id)
+       REFERENCES mbcore.employee(id),
+  CONSTRAINT fk_labor_day_rate_cost  FOREIGN KEY (cost_estimate_id)
+       REFERENCES mbhr.employee_cost_estimate(id),
+  CONSTRAINT fk_labor_day_rate_wday  FOREIGN KEY (workday_estimate_id)
+       REFERENCES mbhr.employee_workday_estimate(id),
+  CONSTRAINT fk_labor_day_rate_prev  FOREIGN KEY (supersedes_rate_id)
+       REFERENCES mbhr.labor_day_rate(id),
+  CONSTRAINT ck_labor_day_rate_denom CHECK (denominator_days &gt; 0),
+  CONSTRAINT ck_labor_day_rate_range CHECK (effective_to &gt;= effective_from)
+);
+-- 같은 임직원·같은 판종류의 유효구간은 겹칠 수 없다 (R-LB-10)
+CREATE EXTENSION IF NOT EXISTS btree_gist;
+ALTER TABLE mbhr.labor_day_rate
+  ADD CONSTRAINT ex_labor_day_rate_overlap
+  EXCLUDE USING gist (
+      employee_id WITH =, rate_kind WITH =, tenant_id WITH =,
+      daterange(effective_from, effective_to, '[]') WITH &amp;&amp;
+  ) WHERE (is_deleted = false AND status IN ('APPROVED','LOCKED'));
+
+-- =====================================================================
+-- 2. 계획·예산 계층 (mbproj) — 규칙 2 · 3 · 5 · 확정전제 P-04
+-- =====================================================================
+
+-- ---------------------------------------------------------------------
+-- 2.1 프로젝트 인력투입계획 버전
+-- ---------------------------------------------------------------------
+CREATE TABLE mbproj.project_labor_plan (
+  id                        uuid          NOT NULL DEFAULT uuidv7(),
+  plan_no                   varchar(40)   NOT NULL,
+  project_id                uuid          NOT NULL,
+  fiscal_year               smallint      NOT NULL,
+  plan_seq                  integer       NOT NULL DEFAULT 1,
+  rate_basis_kind           varchar(30)   NOT NULL DEFAULT 'ACTUAL_ESTIMATE',
+  total_human_man_day       numeric(11,2) NOT NULL DEFAULT 0,
+  total_labor_budget_amount numeric(20,4) NOT NULL DEFAULT 0,
+  total_agent_cost_amount   numeric(20,4) NOT NULL DEFAULT 0,
+  total_budget_amount       numeric(20,4) NOT NULL DEFAULT 0,
+  headcount                 integer       NOT NULL DEFAULT 0,
+  budget_no                 varchar(40),
+  capacity_check_passed     boolean       NOT NULL DEFAULT false,
+  capacity_check_at         timestamptz,
+  approval_request_no       varchar(40),
+  criteria_version_ref      varchar(80),
+  supersedes_plan_id        uuid,
+  status                    varchar(20)   NOT NULL DEFAULT 'DRAFT',
+     -- DRAFT / SUBMITTED / APPROVED / SUPERSEDED / CLOSED
+  approved_at               timestamptz,
+  -- ▼ 공통 15컬럼
+  CONSTRAINT pk_proj_labor_plan       PRIMARY KEY (id),
+  CONSTRAINT uk_proj_labor_plan_no    UNIQUE (plan_no),
+  CONSTRAINT uk_proj_labor_plan_seq   UNIQUE (project_id, fiscal_year, plan_seq),
+  CONSTRAINT fk_proj_labor_plan_proj  FOREIGN KEY (project_id)
+       REFERENCES mbproj.project(id),
+  CONSTRAINT fk_proj_labor_plan_bdg   FOREIGN KEY (budget_no)
+       REFERENCES mbacct.budget(budget_no),
+  CONSTRAINT fk_proj_labor_plan_appr  FOREIGN KEY (approval_request_no)
+       REFERENCES mbtxn.approval_request(request_no),
+  CONSTRAINT fk_proj_labor_plan_prev  FOREIGN KEY (supersedes_plan_id)
+       REFERENCES mbproj.project_labor_plan(id),
+  CONSTRAINT ck_proj_labor_plan_total CHECK (
+       total_budget_amount = total_labor_budget_amount + total_agent_cost_amount),
+  -- 가용일수 검증을 통과하지 않은 계획은 승인될 수 없다 (R-LB-01)
+  CONSTRAINT ck_proj_labor_plan_cap   CHECK (
+       status NOT IN ('APPROVED','CLOSED') OR capacity_check_passed = true)
+);
+COMMENT ON TABLE mbproj.project_labor_plan IS
+  '프로젝트 인력투입계획의 버전. 이 버전의 계산 결과가 곧 프로젝트 인건비 예산이다(규칙 5).
+   계획은 연도 단위로 나뉜다 — day 단가가 연도 버전이기 때문이다.';
+
+-- ---------------------------------------------------------------------
+-- 2.2 인력투입계획 라인  (업무코드 × 수행주체 × man-day)
+-- ---------------------------------------------------------------------
+CREATE TABLE mbproj.project_labor_plan_line (
+  id                    uuid          NOT NULL DEFAULT uuidv7(),
+  plan_id               uuid          NOT NULL,
+  line_no               smallint      NOT NULL,
+  work_code             varchar(20)   NOT NULL,
+  executor_kind         varchar(20)   NOT NULL,          -- HUMAN / AGENT  (규칙 2)
+  employee_id           uuid,                            -- HUMAN 이면 필수 (규칙 3)
+  agent_kind            varchar(20),                     -- IA/PA/EA/VA/TA/TR
+  agent_profile_code    varchar(40),
+  planned_man_day       numeric(9,2),                    -- HUMAN 이면 필수 (규칙 3)
+  day_rate_id           uuid,
+  day_rate_snapshot     numeric(20,4),
+  planned_run_count     integer,                         -- AGENT
+  unit_cost_amount      numeric(20,6),                   -- AGENT
+  line_amount           numeric(20,4)  NOT NULL DEFAULT 0,
+  account_code          varchar(20)    NOT NULL,
+  cost_center_code      varchar(20),
+  assignment_id         uuid,
+  is_standing_absorber  boolean        NOT NULL DEFAULT false,
+  note                  varchar(400),
+  -- ▼ 공통 15컬럼
+  CONSTRAINT pk_plan_line        PRIMARY KEY (id),
+  CONSTRAINT uk_plan_line_no     UNIQUE (plan_id, line_no),
+  CONSTRAINT fk_plan_line_plan   FOREIGN KEY (plan_id)
+       REFERENCES mbproj.project_labor_plan(id),
+  CONSTRAINT fk_plan_line_wc     FOREIGN KEY (work_code)
+       REFERENCES mbcode.work_code(work_code),
+  CONSTRAINT fk_plan_line_emp    FOREIGN KEY (employee_id)
+       REFERENCES mbcore.employee(id),
+  CONSTRAINT fk_plan_line_rate   FOREIGN KEY (day_rate_id)
+       REFERENCES mbhr.labor_day_rate(id),
+  CONSTRAINT fk_plan_line_acct   FOREIGN KEY (account_code)
+       REFERENCES mbacct.account(account_code),
+  CONSTRAINT fk_plan_line_assign FOREIGN KEY (assignment_id)
+       REFERENCES mbproj.project_work_assignment(id),
+  -- 사람 라인과 에이전트 라인은 배타다 (R-LB-08)
+  CONSTRAINT ck_plan_line_human  CHECK (
+       executor_kind &lt;&gt; 'HUMAN' OR
+       (employee_id IS NOT NULL AND planned_man_day IS NOT NULL
+        AND day_rate_id IS NOT NULL AND agent_kind IS NULL)),
+  CONSTRAINT ck_plan_line_agent  CHECK (
+       executor_kind &lt;&gt; 'AGENT' OR
+       (agent_kind IS NOT NULL AND planned_run_count IS NOT NULL
+        AND employee_id IS NULL AND planned_man_day IS NULL)),
+  CONSTRAINT ck_plan_line_amount CHECK (
+       executor_kind &lt;&gt; 'HUMAN'
+       OR line_amount = round(planned_man_day * day_rate_snapshot, 4))
+);
+COMMENT ON COLUMN mbproj.project_labor_plan_line.day_rate_snapshot IS
+  '승인 시점의 day 단가를 굳혀 기록한다. 이후 단가 버전이 바뀌어도 이 예산은 흔들리지 않는다.
+   업무코드 토큰을 수행 시점 버전으로 굳히는 것과 같은 원리다.';
+
+-- ---------------------------------------------------------------------
+-- 2.3 월 투입 분해
+-- ---------------------------------------------------------------------
+CREATE TABLE mbproj.project_labor_plan_month (
+  id               uuid          NOT NULL DEFAULT uuidv7(),
+  plan_line_id     uuid          NOT NULL,
+  period_code      varchar(20)   NOT NULL,
+  planned_man_day  numeric(9,2)  NOT NULL DEFAULT 0,
+  planned_amount   numeric(20,4) NOT NULL DEFAULT 0,
+  -- ▼ 공통 15컬럼
+  CONSTRAINT pk_plan_month       PRIMARY KEY (id),
+  CONSTRAINT uk_plan_month       UNIQUE (plan_line_id, period_code),
+  CONSTRAINT fk_plan_month_line  FOREIGN KEY (plan_line_id)
+       REFERENCES mbproj.project_labor_plan_line(id),
+  CONSTRAINT fk_plan_month_per   FOREIGN KEY (period_code)
+       REFERENCES mbcore.calendar_period(period_code)
+);
+
+-- =====================================================================
+-- 3. 집행 계층 (mbhr · mbacct) — 규칙 6 · 7
+-- =====================================================================
+
+-- ---------------------------------------------------------------------
+-- 3.1 급여의 프로젝트 귀속  (기존 payslip.project_allocation jsonb 를 대체)
+-- ---------------------------------------------------------------------
+CREATE TABLE mbhr.payslip_project_cost (
+  id                      uuid          NOT NULL DEFAULT uuidv7(),
+  payslip_id              uuid          NOT NULL,
+  seq                     smallint      NOT NULL,
+  project_id              uuid          NOT NULL,
+  work_code               varchar(20),
+  plan_line_id            uuid,
+  period_code             varchar(20)   NOT NULL,   -- 근로 귀속월(지급월 아님)
+  basis_kind              varchar(30)   NOT NULL,
+     -- ACTUAL_EFFORT / PLAN_MAN_DAY / MEMBER_RATE / STANDING_RESIDUAL
+  basis_value             numeric(24,8) NOT NULL,
+  ratio                   numeric(9,8)  NOT NULL,
+  direct_cost_amount      numeric(20,4) NOT NULL DEFAULT 0,
+  employer_burden_amount  numeric(20,4) NOT NULL DEFAULT 0,
+  severance_amount        numeric(20,4) NOT NULL DEFAULT 0,
+  welfare_amount          numeric(20,4) NOT NULL DEFAULT 0,
+  total_cost_amount       numeric(20,4) NOT NULL,
+  is_residual_absorber    boolean       NOT NULL DEFAULT false,
+  budget_no               varchar(40)   NOT NULL,
+  journal_no              varchar(40),
+  execution_line_id       uuid,
+  allocation_run_id       uuid          NOT NULL,
+  rate_kind_used          varchar(20)   NOT NULL DEFAULT 'ESTIMATE',
+  -- ▼ 공통 15컬럼
+  CONSTRAINT pk_payslip_proj_cost      PRIMARY KEY (id),
+  CONSTRAINT uk_payslip_proj_cost_seq  UNIQUE (payslip_id, seq),
+  CONSTRAINT fk_payslip_proj_cost_slip FOREIGN KEY (payslip_id)
+       REFERENCES mbhr.payslip(id),
+  CONSTRAINT fk_payslip_proj_cost_proj FOREIGN KEY (project_id)
+       REFERENCES mbproj.project(id),
+  CONSTRAINT fk_payslip_proj_cost_wc   FOREIGN KEY (work_code)
+       REFERENCES mbcode.work_code(work_code),
+  CONSTRAINT fk_payslip_proj_cost_line FOREIGN KEY (plan_line_id)
+       REFERENCES mbproj.project_labor_plan_line(id),
+  CONSTRAINT fk_payslip_proj_cost_per  FOREIGN KEY (period_code)
+       REFERENCES mbcore.calendar_period(period_code),
+  CONSTRAINT fk_payslip_proj_cost_bdg  FOREIGN KEY (budget_no)
+       REFERENCES mbacct.budget(budget_no),
+  CONSTRAINT fk_payslip_proj_cost_jrn  FOREIGN KEY (journal_no)
+       REFERENCES mbacct.journal(journal_no),
+  CONSTRAINT ck_payslip_proj_cost_sum  CHECK (
+       total_cost_amount = direct_cost_amount + employer_burden_amount
+       + severance_amount + welfare_amount),
+  CONSTRAINT ck_payslip_proj_cost_rt   CHECK (ratio &gt;= 0 AND ratio &lt;= 1)
+);
+
+-- ---------------------------------------------------------------------
+-- 3.2 예산 집행 라인  (append-only 정본)
+-- ---------------------------------------------------------------------
+CREATE TABLE mbacct.budget_execution_line (
+  id                    uuid          NOT NULL DEFAULT uuidv7(),
+  budget_no             varchar(40)   NOT NULL,
+  period_code           varchar(20)   NOT NULL,   -- 근로 귀속월
+  project_id            uuid          NOT NULL,
+  account_code          varchar(20)   NOT NULL,
+  work_code             varchar(20),
+  employee_id           uuid,
+  direction             varchar(30)   NOT NULL,
+     -- ACTUAL / REVERSAL / YEAREND_ADJUST
+  source_kind           varchar(30)   NOT NULL,
+     -- PAYROLL / PAYROLL_RETRO / PAYROLL_BONUS / PAYROLL_SEVERANCE_ACCRUAL
+     -- / AGENT_COST / YEAREND_TRUEUP
+  source_ref            varchar(40),
+  source_line_id        uuid,
+  amount                numeric(20,4) NOT NULL,   -- 부호 있는 금액
+  currency_code         char(3)       NOT NULL DEFAULT 'KRW',
+  journal_no            varchar(40)   NOT NULL,
+  journal_line_no       smallint,
+  rate_kind_used        varchar(20),
+  criteria_version_ref  varchar(80),
+  idempotency_key       varchar(200)  NOT NULL,
+  posted_at             timestamptz   NOT NULL DEFAULT now(),
+  reversal_of_line_id   uuid,
+  hash_prev             char(64),
+  hash_self             char(64),
+  -- ▼ 공통 15컬럼
+  CONSTRAINT pk_budget_exec_line       PRIMARY KEY (id),
+  CONSTRAINT uk_budget_exec_idem       UNIQUE (idempotency_key),
+  CONSTRAINT fk_budget_exec_bdg        FOREIGN KEY (budget_no)
+       REFERENCES mbacct.budget(budget_no),
+  CONSTRAINT fk_budget_exec_per        FOREIGN KEY (period_code)
+       REFERENCES mbcore.calendar_period(period_code),
+  CONSTRAINT fk_budget_exec_proj       FOREIGN KEY (project_id)
+       REFERENCES mbproj.project(id),
+  CONSTRAINT fk_budget_exec_acct       FOREIGN KEY (account_code)
+       REFERENCES mbacct.account(account_code),
+  CONSTRAINT fk_budget_exec_wc         FOREIGN KEY (work_code)
+       REFERENCES mbcode.work_code(work_code),
+  CONSTRAINT fk_budget_exec_emp        FOREIGN KEY (employee_id)
+       REFERENCES mbcore.employee(id),
+  CONSTRAINT fk_budget_exec_jrn        FOREIGN KEY (journal_no)
+       REFERENCES mbacct.journal(journal_no),
+  CONSTRAINT fk_budget_exec_rev        FOREIGN KEY (reversal_of_line_id)
+       REFERENCES mbacct.budget_execution_line(id),
+  CONSTRAINT ck_budget_exec_rev        CHECK (
+       direction &lt;&gt; 'REVERSAL' OR reversal_of_line_id IS NOT NULL)
+);
+-- 이 표는 수정하지 않는다 (R-LB-13). 취소·확정은 반대부호 행과 조정 행으로만 한다.
+CREATE RULE r_budget_exec_no_update AS ON UPDATE TO mbacct.budget_execution_line DO INSTEAD NOTHING;
+CREATE RULE r_budget_exec_no_delete AS ON DELETE TO mbacct.budget_execution_line DO INSTEAD NOTHING;
+
+-- ---------------------------------------------------------------------
+-- 3.3 예산 잔액 투영  (캐시 — 정본은 3.2 의 라인이다)
+-- ---------------------------------------------------------------------
+CREATE TABLE mbacct.budget_balance (
+  id                uuid          NOT NULL DEFAULT uuidv7(),
+  budget_no         varchar(40)   NOT NULL,
+  period_code       varchar(20)   NOT NULL,
+  project_id        uuid,
+  account_code      varchar(20)   NOT NULL,
+  budget_amount     numeric(20,4) NOT NULL DEFAULT 0,
+  actual_amount     numeric(20,4) NOT NULL DEFAULT 0,
+  adjust_amount     numeric(20,4) NOT NULL DEFAULT 0,
+  variance_amount   numeric(20,4) NOT NULL DEFAULT 0,
+  variance_rate     numeric(9,6),
+  is_overrun        boolean       NOT NULL DEFAULT false,
+  is_final          boolean       NOT NULL DEFAULT false,
+  last_line_id      uuid,
+  recomputed_at     timestamptz   NOT NULL DEFAULT now(),
+  -- ▼ 공통 15컬럼
+  CONSTRAINT pk_budget_balance      PRIMARY KEY (id),
+  CONSTRAINT uk_budget_balance      UNIQUE (budget_no, period_code, account_code),
+  CONSTRAINT fk_budget_balance_bdg  FOREIGN KEY (budget_no)
+       REFERENCES mbacct.budget(budget_no),
+  CONSTRAINT fk_budget_balance_per  FOREIGN KEY (period_code)
+       REFERENCES mbcore.calendar_period(period_code),
+  CONSTRAINT fk_budget_balance_line FOREIGN KEY (last_line_id)
+       REFERENCES mbacct.budget_execution_line(id),
+  CONSTRAINT ck_budget_balance_var  CHECK (
+       variance_amount = budget_amount - (actual_amount + adjust_amount))
+);
+
+-- ---------------------------------------------------------------------
+-- 3.4 연말 인건비 확정 버전  (확정전제 P-02 — 매년 4월 1회)
+-- ---------------------------------------------------------------------
+CREATE TABLE mbhr.labor_cost_actual_close (
+  id                                uuid          NOT NULL DEFAULT uuidv7(),
+  close_no                          varchar(40)   NOT NULL,
+  company_id                        uuid          NOT NULL,
+  fiscal_year                       smallint      NOT NULL,
+  target_close_date                 date          NOT NULL,
+  adjust_period_code                varchar(20)   NOT NULL,   -- 조정 인식 기간(확정연도 4월)
+  payroll_december_done             boolean       NOT NULL DEFAULT false,
+  payroll_december_ref              varchar(40),
+  income_tax_settlement_done        boolean       NOT NULL DEFAULT false,
+  income_tax_settlement_ref         varchar(40),
+  employment_insurance_report_done  boolean       NOT NULL DEFAULT false,
+  employment_insurance_report_ref   varchar(40),
+  health_insurance_settlement_done  boolean       NOT NULL DEFAULT false,
+  health_insurance_settlement_ref   varchar(40),
+  severance_confirm_done            boolean       NOT NULL DEFAULT false,
+  severance_confirm_ref             varchar(40),
+  prerequisite_all_met              boolean       NOT NULL DEFAULT false,
+  headcount                         integer       NOT NULL DEFAULT 0,
+  total_actual_cost_amount          numeric(20,4) NOT NULL DEFAULT 0,
+  total_executed_amount             numeric(20,4) NOT NULL DEFAULT 0,
+  total_adjust_amount               numeric(20,4) NOT NULL DEFAULT 0,
+  adjust_journal_no                 varchar(40),
+  approval_request_no               varchar(40),
+  status                            varchar(20)   NOT NULL DEFAULT 'OPEN',
+     -- OPEN / PREREQ_MET / CALCULATED / APPROVED / POSTED / CLOSED
+  closed_at                         timestamptz,
+  -- ▼ 공통 15컬럼
+  CONSTRAINT pk_labor_close        PRIMARY KEY (id),
+  CONSTRAINT uk_labor_close_no     UNIQUE (close_no),
+  CONSTRAINT uk_labor_close_year   UNIQUE (company_id, fiscal_year),
+  CONSTRAINT fk_labor_close_comp   FOREIGN KEY (company_id)
+       REFERENCES mbcore.company(id),
+  CONSTRAINT fk_labor_close_per    FOREIGN KEY (adjust_period_code)
+       REFERENCES mbcore.calendar_period(period_code),
+  CONSTRAINT fk_labor_close_jrn    FOREIGN KEY (adjust_journal_no)
+       REFERENCES mbacct.journal(journal_no),
+  CONSTRAINT fk_labor_close_appr   FOREIGN KEY (approval_request_no)
+       REFERENCES mbtxn.approval_request(request_no),
+  -- 선행조건 5건을 모두 채우기 전에는 확정으로 넘어갈 수 없다 (R-LB-15)
+  CONSTRAINT ck_labor_close_prereq CHECK (
+       prerequisite_all_met = (payroll_december_done AND income_tax_settlement_done
+         AND employment_insurance_report_done AND health_insurance_settlement_done
+         AND severance_confirm_done)),
+  CONSTRAINT ck_labor_close_status CHECK (
+       status IN ('OPEN') OR prerequisite_all_met = true),
+  CONSTRAINT ck_labor_close_amt    CHECK (
+       total_adjust_amount = total_actual_cost_amount - total_executed_amount)
+);
+
+-- =====================================================================
+-- 4. 기존 테이블 변경 4건
+-- =====================================================================
+
+-- C-01  급여 명세의 프로젝트 배분을 jsonb 에서 정규 테이블로 옮긴다.
+--       금액은 jsonb 에 두지 않는다 — 집계 · 외래키 · 부분수정 · 대사가 모두 막힌다.
+ALTER TABLE mbhr.payslip DROP COLUMN project_allocation;
+
+-- C-02  프로젝트 종류를 구분한다. 사내상시업무도 정식 프로젝트다(확정전제 P-04).
+ALTER TABLE mbproj.project ADD COLUMN project_kind varchar(20) NOT NULL DEFAULT 'PROJECT';
+   -- PROJECT(수주·개발 과제) / STANDING(사내상시업무) / RND / INVESTMENT
+ALTER TABLE mbproj.project ADD COLUMN standing_cost_center_code varchar(20);
+COMMENT ON COLUMN mbproj.project.project_kind IS
+  'STANDING 은 부서(코스트센터)마다 하나씩 두는 사내상시업무 프로젝트다.
+   프로젝트에 배정되지 않은 임직원 일수를 흡수해 전사 인건비 완전분해(R-LB-02)를 성립시킨다.';
+
+-- C-03  예산 금액의 소유권을 mbacct.budget 하나로 모은다.
+--       mbproj.project_budget 은 배정 링크로 축소한다 — 예산 원장이 둘이면 반드시 틀어진다.
+ALTER TABLE mbproj.project_budget DROP COLUMN committed_amount;
+ALTER TABLE mbproj.project_budget DROP COLUMN actual_amount;
+ALTER TABLE mbproj.project_budget ADD  COLUMN budget_no varchar(40);
+ALTER TABLE mbproj.project_budget ADD  CONSTRAINT fk_project_budget_bdg
+      FOREIGN KEY (budget_no) REFERENCES mbacct.budget(budget_no);
+
+-- C-04  배부 기준에 공수를 쓰려면 공수의 원천이 있어야 한다.
+--       MyBee 는 mbtxn.project_transaction 에 모든 행위가 프로젝트·업무코드와 함께 쌓이므로
+--       타임시트를 따로 입력받지 않고 여기서 역산한다. 역산 결과를 승인으로 굳히는 자리다.
+ALTER TABLE mbproj.project_work_assignment ADD COLUMN actual_man_day numeric(9,2) NOT NULL DEFAULT 0;
+ALTER TABLE mbproj.project_work_assignment ADD COLUMN actual_man_day_source varchar(30);
+   -- TXN_DERIVED / PA_ADJUSTED / PLAN_FALLBACK
+ALTER TABLE mbproj.project_work_assignment ADD COLUMN actual_man_day_confirmed_at timestamptz;
+
+-- =====================================================================
+-- 5. 인덱스 (Zero-DDL 규약 — 확장 항목은 ext 의 GIN 으로 흡수)
+-- =====================================================================
+CREATE INDEX ix_emp_cost_est_emp    ON mbhr.employee_cost_estimate      (tenant_id, employee_id, fiscal_year);
+CREATE INDEX ix_labor_rate_lookup   ON mbhr.labor_day_rate              (tenant_id, employee_id, effective_from, effective_to);
+CREATE INDEX ix_plan_line_emp       ON mbproj.project_labor_plan_line   (tenant_id, employee_id, executor_kind);
+CREATE INDEX ix_plan_month_period   ON mbproj.project_labor_plan_month  (tenant_id, period_code);
+CREATE INDEX ix_pspc_project        ON mbhr.payslip_project_cost        (tenant_id, project_id, period_code);
+CREATE INDEX ix_bexec_budget        ON mbacct.budget_execution_line     (tenant_id, budget_no, period_code);
+CREATE INDEX ix_bexec_project       ON mbacct.budget_execution_line     (tenant_id, project_id, period_code);
+CREATE INDEX ix_bexec_source        ON mbacct.budget_execution_line     (tenant_id, source_kind, source_ref);
+CREATE INDEX ix_emp_cost_comp_ext   ON mbhr.employee_cost_component     USING gin (ext jsonb_path_ops);
+CREATE INDEX ix_plan_line_ext       ON mbproj.project_labor_plan_line   USING gin (ext jsonb_path_ops);
+CREATE INDEX ix_bexec_ext           ON mbacct.budget_execution_line     USING gin (ext jsonb_path_ops);
+
+-- =====================================================================
+-- 6. 정합성 제약 — 단일 행으로 표현할 수 없는 것들 (검사 함수)
+-- =====================================================================
+
+-- R-LB-01  가용일수 항등식
+--          한 임직원의 전 프로젝트 배정 man-day 합 = 그 사람의 예상 실근무일수
+CREATE OR REPLACE FUNCTION mbhr.ck_capacity_identity(p_fiscal_year smallint)
+RETURNS TABLE (employee_id uuid, assigned_days numeric, available_days numeric, gap numeric)
+LANGUAGE sql STABLE AS $$
+  SELECT e.employee_id,
+         coalesce(sum(l.planned_man_day), 0) AS assigned_days,
+         e.estimated_working_days            AS available_days,
+         e.estimated_working_days - coalesce(sum(l.planned_man_day), 0) AS gap
+    FROM mbhr.employee_workday_estimate e
+    LEFT JOIN mbproj.project_labor_plan_line l
+           ON l.employee_id = e.employee_id
+          AND l.executor_kind = 'HUMAN'
+          AND l.is_deleted = false
+    LEFT JOIN mbproj.project_labor_plan p
+           ON p.id = l.plan_id
+          AND p.fiscal_year = e.fiscal_year
+          AND p.status = 'APPROVED'
+   WHERE e.fiscal_year = p_fiscal_year
+     AND e.estimate_kind = 'ESTIMATE'
+     AND e.is_deleted = false
+   GROUP BY e.employee_id, e.estimated_working_days
+  HAVING abs(e.estimated_working_days - coalesce(sum(l.planned_man_day), 0)) &gt; 0.005;
+$$;
+
+-- R-LB-02  전사 완전분해
+--          전 프로젝트 인건비 예산의 합 = 전 임직원 연간 예상 인건비의 합
+CREATE OR REPLACE FUNCTION mbacct.ck_labor_budget_exhaustive(p_fiscal_year smallint)
+RETURNS TABLE (budget_total numeric, cost_total numeric, gap numeric)
+LANGUAGE sql STABLE AS $$
+  SELECT b.total, c.total, b.total - c.total
+    FROM (SELECT coalesce(sum(total_labor_budget_amount), 0) AS total
+            FROM mbproj.project_labor_plan
+           WHERE fiscal_year = p_fiscal_year AND status = 'APPROVED' AND is_deleted = false) b,
+         (SELECT coalesce(sum(total_cost_amount), 0) AS total
+            FROM mbhr.employee_cost_estimate
+           WHERE fiscal_year = p_fiscal_year AND estimate_kind = 'ESTIMATE'
+             AND status IN ('APPROVED','LOCKED') AND is_deleted = false) c;
+$$;
+
+-- R-LB-04 · R-LB-05  배부 비율 합 = 1, 배부 금액 합 = 급여 총원가
+CREATE OR REPLACE FUNCTION mbhr.ck_allocation_closure(p_payroll_no varchar)
+RETURNS TABLE (payslip_id uuid, ratio_sum numeric, cost_sum numeric, payslip_cost numeric)
+LANGUAGE sql STABLE AS $$
+  SELECT s.id,
+         sum(c.ratio),
+         sum(c.total_cost_amount),
+         s.gross_amount + coalesce(s.employer_insurance_amount, 0)
+    FROM mbhr.payslip s
+    JOIN mbhr.payslip_project_cost c ON c.payslip_id = s.id AND c.is_deleted = false
+   WHERE s.payroll_no = p_payroll_no AND s.is_deleted = false
+   GROUP BY s.id, s.gross_amount, s.employer_insurance_amount
+  HAVING abs(sum(c.ratio) - 1) &gt; 0.00000001;
+$$;
+
+-- R-LB-06  집행 라인 = 전표 (프로젝트별 인건비 차변)
+CREATE OR REPLACE FUNCTION mbacct.ck_execution_matches_journal(p_period_code varchar)
+RETURNS TABLE (project_id uuid, exec_total numeric, journal_total numeric, gap numeric)
+LANGUAGE sql STABLE AS $$
+  WITH x AS (
+    SELECT project_id, sum(amount) AS t
+      FROM mbacct.budget_execution_line
+     WHERE period_code = p_period_code AND is_deleted = false
+     GROUP BY project_id),
+  j AS (
+    SELECT jl.project_id, sum(CASE WHEN jl.dr_cr = 'DR' THEN jl.amount ELSE -jl.amount END) AS t
+      FROM mbacct.journal_line jl
+      JOIN mbacct.journal      jh ON jh.journal_no = jl.journal_no
+      JOIN mbacct.account      a  ON a.account_code = jl.account_code
+     WHERE jh.period_code = p_period_code
+       AND a.account_group = 'LABOR_COST'
+       AND jl.is_deleted = false
+     GROUP BY jl.project_id)
+  SELECT coalesce(x.project_id, j.project_id),
+         coalesce(x.t, 0), coalesce(j.t, 0), coalesce(x.t, 0) - coalesce(j.t, 0)
+    FROM x FULL OUTER JOIN j ON j.project_id = x.project_id
+   WHERE abs(coalesce(x.t, 0) - coalesce(j.t, 0)) &gt; 0.0001;
+$$;
+
+-- R-LB-07  잔액 투영 재계산 일치
+CREATE OR REPLACE FUNCTION mbacct.ck_balance_projection(p_period_code varchar)
+RETURNS TABLE (budget_no varchar, stored numeric, recomputed numeric, gap numeric)
+LANGUAGE sql STABLE AS $$
+  SELECT b.budget_no, b.actual_amount + b.adjust_amount,
+         coalesce(sum(l.amount), 0),
+         (b.actual_amount + b.adjust_amount) - coalesce(sum(l.amount), 0)
+    FROM mbacct.budget_balance b
+    LEFT JOIN mbacct.budget_execution_line l
+           ON l.budget_no = b.budget_no AND l.period_code = b.period_code
+          AND l.is_deleted = false
+   WHERE b.period_code = p_period_code AND b.is_deleted = false
+   GROUP BY b.budget_no, b.actual_amount, b.adjust_amount
+  HAVING abs((b.actual_amount + b.adjust_amount) - coalesce(sum(l.amount), 0)) &gt; 0.0001;
+$$;
+
+-- R-LB-09  에이전트 라인은 인건비 계정을 쓸 수 없다
+CREATE OR REPLACE FUNCTION mbproj.ck_agent_account_separation()
+RETURNS TABLE (plan_line_id uuid, work_code varchar, account_code varchar)
+LANGUAGE sql STABLE AS $$
+  SELECT l.id, l.work_code, l.account_code
+    FROM mbproj.project_labor_plan_line l
+    JOIN mbacct.account a ON a.account_code = l.account_code
+   WHERE l.executor_kind = 'AGENT'
+     AND a.account_group = 'LABOR_COST'
+     AND l.is_deleted = false;
+$$;
+
+-- =====================================================================
+-- 7. 로직도구 서명 (결정적 함수 — 금액 계산은 전부 여기서 한다)
+-- =====================================================================
+-- fn_workday_baseline_build (company_id, fiscal_year)            → workday_baseline
+-- fn_workday_estimate       (fiscal_year, employee_id, kind)     → employee_workday_estimate
+-- fn_cost_estimate_build    (fiscal_year, kind)                  → employee_cost_estimate(+component)
+-- fn_labor_day_rate_build   (fiscal_year, kind)                  → labor_day_rate
+-- fn_capacity_reconcile     (fiscal_year)                        → 초과 REJECT · 잔여 STANDING 라인 생성
+-- fn_labor_budget_calc      (plan_id)                            → plan_line.line_amount · 예산 편성 요청값
+--                                                                  (budget 은 D04 의 FL0004012 가 만든다 · 10.1.1)
+-- fn_labor_allocate         (payroll_no)                         → payslip_project_cost
+-- fn_budget_post            (journal_no)                         → budget_execution_line(ACTUAL)
+-- fn_labor_rate_actualize   (fiscal_year)                        → ACTUAL 버전 생성
+-- fn_labor_reallocate_year  (fiscal_year)                        → YEAREND_ADJUST 라인 · 조정 전표
+-- fn_budget_balance_rebuild (period_code)                        → budget_balance 재계산
+--
+-- 중복 실행 방지 키 규약
+--   fn_budget_post          : hash(journal_no, journal_line_no, budget_no, 'ACTUAL')
+--   fn_labor_allocate       : hash(payroll_no, payslip_id, allocation_run_id)
+--   fn_labor_reallocate_year: hash(close_no, project_id, 'YEAREND_TRUEUP')
+-- =====================================================================
+</pre><div style="margin-top:26px;padding-top:9px;border-top:1.5px solid #1b3a6b;font-size:8.6pt;color:#4a5566;line-height:1.8">MyBee_프로젝트인건비예산집행_설계서_<b>v1.7</b> &nbsp;·&nbsp; 산출물 S-17 &nbsp;·&nbsp; 문서번호 MB-LBC-2026-001 &nbsp;·&nbsp; 작성일 2026-10-28<br>공용 인력 배분 &nbsp;·&nbsp; 근거 버전 : 설계지시문 v5.24 · 코드체계_설계서 v3.20 · DB테이블설계서 v3.28</div></div></body></html>

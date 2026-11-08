@@ -1,0 +1,646 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>법률해석 멀티에이전트 근거분석</title>
+<style>
+:root{--ink:#182b3a;--muted:#586773;--accent:#14665d;--line:#dbe3e7;--paper:#fff;--bg:#f2f5f5;--nav:292px;
+--good:#1c7a4a;--good-bg:#e5f3ea;--mid:#9a6512;--mid-bg:#fbf1dd;--bad:#a8392f;--bad-bg:#f8e5e2;--none:#5d6b75;--none-bg:#eceff1;--llm:#2d5f93;--llm-bg:#e6eef7;--human:#8a5a12;--human-bg:#fbf0dc;--det:#14665d;--det-bg:#e2f1ee}
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:34px}
+body{margin:0;color:var(--ink);background:var(--bg);font-family:"Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif;font-size:16px;line-height:1.85;word-break:keep-all;overflow-wrap:anywhere}
+a{color:var(--accent);text-underline-offset:4px}a:focus-visible,button:focus-visible{outline:3px solid #ca8a28;outline-offset:3px}
+.skip{position:fixed;top:-100px;left:12px;background:#fff;padding:10px;z-index:9}.skip:focus{top:8px}
+.sidebar{position:fixed;inset:0 auto 0 0;width:var(--nav);overflow-y:auto;background:#fff;border-right:1px solid var(--line);padding:28px 20px}
+.brand{font-size:14px;font-weight:750;letter-spacing:.03em;margin:0 0 22px}.nav-title{font-size:12px;color:var(--muted);font-weight:700;letter-spacing:.1em;margin:0}
+.sidebar ol{list-style:none;padding:0;margin:10px 0 20px}.sidebar a{display:flex;gap:11px;text-decoration:none;font-size:13px;line-height:1.55;padding:7px 9px;border-radius:5px;color:#42535d}
+.sidebar a span{flex:0 0 18px;white-space:nowrap;font-size:11px;font-variant-numeric:tabular-nums;color:#84939b;padding-top:2px}.sidebar a:hover,.sidebar a.active{background:#edf5f2;color:#125c52}
+main{max-width:1240px;margin-left:var(--nav);padding:50px clamp(24px,5vw,76px) 100px}
+.hero{margin-bottom:44px}.eyebrow{font-size:12px;font-weight:700;letter-spacing:.14em;color:var(--accent);margin-bottom:14px}
+h1{font-size:clamp(28px,3vw,41px);line-height:1.38;letter-spacing:-.045em;margin:0 0 18px;color:#122c36;max-width:880px}
+.hero .sub{font-size:18px;font-weight:500;color:#435762;margin:0 0 18px;max-width:880px}.meta{font-size:13px;color:var(--muted)}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}.actions a,button{font:inherit;font-size:13px;border:1px solid #bfcfce;padding:8px 14px;background:#fff;border-radius:5px;cursor:pointer;text-decoration:none;color:var(--accent)}.actions .primary{background:#185f55;color:#fff;border-color:#185f55}
+.chapter{background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:30px clamp(20px,3vw,42px) 36px;margin:0 0 24px;box-shadow:0 2px 9px #1a334405}
+.num{font-size:12px;font-weight:700;letter-spacing:.12em;color:var(--accent);margin:0 0 6px}
+h2{font-size:26px;line-height:1.45;letter-spacing:-.035em;margin:0 0 20px;color:#142b36}
+h3{font-size:20px;line-height:1.55;letter-spacing:-.02em;margin:34px 0 12px;padding-top:20px;border-top:1px solid #e3e9eb;color:#142b36}
+h4{font-size:16px;margin:22px 0 8px}p{margin:12px 0}ul,ol.body{padding-left:22px}li{margin:5px 0}
+.lead{font-size:18px;line-height:1.8;color:#1d3441}
+.answer{border-left:5px solid var(--accent);background:#eef6f4;padding:18px 22px;border-radius:0 6px 6px 0;margin:18px 0}
+.answer p{margin:6px 0}.answer strong{color:#0f4d45}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:20px 0}
+.card{border:1px solid var(--line);border-radius:6px;padding:16px 18px;background:#fbfcfc}.card h4{margin:0 0 8px;font-size:15px}.card ul{margin:0;padding-left:18px;font-size:14px;line-height:1.75}
+.card.good{border-top:4px solid var(--good)}.card.mid{border-top:4px solid var(--mid)}.card.bad{border-top:4px solid var(--bad)}
+.table-wrap{overflow-x:auto;max-width:100%;margin:18px 0 22px;border:1px solid #d5dfe3;border-radius:5px}
+table{border-collapse:collapse;width:100%;font-size:14px;line-height:1.7;text-align:left}
+th,td{padding:10px 13px;vertical-align:top;border-right:1px solid #d5dfe3;border-bottom:1px solid #d5dfe3}
+th:last-child,td:last-child{border-right:0}tr:last-child td{border-bottom:0}thead{background:#203c4a;color:#fff}th{font-weight:650;white-space:nowrap}
+tbody tr:nth-child(even){background:#f6f8f9}td.k{font-weight:650;min-width:130px}td.n{font-variant-numeric:tabular-nums;white-space:nowrap}
+.tag{display:inline-block;font-size:12px;font-weight:700;padding:1px 8px;border-radius:10px;white-space:nowrap;line-height:1.7}
+.t-good{color:var(--good);background:var(--good-bg)}.t-mid{color:var(--mid);background:var(--mid-bg)}.t-bad{color:var(--bad);background:var(--bad-bg)}.t-none{color:var(--none);background:var(--none-bg)}
+.cite{font-size:12px;vertical-align:super;line-height:0;text-decoration:none;color:var(--accent);font-weight:700}
+.note{font-size:13.5px;color:var(--muted);background:#f5f7f8;border:1px dashed #cdd7dc;border-radius:5px;padding:10px 14px;margin:14px 0}
+.warn{background:var(--bad-bg);border-left:4px solid var(--bad);padding:12px 16px;border-radius:0 5px 5px 0;margin:14px 0;font-size:15px}
+figure{margin:22px 0}figcaption{font-size:13px;color:var(--muted);margin-top:8px}
+.bars{border:1px solid var(--line);border-radius:6px;padding:16px 18px;background:#fcfdfd}
+.bar-row{display:grid;grid-template-columns:230px 1fr 56px;gap:10px;align-items:center;font-size:13.5px;margin:6px 0}
+.bar-track{background:#edf1f3;border-radius:3px;height:18px;position:relative;overflow:hidden}.bar-fill{height:100%;border-radius:3px}
+.bar-val{font-variant-numeric:tabular-nums;font-weight:650;text-align:right}
+.bar-group{font-size:13px;font-weight:700;color:#304652;margin:14px 0 4px}.bar-group:first-child{margin-top:0}
+.f-base{background:#9aa9b2}.f-same{background:#6f8fa8}.f-het{background:#2d5f93}.f-hi{background:#14665d}.f-bad{background:#c0645a}
+.svgwrap{overflow-x:auto;border:1px solid var(--line);border-radius:6px;background:#fff;padding:10px}.svgwrap svg{display:block;min-width:760px;width:100%;height:auto}
+.refs{list-style:none;padding:0;font-size:13.5px;line-height:1.7}.refs li{padding:7px 0;border-bottom:1px solid #edf0f2;display:grid;grid-template-columns:44px 1fr;gap:6px}.refs .rn{color:var(--accent);font-weight:700}
+.refs .lv{font-size:11.5px;color:var(--muted)}
+.foot{font-size:13px;color:var(--muted);padding:12px 3px}.to-top{position:fixed;right:20px;bottom:20px;box-shadow:0 4px 16px #122a3b18}
+.mobile-nav{display:none}
+@media(max-width:1050px){:root{--nav:240px}main{padding:34px 22px 80px}.grid3{grid-template-columns:1fr}.bar-row{grid-template-columns:170px 1fr 50px}}
+@media(max-width:760px){.sidebar{display:none}main{margin:0;padding:26px 16px 70px}h1{font-size:28px}h2{font-size:22px}.chapter{padding:22px 18px}
+.mobile-nav{display:block;margin:18px 0;background:#fff;padding:13px 16px;border:1px solid var(--line);border-radius:5px}.mobile-nav summary{font-weight:700;cursor:pointer}.mobile-nav ol{padding-left:20px;font-size:14px}
+table{min-width:640px}.bar-row{grid-template-columns:120px 1fr 44px;font-size:12px}}
+@media print{@page{size:A4;margin:14mm 12mm}body{background:#fff;font-size:11pt}.sidebar,.mobile-nav,.actions,.to-top,.skip{display:none!important}main{margin:0;padding:0;max-width:none}
+.chapter{box-shadow:none;border:0;border-top:2px solid #203c4a;border-radius:0;padding:14px 0;break-before:page}.chapter:first-of-type{break-before:auto}
+thead{display:table-header-group}tr,.card,figure,.bars{break-inside:avoid}.table-wrap{overflow:visible;border:0}table{min-width:0!important;font-size:9pt}.svgwrap svg{min-width:0}a{color:inherit;text-decoration:none}}
+</style>
+</head>
+<body>
+<a class="skip" href="#content">본문으로 이동</a>
+<aside class="sidebar" aria-label="목차">
+<p class="brand">법률 해석 × 멀티에이전트 근거분석</p>
+<p class="nav-title">목차</p>
+<nav><ol id="toc">
+<li><a href="#s1"><span>01</span>결론</a></li>
+<li><a href="#s2"><span>02</span>질문을 과제로 나누기</a></li>
+<li><a href="#s3"><span>03</span>영상의 군집 방식을 법률에 대입하면</a></li>
+<li><a href="#s4"><span>04</span>일반 연구 — 토론·앙상블·비판자</a></li>
+<li><a href="#s5"><span>05</span>법률 특화 연구 21편</a></li>
+<li><a href="#s6"><span>06</span>실증 사례 — 제품·법원·한국</a></li>
+<li><a href="#s7"><span>07</span>효과는 어디서 나오는가</a></li>
+<li><a href="#s8"><span>08</span>과제별 판정</a></li>
+<li><a href="#s9"><span>09</span>권장 구조</a></li>
+<li><a href="#s10"><span>10</span>Legal/Tax Agent v1.4 대조</a></li>
+<li><a href="#s11"><span>11</span>한국법 검증 실험 설계</a></li>
+<li><a href="#s12"><span>12</span>법적 경계</a></li>
+<li><a href="#s13"><span>13</span>한계와 확인 범위</a></li>
+<li><a href="#s14"><span>14</span>참고 근거</a></li>
+</ol></nav>
+<p class="nav-title">판</p>
+<p style="font-size:12.5px;color:var(--muted);margin:8px 9px">v1.0 · 2026-09-17 최초 작성</p>
+</aside>
+
+<main id="content">
+<header class="hero" id="top">
+<p class="eyebrow">근거 분석 보고서 · v1.0</p>
+<h1>법률 해석에 멀티에이전트·멀티 LLM은 효과적인가</h1>
+<p class="sub">같은 법률 안의 조항 연결, 다른 법률과의 연결, 해석 차이를 변호사 수준으로 다룰 때 — 논문 42편과 실증 사례 분석</p>
+<p class="meta">작성 2026년 9월 17일 | 자료 확인 기준일 2026년 9월 17일 | 대상 MyBee Legal/Tax Agent 설계 담당자, 법률검토 담당자</p>
+<div class="actions"><a class="primary" href="#s1">결론 바로 보기</a><a href="#s9">권장 구조</a><button type="button" id="print">인쇄 및 PDF 저장</button></div>
+</header>
+
+<details class="mobile-nav"><summary>목차 펼치기</summary><ol>
+<li><a href="#s1">결론</a></li><li><a href="#s2">질문을 과제로 나누기</a></li><li><a href="#s3">영상의 군집 방식을 법률에 대입하면</a></li><li><a href="#s4">일반 연구</a></li><li><a href="#s5">법률 특화 연구</a></li><li><a href="#s6">실증 사례</a></li><li><a href="#s7">효과는 어디서 나오는가</a></li><li><a href="#s8">과제별 판정</a></li><li><a href="#s9">권장 구조</a></li><li><a href="#s10">v1.4 대조</a></li><li><a href="#s11">검증 실험 설계</a></li><li><a href="#s12">법적 경계</a></li><li><a href="#s13">한계</a></li><li><a href="#s14">참고 근거</a></li></ol></details>
+
+<!-- 01 -->
+<section class="chapter" id="s1">
+<p class="num">01</p>
+<h2>결론 — 조건부로 효과적이다. 다만 효과를 내는 것은 ‘토론’이 아니다</h2>
+<div class="answer">
+<p><strong>답:</strong> 멀티에이전트·멀티 LLM 구성은 법률 해석의 정확도와 근거 신뢰도를 높일 수 있습니다. 그러나 연구를 분해해 보면 개선의 대부분은 <strong>① 조문 원문·구조·시점을 가져오는 검색과 결정적 도구</strong>, <strong>② 서로 다른 동급 모델의 독립 답변 비교</strong>, <strong>③ 원문에 대조하는 검증 단계</strong>에서 나옵니다. 영상이 강조한 “여러 에이전트가 주고받으며 합의에 이르는 토론”은 같은 계산량으로 비교하면 효과가 거의 없거나, 오히려 맞는 답을 틀린 답으로 바꾸는 사례가 반복 보고됩니다.</p>
+<p><strong>한 법률 안의 조항 간 연결</strong>(준용·단서·항호목 참조)과 <strong>다른 법률과의 연결</strong>을 멀티에이전트가 개선하는지 직접 측정한 논문은 찾지 못했습니다. 이 두 과제는 단일 모델이 약하다는 증거만 있고, 해법의 효과는 아직 간접 근거입니다. <strong>한국법 대상 멀티에이전트 연구도 없습니다.</strong></p>
+</div>
+
+<div class="grid3">
+<div class="card good"><h4><span class="tag t-good">효과 확인</span></h4><ul>
+<li>서로 다른 계열 모델의 다수결 — COLIEE 2026 조문 포섭 1위(단일 최고 84.9% → 이질 앙상블 93.0%)<a class="cite" href="#r30">[30]</a></li>
+<li>검색·검증 에이전트 분리 — 인용 누락률 98.9% → 13.2%<a class="cite" href="#r21">[21]</a></li>
+<li>요건을 형식화해 솔버로 판정 — 세법·양형 규칙에서 개선<a class="cite" href="#r28">[28]</a><a class="cite" href="#r29">[29]</a></li>
+</ul></div>
+<div class="card mid"><h4><span class="tag t-mid">효과 불확실</span></h4><ul>
+<li>같은 모델 여러 개의 토론 — 모델에 따라 +8%p 또는 −9%p<a class="cite" href="#r31">[31]</a></li>
+<li>원고·피고·판사 역할극 — 개선 폭보다 검색 기여가 큼<a class="cite" href="#r24">[24]</a></li>
+<li>조항 간·법률 간 연결 추적 — 직접 연구 없음</li>
+</ul></div>
+<div class="card bad"><h4><span class="tag t-bad">역효과 확인</span></h4><ul>
+<li>토론 라운드 증가 → 정확도 지속 하락<a class="cite" href="#r31">[31]</a></li>
+<li>강한 추론 모델에 복잡한 다단 파이프라인 → 하락(Gemini 2.5 Flash 96.9 → 77.1)<a class="cite" href="#r29">[29]</a></li>
+<li>검색이 섞이면 약한 모델이 앙상블을 끌어내림(86.6 vs 단일 91.5)<a class="cite" href="#r30">[30]</a></li>
+<li>외부 근거 없는 자기 비판 → 악화<a class="cite" href="#r9">[9]</a></li>
+</ul></div>
+</div>
+
+<h3>실무 권고 요약</h3>
+<ol class="body">
+<li><strong>조항 연결·시점은 에이전트가 아니라 데이터로 푼다.</strong> 준용·위임·특례·정의·부칙 관계를 조문 그래프와 시점 DB에 넣고, 에이전트는 그것을 조회합니다.</li>
+<li><strong>해석은 서로 다른 회사의 동급 모델이 서로 보지 않고 독립적으로 작성한다.</strong> 약한 모델을 섞으면 평균이 떨어집니다.<a class="cite" href="#r12">[12]</a></li>
+<li><strong>일치는 정답의 증거가 아니다.</strong> 최신 모델들은 틀릴 때 같은 오답을 고르는 비율이 높습니다(우연 33% 대비 약 60%).<a class="cite" href="#r16">[16]</a> 일치해도 원문 감사를 생략하지 않습니다.</li>
+<li><strong>불일치는 합의로 없애지 말고 분류한다.</strong> 근거·시점 오류는 반려하고, 진짜 해석 대립은 양론을 병기해 변호사에게 넘깁니다.</li>
+<li><strong>토론은 최대 1회의 구조화된 반박으로 제한한다.</strong> 반복 토론은 동조와 정확도 하락을 부릅니다.<a class="cite" href="#r13">[13]</a><a class="cite" href="#r14">[14]</a></li>
+<li><strong>도입 효과는 같은 계산량의 단일 강한 모델과 비교해 증명한다.</strong> 그렇지 않은 개선 수치는 대부분 계산량 차이입니다.<a class="cite" href="#r18">[18]</a></li>
+</ol>
+</section>
+
+<!-- 02 -->
+<section class="chapter" id="s2">
+<p class="num">02</p>
+<h2>질문을 과제로 나누기 — 변호사 수준 해석은 네 층으로 이루어진다</h2>
+<p>“변호사 수준으로 해석한다”는 하나의 능력이 아닙니다. 서로 다른 오류가 생기는 네 층으로 나누어야 어떤 구성이 어디에 효과가 있는지 판정할 수 있습니다.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>층</th><th>실무에서 하는 일</th><th>단일 LLM에서 확인된 약점</th></tr></thead>
+<tbody>
+<tr><td class="k">① 같은 법률 안의 조항 연결</td><td>항·호·목 구조, 단서, “제○조를 준용한다”, 정의 조항, 적용 제외 조항을 따라가 요건을 완성</td><td>형제 하위조항 혼동(§152(d)(2)(C)를 (D)로 인용), 가상 법률 깊이가 3×3으로 깊어지면 정확도 100% → 81%<a class="cite" href="#r33">[33]</a>. 한국 KBL에서 조문 내용과 조문 번호 연결 과제 정답률 23.0~49.0%<a class="cite" href="#r38">[38]</a></td></tr>
+<tr><td class="k">② 다른 법률과의 연결</td><td>시행령·시행규칙 위임, 특별법 우선, 타법 준용, 일반법 보충, 행정해석·판례 연결</td><td>도구 사용 에이전트도 1단계 과제 약 93% → 5단계 약 61%로 하락<a class="cite" href="#r40">[40]</a>. 다관할 문항은 평균 14점 낮음<a class="cite" href="#r46">[46]</a></td></tr>
+<tr><td class="k">③ 시점</td><td>사실 발생일 기준 유효 조문, 부칙 적용례·경과조치, 판례 변경</td><td>입력으로 개정 조문을 주어도 학습 기억 속 개정 전 문언을 답하는 현상<a class="cite" href="#r34">[34]</a></td></tr>
+<tr><td class="k">④ 해석 차이</td><td>문리·체계·목적론적 해석, 판례와 유권해석의 차이, 학설 대립, 반대 논거 대응</td><td>같은 질문을 온도 0으로 20회 물어도 답이 바뀌는 비율 10.6~50.4%<a class="cite" href="#r35">[35]</a>. 미국 판례 질의 할루시네이션 58~88%<a class="cite" href="#r44">[44]</a></td></tr>
+</tbody></table></div>
+<p>여기에 ⑤ <strong>요건 포섭</strong>(사실이 조문 요건을 충족하는가)과 ⑥ <strong>인용 정확성</strong>이 겹칩니다. 연구 대부분은 ⑤·⑥을 측정했고, 사용자가 질문한 ①·②·④는 정면으로 측정한 연구가 드뭅니다.</p>
+</section>
+
+<!-- 03 -->
+<section class="chapter" id="s3">
+<p class="num">03</p>
+<h2>영상의 군집 방식(Solver·Critic·Selector)을 법률에 대입하면</h2>
+<p>공유된 영상 요약이 제시한 구성 요소마다 법률 분야 근거를 대조했습니다.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>영상의 구성 요소</th><th>법률 해석에 대입했을 때</th><th>판정</th></tr></thead>
+<tbody>
+<tr><td class="k">고온도 Solver 다수가 가설을 쏟아냄</td><td>법률 답변은 온도 0에서도 이미 불안정합니다<a class="cite" href="#r35">[35]</a>. 무작위성을 키우면 서로 다른 결론만 늘고, 틀린 결론을 걸러낼 기준이 따로 필요합니다. 다양성은 온도보다 <em>서로 다른 모델·서로 다른 검색 계획</em>에서 얻는 편이 근거가 있습니다<a class="cite" href="#r11">[11]</a><a class="cite" href="#r30">[30]</a>.</td><td><span class="tag t-mid">변형 필요</span></td></tr>
+<tr><td class="k">온도 0 Critic이 오류 검증</td><td>외부 근거 없이 LLM이 비판하면 결과가 나빠질 수 있습니다(CommonSenseQA 75.8 → 41.8)<a class="cite" href="#r9">[9]</a>. 초안과 같은 모델이 심사하면 자기 글을 선호합니다<a class="cite" href="#r17">[17]</a>. 비판자는 <em>조문 원문·인용 실존·시점</em>을 결정적 도구로 대조해야 효과가 있습니다.</td><td><span class="tag t-mid">조건부 유효</span></td></tr>
+<tr><td class="k">Selector가 살아남은 조각을 합성</td><td>합의 압력이 강하면 맞는 답이 틀린 답으로 바뀌는 빈도가 반대보다 높습니다<a class="cite" href="#r13">[13]</a>. 해석 대립이 있는 쟁점에서 합성은 소수설·반대 판례를 지워 버릴 위험이 있습니다.</td><td><span class="tag t-bad">위험</span></td></tr>
+<tr><td class="k">실패 경로를 공유 메모리에 기록(페로몬)</td><td>판결 예측 연구에서 기억 제거 시 조문 정확도 90.56 → 86.55<a class="cite" href="#r27">[27]</a>. “이 조문은 해당 기준일에 시행 전” 같은 불가 조건 기록은 재사용 가치가 큽니다.</td><td><span class="tag t-good">유효</span></td></tr>
+<tr><td class="k">Lean·Coq 형식 검증기로 무결성 보증</td><td>요건 조합·세액 계산 같은 규칙형 조문은 솔버 제거 시 성능이 크게 떨어질 만큼 기여합니다(G-F1 39.08 → 25.29)<a class="cite" href="#r28">[28]</a>. 그러나 “정당한 사유”, “사회통념상” 같은 불확정 개념과 학설 대립은 형식화할 수 없고, 자연어 → 논리식 변환 오류는 검증기가 잡지 못합니다.</td><td><span class="tag t-mid">규칙형 조문에 한정</span></td></tr>
+<tr><td class="k">MCTS 가지치기로 비용 절감</td><td>법률 분야 적용 연구를 찾지 못했습니다.</td><td><span class="tag t-none">근거 없음</span></td></tr>
+</tbody></table></div>
+</section>
+
+<!-- 04 -->
+<section class="chapter" id="s4">
+<p class="num">04</p>
+<h2>일반 연구 — 토론·앙상블·비판자에 대해 알려진 것</h2>
+<p>법률 전용 연구가 적기 때문에, 먼저 구성 방식 자체의 효과를 검증한 일반 연구를 봅니다. 핵심은 <strong>비교 기준</strong>입니다. 멀티에이전트를 “한 번 호출한 단일 모델”과 비교하면 거의 항상 이기지만, “같은 호출 수로 여러 번 뽑아 다수결한 단일 모델”과 비교하면 차이가 사라집니다.</p>
+
+<figure class="bars" aria-label="같은 응답 수에서 토론과 다수결 비교">
+<div class="bar-group">GSM8K, GPT-3.5 — 같은 응답 수에서 토론 vs 다수결<a class="cite" href="#r9">[9]</a></div>
+<div class="bar-row"><span>토론 (응답 6개)</span><div class="bar-track"><div class="bar-fill f-same" style="width:83.2%"></div></div><span class="bar-val">83.2</span></div>
+<div class="bar-row"><span>다수결 (응답 6개)</span><div class="bar-track"><div class="bar-fill f-het" style="width:85.3%"></div></div><span class="bar-val">85.3</span></div>
+<div class="bar-row"><span>토론 (응답 9개)</span><div class="bar-track"><div class="bar-fill f-same" style="width:83.0%"></div></div><span class="bar-val">83.0</span></div>
+<div class="bar-row"><span>다수결 (응답 9개)</span><div class="bar-track"><div class="bar-fill f-het" style="width:88.2%"></div></div><span class="bar-val">88.2</span></div>
+<div class="bar-group">MMLU — 토론 전 → 토론 후 정확도<a class="cite" href="#r13">[13]</a></div>
+<div class="bar-row"><span>GPT-4o-mini + Mistral 2 · 토론 전</span><div class="bar-track"><div class="bar-fill f-base" style="width:65.8%"></div></div><span class="bar-val">65.8</span></div>
+<div class="bar-row"><span>토론 후</span><div class="bar-track"><div class="bar-fill f-bad" style="width:58.8%"></div></div><span class="bar-val">58.8</span></div>
+<figcaption>그림 1. 막대 길이는 정확도(%) 그대로입니다. 토론의 이득은 다수결이 대부분 설명하며, 약한 에이전트가 섞이면 토론이 정확도를 낮춥니다.</figcaption>
+</figure>
+
+<div class="table-wrap"><table>
+<thead><tr><th>연구</th><th>설정</th><th>핵심 결과</th><th>법률 적용 시 의미</th></tr></thead>
+<tbody>
+<tr><td class="k">Du et al., ICML 2024<a class="cite" href="#r1">[1]</a></td><td>GPT-3.5 3개, 2라운드 토론</td><td class="n">GSM8K 77.0 → 85.0<br>MMLU 63.9 → 71.1</td><td>1회 호출보다 낫지만 다수결 대조군 없음</td></tr>
+<tr><td class="k">Li et al., TMLR<a class="cite" href="#r4">[4]</a></td><td>같은 모델 N회 샘플링 + 다수결</td><td class="n">GSM8K GPT-3.5 73 → 85<br>Llama2-13B 15회 ≈ 70B</td><td>강한 기준선. 단 자유서술 해석은 다수결 집계 자체가 어려움</td></tr>
+<tr><td class="k">Wang et al., ICLR 2025<a class="cite" href="#r3">[3]</a></td><td>Mixture-of-Agents 계층 합성</td><td class="n">AlpacaEval 2.0 65.1%<br>(GPT-4o 57.5%)</td><td>정답성이 아닌 선호 평가 기준</td></tr>
+<tr><td class="k">Hegazy, 2024<a class="cite" href="#r5">[5]</a></td><td>서로 다른 모델 3개 토론</td><td class="n">GSM8K 91% vs 같은 모델 3개 82%</td><td>이질성 이득의 초기 근거(근거 강도 약함)</td></tr>
+<tr><td class="k">Q. Wang et al., ACL 2024<a class="cite" href="#r8">[8]</a></td><td>강한 프롬프트 단일 vs 토론</td><td>예시가 있는 단일 모델이 최고 토론과 거의 같음</td><td>예시·프롬프트 투자가 에이전트 추가만큼 효과</td></tr>
+<tr><td class="k">Liang et al., EMNLP 2024<a class="cite" href="#r2">[2]</a></td><td>찬성·반대 + 심판</td><td class="n">CIAR 26.0 → 37.0<br>(GPT-4 단독 51.0)</td><td>심판은 자기 모델 쪽을 편듦 → 심판은 다른 모델</td></tr>
+<tr><td class="k">Smit et al., ICML 2024<a class="cite" href="#r7">[7]</a></td><td>토론 전략 × 의료 등 7개 데이터</td><td>일관된 승자 없음, 동조 강도 설정 하나로 최하위 ↔ 최상위</td><td>토론은 설정에 극도로 민감</td></tr>
+<tr><td class="k">Huang et al., ICLR 2024<a class="cite" href="#r9">[9]</a></td><td>외부 피드백 없는 자기 교정</td><td class="n">CommonSenseQA 75.8 → 41.8<br>GPT-4 GSM8K 95.5 → 89.0</td><td>원문 없는 비판자는 해석을 망침</td></tr>
+<tr><td class="k">Choi et al., NeurIPS 2025<a class="cite" href="#r10">[10]</a></td><td>7개 벤치마크</td><td>토론 이득의 대부분은 다수결, 토론 자체는 정답 기대치를 높이지 않음을 증명</td><td>독립 답변 + 집계가 먼저</td></tr>
+<tr><td class="k">Zhang et al., 2025<a class="cite" href="#r11">[11]</a></td><td>5개 토론법 × 9개 벤치마크 × 4개 모델, 호출 6회로 통일</td><td>CoT를 이긴 경우 36건 중 20% 이하. 이질 모델 조합 시 +6.4~8.2%</td><td>토론을 쓰려면 이질 모델로</td></tr>
+<tr><td class="k">Li et al., 2025<a class="cite" href="#r12">[12]</a></td><td>최고 모델 단독 샘플 혼합 vs 여러 모델 혼합</td><td>단독 혼합이 AlpacaEval +6.6%, MMLU·MATH 등 평균 +3.8%</td><td>다양성은 동급 모델 사이에서만 이득</td></tr>
+<tr><td class="k">Wynn et al., 2025<a class="cite" href="#r13">[13]</a></td><td>이질 조합 토론</td><td>정답 → 오답 전환이 반대보다 잦음</td><td>약한 에이전트가 맞는 해석을 끌어내림</td></tr>
+<tr><td class="k">Yao et al., 2025<a class="cite" href="#r14">[14]</a></td><td>토론 속 동조(sycophancy)</td><td>조기 합의 붕괴 최대 86.36%, 단일보다 낮은 정확도</td><td>합의는 정답의 증거가 아님</td></tr>
+<tr><td class="k">Cemri et al., NeurIPS 2025<a class="cite" href="#r15">[15]</a></td><td>7개 프레임워크 1,642회 실행 주석</td><td>실패율 41~86.7%. 검증 부재·부정확 검증이 주요 실패 유형</td><td>검증 에이전트 “존재”만으로 부족</td></tr>
+<tr><td class="k">Kim et al., ICML 2025<a class="cite" href="#r16">[16]</a></td><td>HELM 71개 모델</td><td>둘 다 틀릴 때 같은 오답 약 60%(우연 33%). 큰 모델일수록 오류가 닮음</td><td>벤더가 달라도 독립 확인이 아님</td></tr>
+<tr><td class="k">Panickssery et al., NeurIPS 2024<a class="cite" href="#r17">[17]</a></td><td>LLM 평가자의 자기 인식</td><td>자기 글을 알아볼수록 자기 글을 더 높게 평가</td><td>초안 모델 ≠ 심사 모델</td></tr>
+<tr><td class="k">Tran &amp; Kiela, 2026<a class="cite" href="#r18">[18]</a></td><td>다단계 추론 QA, 추론 토큰 예산 동일</td><td>단일 에이전트가 멀티에이전트와 같거나 우세</td><td>계산량을 맞춘 비교가 필수</td></tr>
+<tr><td class="k">X-Masters(SciMaster), 2025<a class="cite" href="#r6">[6]</a></td><td>HLE, DeepSeek-R1 기반</td><td class="n">17.7 → 도구 21.1 → 병렬·합성 32.1</td><td>영상이 인용한 32.1%의 원 논문. 같은 계산량 단일 대조군 없음</td></tr>
+</tbody></table></div>
+<div class="note">일반 연구의 과제는 대부분 수학·상식·객관식입니다. 답이 하나로 정해지고 다수결이 가능한 과제에서도 토론의 이득이 약하다면, 정답이 복수일 수 있는 법률 해석에서는 더 신중해야 합니다.</div>
+</section>
+
+<!-- 05 -->
+<section class="chapter" id="s5">
+<p class="num">05</p>
+<h2>법률 특화 연구 21편 — 무엇을 비교했는지까지 읽기</h2>
+
+<h3>5.1 멀티에이전트 법률 추론 프레임워크</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>연구</th><th>과제·데이터</th><th>구성</th><th>결과(기준 대비)</th><th>주의점</th></tr></thead>
+<tbody>
+<tr><td class="k">MALR<br>EMNLP 2024 Findings<a class="cite" href="#r19">[19]</a></td><td>중국 형법 혼동 죄명 8쌍 구분 (Chain of Logic<a class="cite" href="#r20">[20]</a> 대조)</td><td>계획·하위과제·자기성찰·통찰 추출 에이전트</td><td class="n">GPT-4 CAIL2018<br>CoT 35.8 → 56.8<br>(Chain of Logic 36.0)</td><td>중국 형법 한정. 비법률가 사람 62.5%와 비슷한 수준</td></tr>
+<tr><td class="k">L-MARS<br>2025 프리프린트(v4 2026-07)<a class="cite" href="#r21">[21]</a></td><td>미국 변호사시험 부분집합 n=100</td><td>질의·검색·판정·요약 에이전트, 답변·검증·교차확인에 서로 다른 회사 모델</td><td class="n">정확도 74 → 76<br>인용 F1 0.00 → 0.25<br>인용 없음 98.9% → 13.2%</td><td>v1 초록의 96% 수치는 개정판에서 크게 바뀜. 이득은 정확도가 아니라 <em>근거 충실도</em></td></tr>
+<tr><td class="k">PAKTON<br>2025<a class="cite" href="#r22">[22]</a></td><td>장문 계약서 QA (ContractNLI 등)</td><td>보관·질의·조사 에이전트 + 다단 RAG</td><td class="n">ContractNLI 79.04 → 82.87<br>LegalBench-RAG Recall@1 4.94 → 26.77</td><td>영문 계약, 지연 증가. 편차 약 3분의 2 감소</td></tr>
+<tr><td class="k">MASLegalBench<br>2025<a class="cite" href="#r23">[23]</a></td><td>GDPR 제재 사건 950문항</td><td>사실·규칙·적용·상식 에이전트 + 조정자</td><td class="n">GPT-4o-mini 단일 70.2~79.8 → 81.6</td><td>조정자 모델에 따라 24~39%로 무작위(42%) 이하</td></tr>
+<tr><td class="k">AgentsCourt<br>EMNLP 2024 Findings<a class="cite" href="#r24">[24]</a></td><td>중국 판결 420건</td><td>원고·피고·판사 역할극 + 판사보조 검색</td><td class="n">조문 F1 GPT-4 13.6 → 20.3</td><td>토론 제거 0.203 → 0.171, 지식베이스 제거 → 0.145. <em>검색 기여가 더 큼</em></td></tr>
+<tr><td class="k">Debate-Feedback<br>NAACL 2025<a class="cite" href="#r26">[26]</a></td><td>판결 예측</td><td>판사 + 대립 토론자 2, 모두 GPT-4o</td><td class="n">CAIL18 정확도 0.31 → 0.45</td><td>구성요소 분석 부족(저자 인정)</td></tr>
+<tr><td class="k">VERDICT<br>2026 프리프린트<a class="cite" href="#r27">[27]</a></td><td>중국 판결 예측</td><td>5역할 합의부, 미세조정 7B + DeepSeek-V3 + 기억</td><td class="n">CJO2025 조문 86.52 → 90.56</td><td>기억 제거 시 86.55. 미세조정·기억 효과와 분리 어려움</td></tr>
+<tr><td class="k">L4L<br>2025~2026 프리프린트<a class="cite" href="#r28">[28]</a></td><td>중국 형사 조문·양형</td><td>검사·변호 에이전트 + 자동 형식화 + Z3 솔버 + 판사</td><td class="n">조문 F1 75.53 → 78.99<br>양형 RMSE 14.54 → 12.72개월</td><td>솔버 제거가 최대 하락. 건당 약 107초</td></tr>
+<tr><td class="k">SOLAR<br>CIKM 2025<a class="cite" href="#r29">[29]</a></td><td>미국 세법 SARA 96건</td><td>추출·규칙·온톨로지·검증·코드·판정 등 9역할</td><td class="n">비추론 모델 평균 18.8 → 76.4</td><td><strong>추론 모델은 하락</strong>: o4-mini 91.7 → 87.5, Gemini 2.5 Flash 96.9 → 77.1</td></tr>
+<tr><td class="k">AgentCourt · LawLuo<a class="cite" href="#r25">[25]</a><a class="cite" href="#r42">[42]</a></td><td>모의 법정, 법률 상담</td><td>적대적 진화 변호사, 상담 역할 분담</td><td>자기 초기판 대비 +12.1% / “기준선 능가”(수치 미확인)</td><td>단일 모델 대조 불충분</td></tr>
+<tr><td class="k">LegalGraphRAG<br>ACL 2026<a class="cite" href="#r41">[41]</a></td><td>법률 추론</td><td>계층형 법률 그래프 + Researcher–Auditor–Adjudicator</td><td>기존 설계서 v1.4에서 서지·구조 확인</td><td>Legal/Tax Agent v1.4의 근거 감사 구조에 이미 반영</td></tr>
+</tbody></table></div>
+
+<h3>5.2 서로 다른 모델 조합 — 가장 강한 증거와 그 반례가 한 논문에</h3>
+<figure class="bars" aria-label="COLIEE 2026 조문 포섭 앙상블 비교">
+<div class="bar-group">COLIEE 2026 Task 4 — 일본 민법 조문 포섭, 검증셋 정확도<a class="cite" href="#r30">[30]</a></div>
+<div class="bar-row"><span>단일 최고 모델</span><div class="bar-track"><div class="bar-fill f-base" style="width:84.9%"></div></div><span class="bar-val">84.9</span></div>
+<div class="bar-row"><span>같은 계열 앙상블</span><div class="bar-track"><div class="bar-fill f-same" style="width:87.2%"></div></div><span class="bar-val">87.2</span></div>
+<div class="bar-row"><span>다른 계열 다수결</span><div class="bar-track"><div class="bar-fill f-het" style="width:91.9%"></div></div><span class="bar-val">91.9</span></div>
+<div class="bar-row"><span>다른 계열 계층형 앙상블</span><div class="bar-track"><div class="bar-fill f-hi" style="width:93.0%"></div></div><span class="bar-val">93.0</span></div>
+<div class="bar-group">같은 논문 Task 3 — 조문을 검색한 뒤 포섭(검색 결과가 섞임)</div>
+<div class="bar-row"><span>Qwen3-235B 단독</span><div class="bar-track"><div class="bar-fill f-hi" style="width:91.5%"></div></div><span class="bar-val">91.5</span></div>
+<div class="bar-row"><span>9개 모델 앙상블</span><div class="bar-track"><div class="bar-fill f-bad" style="width:86.6%"></div></div><span class="bar-val">86.6</span></div>
+<figcaption>그림 2. 다른 계열 모델은 같은 계열보다 불일치가 잦고(17.5% vs 11.4%), 그 덕분에 오류가 상쇄됩니다. 그러나 관련 없는 조문이 검색 결과에 섞이면 약한 모델이 먼저 흔들려 앙상블이 단일 강한 모델에 집니다. 테스트셋 96.3%로 33개 제출 중 1위.</figcaption>
+</figure>
+
+<h3>5.3 법률 토론의 부정·혼합 결과</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>연구</th><th>설정</th><th>결과</th></tr></thead>
+<tbody>
+<tr><td class="k">L-MAD, 2026<a class="cite" href="#r31">[31]</a></td><td>일본 민법 조문 포섭 264문항, 같은 모델 3개 토론 vs 자기일관성 다수결</td><td class="n">Qwen3-8B 83.0 → 89.4 (개선)<br>Qwen3-32B 대등<br>Llama3.1-8B 73.1 → 64~68 (악화)<br>라운드가 늘수록 정확도 하락, 약한 모델은 “집단 할루시네이션”</td></tr>
+<tr><td class="k">Steging et al., ICAIL 2026 워크숍<a class="cite" href="#r32">[32]</a></td><td>LEXAM·COLIEE·SARA 등 5개, GPT-5-mini로 토론·3자 논증 vs 단일 호출</td><td>평균 F1 차이 1.5점 이내. 기준선 오답의 42.6~51.9%를 고쳤지만, 맞던 답을 그만큼 틀림 → <strong>답은 달라지나 전체 이득 없음</strong></td></tr>
+</tbody></table></div>
+
+<h3>5.4 조문 구조·시점·안정성에 대한 단일 모델 연구</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>연구</th><th>발견</th><th>사용자 질문과의 관계</th></tr></thead>
+<tbody>
+<tr><td class="k">Blair-Stanek et al., ICAIL 2023<a class="cite" href="#r33">[33]</a></td><td>가상 법률의 폭·깊이가 커지면 정확도 하락, 오류는 대부분 거짓 양성(2,204 vs 61). 형제 하위조항 혼동</td><td>① 조항 연결의 핵심 약점</td></tr>
+<tr><td class="k">BLT, NLLP 2024<a class="cite" href="#r34">[34]</a></td><td>GPT-4 92.5%. 미세조정으로 98~100%. 개정 전 문언을 기억에서 답하는 현상</td><td>① 기본 조문 처리, ③ 시점</td></tr>
+<tr><td class="k">불안정한 답변, 2025<a class="cite" href="#r35">[35]</a></td><td>의견이 갈린 항소심 500건, 온도 0·20회. 불일치 Claude-3.5 10.6%, GPT-4o 43.0%, Gemini-1.5 50.4%</td><td>④ 해석 차이 — 단일 답변 신뢰 불가</td></tr>
+<tr><td class="k">SAT-Graph RAG, JURIX 2025<a class="cite" href="#r36">[36]</a></td><td>조문 버전·개정 사건을 그래프로 관리하는 설계(정량 평가 없음)</td><td>③ 시점의 데이터 해법</td></tr>
+<tr><td class="k">G-DSR, EACL 2023<a class="cite" href="#r37">[37]</a></td><td>법령 구조를 그래프로 써서 조문 검색 개선(수치 미확인)</td><td>①·② 연결 검색</td></tr>
+<tr><td class="k">LegalAgentBench, ACL 2025<a class="cite" href="#r40">[40]</a></td><td>중국 법률 과제 300개·도구 37개. 1단계 약 93% → 5단계 약 61%. 방법만 바꿔도 같은 모델 성능이 최대 65% 차이</td><td>② 법률 간 다단계 연결</td></tr>
+<tr><td class="k">KBL, EMNLP 2024 Findings<a class="cite" href="#r38">[38]</a></td><td>한국 변호사시험 기반. GPT-4 합격선 미달. RAG 최대 +8.6%p, 공법은 −2.5~−5.8%p</td><td>한국법에서 검색만으로 해결되지 않음</td></tr>
+<tr><td class="k">KCL, EACL 2026<a class="cite" href="#r39">[39]</a></td><td>객관식 283·서술형 169문항·채점기준 2,739개. 30여 개 모델 모두 서술형에서 큰 격차</td><td>한국법 서술형 해석은 미해결</td></tr>
+</tbody></table></div>
+</section>
+
+<!-- 06 -->
+<section class="chapter" id="s6">
+<p class="num">06</p>
+<h2>실증 사례 — 상용 제품, 법원, 한국</h2>
+
+<h3>6.1 법률 AI 제품의 독립 평가</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>평가</th><th>대상</th><th>결과</th><th>의미</th></tr></thead>
+<tbody>
+<tr><td class="k">Stanford RegLab/HAI<br>JELS 2025<a class="cite" href="#r43">[43]</a></td><td>질의 202개 (2024년 3~5월)</td><td class="n">할루시네이션<br>Lexis+ AI 17%<br>Westlaw AI 33%<br>Ask Practical Law AI 17%<br>GPT-4 43%</td><td>자체 판례 DB에 근거한 RAG 제품도 0이 아님</td></tr>
+<tr><td class="k">Vals VLAIR<br>2025-02<a class="cite" href="#r45">[45]</a></td><td>Harvey·CoCounsel·Vincent·Oliver, 7개 과제</td><td>문서 Q&amp;A Harvey 94.8 vs 변호사 70.1. 수정 제안은 변호사 우세(79.7 vs 65.0). <strong>다단계 에이전트 조사(EDGAR)는 AI 55.2 vs 변호사 70.1</strong></td><td>단일 문서 과제는 AI 우세, 다단계 연결 조사는 열세</td></tr>
+<tr><td class="k">Vals VLAIR 법률조사<br>2025-10<a class="cite" href="#r46">[46]</a></td><td>미국 법률조사 200문항</td><td>가중 점수 AI 74~78% vs 변호사 69%. <strong>다관할 문항은 평균 14점 낮음</strong>. 변호사는 맥락 이해·복합 관할·판단형 종합에서 우세</td><td>② 법률 간 연결과 ④ 판단형 종합이 남은 약점</td></tr>
+</tbody></table></div>
+<div class="note">Vals 10월 보고서의 변호사 기준값은 Vals 본문(가중 69%)과 LawSites 보도(정확도 71%, 210문항)가 다르게 적혀 있습니다. 본 문서는 Vals 원문 수치를 씁니다.</div>
+
+<h3>6.2 상용 제품의 멀티모델·에이전트 구조 — 공개된 정확도 수치는 없다</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>제품</th><th>공개된 구조</th><th>공개된 평가</th></tr></thead>
+<tbody>
+<tr><td class="k">Harvey<a class="cite" href="#r47">[47]</a></td><td>2026-03 “설계부터 멀티모델” 공식화. Anthropic·Google·OpenAI 모델을 과제별 강점으로 배정</td><td>자체 BigLaw Bench·전문가 선호 평가 언급, 수치 미공개</td></tr>
+<tr><td class="k">Thomson Reuters CoCounsel Legal<a class="cite" href="#r48">[48]</a><a class="cite" href="#r49">[49]</a></td><td>2025-08 에이전트형 Deep Research. 2026-08 차세대판은 Claude Agent SDK 기반, 인용이 주장을 뒷받침하는지 확인하는 Deep Research Verify 추가</td><td>“변호사가 통제” 명시, 정확도 수치 미공개</td></tr>
+<tr><td class="k">LexisNexis Protégé<a class="cite" href="#r50">[50]</a><a class="cite" href="#r51">[51]</a></td><td>2025-08 Orchestrator·Legal Research·Reflection(답변 검토) 3에이전트, 여러 회사 모델 + 미세조정 모델. 2026-08 “Legal Intelligence Engine”이 모델·에이전트·출처를 선택하고 작성 중 Shepard’s Verify 실행</td><td>수치 미공개</td></tr>
+</tbody></table></div>
+<p>세 회사 모두 <strong>여러 모델 + 검증 에이전트 + 인용 대조 도구</strong>로 수렴했습니다. 다만 이것은 시장의 선택이지 효과의 독립 증명이 아닙니다. 제품 수준에서 멀티에이전트 구성의 효과를 단일 구성과 비교해 공개한 사례는 찾지 못했습니다.</p>
+
+<h3>6.3 법원 — 검증 책임은 서명한 사람에게</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>사건·자료</th><th>내용</th></tr></thead>
+<tbody>
+<tr><td class="k">Mata v. Avianca<br>미국 S.D.N.Y. 2023-06-22<a class="cite" href="#r52">[52]</a></td><td>실재하지 않는 판례 6건 인용. 변호사 2명과 법무법인에 연대 5,000달러 제재</td></tr>
+<tr><td class="k">Ayinde v Haringey 외<br>영국 고등법원 2025-06-06<a class="cite" href="#r54">[54]</a></td><td>Al-Haroun 사건 인용 45건 중 18건이 실재하지 않음. 법정모욕 요건 충족을 인정했으나 절차는 개시하지 않고 규제기관 회부·일반 경고</td></tr>
+<tr><td class="k">AI 할루시네이션 판례 DB<a class="cite" href="#r53">[53]</a></td><td>허위 인용 관련 사건 2,041건 (2026-09-14 갱신 기준)</td></tr>
+<tr><td class="k">한국 법원 사례 (보도)<a class="cite" href="#r55">[55]</a><a class="cite" href="#r56">[56]</a></td><td>울산지법 사건 준비서면의 실재하지 않는 대법원 사건번호 인용(2026-05 보도). 서울동부지법·수원지법·특허법원의 허위 판례 인용 지적, 법관 연수에서 인용 40건 중 39건 허위 사례 소개(2026-09 보도)</td></tr>
+<tr><td class="k">한국 사법부 대응<a class="cite" href="#r57">[57]</a><a class="cite" href="#r58">[58]</a></td><td>법원 AI 연구회 「재판 업무 AI 활용 가이드라인」(2025-03 보도): 도구·프롬프트·검증 과정 공개 명령 가능, 당사자 전적 책임. 법원행정처는 AI 사용·검증 고지 의무를 담는 민사소송규칙 개정과 허위 인용 과태료를 검토 중(2026-04 보도)</td></tr>
+</tbody></table></div>
+
+<h3>6.4 한국 시장</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>대상</th><th>내용</th><th>근거 성격</th></tr></thead>
+<tbody>
+<tr><td class="k">엘박스(LBox)<a class="cite" href="#r59">[59]</a></td><td>제15회 변호사시험 객관식 150문항 중 141문항(94%), 사례형 528/750점 발표</td><td><span class="tag t-mid">자사 발표·자체 채점</span></td></tr>
+<tr><td class="k">슈퍼로이어(로앤컴퍼니)<a class="cite" href="#r60">[60]</a></td><td>출시 100일 4,300명 → 6개월 약 6,000명(개업 변호사 약 20%) → 2026-03 법률전문가 약 25,000명</td><td><span class="tag t-mid">자사 발표</span></td></tr>
+<tr><td class="k">법제처<a class="cite" href="#r61">[61]</a><a class="cite" href="#r62">[62]</a><a class="cite" href="#r63">[63]</a></td><td>법령·판례·해석례 Open API. 2024-12 지능형 법령검색(법령 5,218개 기반 지식베이스). 생성형 AI 법령검색은 2027-07 예정(검색 보조이며 유권해석 서비스 아님)</td><td><span class="tag t-good">공공기관 발표·보도</span></td></tr>
+<tr><td class="k">독립 평가</td><td>LLM이 한국 변호사시험을 통과했다는 제3자 검증은 찾지 못했습니다. KBL·KCL은 여전히 큰 격차를 보고합니다<a class="cite" href="#r38">[38]</a><a class="cite" href="#r39">[39]</a>. 한국 변호사시험 기반 Agentic RAG 논문<a class="cite" href="#r67">[67]</a>은 서지만 확인했고 성능 수치는 확인하지 못했습니다.</td><td><span class="tag t-none">부재</span></td></tr>
+</tbody></table></div>
+</section>
+
+<!-- 07 -->
+<section class="chapter" id="s7">
+<p class="num">07</p>
+<h2>효과는 어디서 나오는가 — 제거 실험으로 분해하기</h2>
+<p>멀티에이전트 논문의 개선 수치에는 검색·기억·솔버·미세조정이 함께 들어 있습니다. 구성 요소를 하나씩 뺀 제거 실험(ablation)이 있는 연구만 모으면 기여 순서가 드러납니다.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>연구</th><th>전체</th><th>토론·역할극 제거</th><th>검색·지식 제거</th><th>솔버·기억 제거</th></tr></thead>
+<tbody>
+<tr><td class="k">AgentsCourt 조문 F1<a class="cite" href="#r24">[24]</a></td><td class="n">0.203</td><td class="n">0.171 (−0.032)</td><td class="n">0.145 (−0.058)</td><td>—</td></tr>
+<tr><td class="k">L4L 일반 조문 F1<a class="cite" href="#r28">[28]</a></td><td class="n">39.08</td><td>—</td><td>—</td><td class="n">솔버 제거 25.29 (−13.8)</td></tr>
+<tr><td class="k">VERDICT CJO2025 조문<a class="cite" href="#r27">[27]</a></td><td class="n">90.56</td><td>하락(수치 미확보)</td><td>—</td><td class="n">기억 제거 86.55 (−4.0)</td></tr>
+<tr><td class="k">X-Masters HLE<a class="cite" href="#r6">[6]</a></td><td class="n">32.1</td><td>—</td><td class="n">도구 추가 효과 +3.4</td><td class="n">병렬·합성 +11.0</td></tr>
+</tbody></table></div>
+<h3>근거가 가리키는 기여 순서</h3>
+<ol class="body">
+<li><strong>원문 확보(검색·그래프·시점 DB)</strong> — 거의 모든 법률 연구에서 가장 큰 기여. 단, 한국 공법처럼 검색이 오히려 해가 되는 영역도 있어 영역별 측정이 필요합니다<a class="cite" href="#r38">[38]</a>.</li>
+<li><strong>결정적 검증(솔버·인용 대조·코드 실행)</strong> — 규칙형 조문에서 큰 기여<a class="cite" href="#r28">[28]</a><a class="cite" href="#r29">[29]</a>.</li>
+<li><strong>이질 동급 모델의 독립 답변 + 집계</strong> — 포섭 판단에서 확실한 기여<a class="cite" href="#r30">[30]</a>.</li>
+<li><strong>역할 분리(검색자·감사자·판정자)</strong> — 근거 충실도 개선, 정확도 개선은 작음<a class="cite" href="#r21">[21]</a><a class="cite" href="#r22">[22]</a>.</li>
+<li><strong>에이전트 간 토론</strong> — 가장 작고 불안정한 기여. 모델·라운드 수에 따라 부호가 바뀜<a class="cite" href="#r31">[31]</a><a class="cite" href="#r32">[32]</a>.</li>
+</ol>
+<div class="warn"><strong>모델 세대 효과:</strong> 비추론 모델에서 크던 다단 파이프라인의 이득이 강한 추론 모델에서는 사라지거나 역전됩니다(SOLAR)<a class="cite" href="#r29">[29]</a>. 2023~2024년 모델로 측정한 멀티에이전트 이득을 현재 모델에 그대로 가정하면 안 됩니다.</div>
+</section>
+
+<!-- 08 -->
+<section class="chapter" id="s8">
+<p class="num">08</p>
+<h2>과제별 판정 — 사용자 질문에 대한 항목별 답</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>과제</th><th>멀티에이전트·멀티 LLM 효과</th><th>근거 수준</th><th>실제로 효과를 낼 요소</th></tr></thead>
+<tbody>
+<tr><td class="k">① 같은 법률 안의 조항 연결</td><td>직접 측정 연구 없음. 단일 모델의 하위조항 혼동과 깊이 증가 시 하락은 확인됨. 형식화·다단 파이프라인이 규칙형 세법 조문에서 개선(비추론 모델)</td><td><span class="tag t-none">직접 근거 없음</span></td><td>조문 구조 그래프(항·호·목, 단서, 준용, 정의, 적용 제외)를 결정적으로 펼쳐 주는 도구. 에이전트 수는 부차적</td></tr>
+<tr><td class="k">② 다른 법률과의 연결</td><td>다단계·다관할에서 AI 성능이 떨어진다는 증거는 강함. 검색 역할 분리·그래프 RAG가 유망하나 한국법 측정 없음</td><td><span class="tag t-mid">간접</span></td><td>위임·특별법·타법 준용 관계 그래프 + 독립 검색 계획을 가진 두 번째 에이전트(누락 탐지)</td></tr>
+<tr><td class="k">③ 시점(개정·부칙)</td><td>에이전트로 해결된다는 근거 없음. 모델이 기억 속 옛 조문을 답하는 문제는 데이터 문제</td><td><span class="tag t-none">해당 없음</span></td><td>시점 DB와 부칙 적용 규칙의 결정적 판정</td></tr>
+<tr><td class="k">④ 해석 차이·학설 대립</td><td>여러 모델은 <em>대립의 존재</em>를 드러내는 데 유용(단일 모델도 호출마다 답이 바뀜). 토론으로 옳은 해석에 수렴한다는 근거는 없고, 동조로 소수 해석이 사라질 위험이 확인됨</td><td><span class="tag t-mid">탐지에 유효 · 결정에 부적합</span></td><td>블라인드 독립 해석 → 불일치 분류 → 양론 병기 → 변호사 판단</td></tr>
+<tr><td class="k">⑤ 요건 포섭</td><td>이질 동급 모델 앙상블 효과가 가장 확실. 같은 모델 토론은 혼합</td><td><span class="tag t-good">강함</span></td><td>서로 다른 계열 동급 모델 3개 이상 다수결, 검색 결과 정제 후 투입</td></tr>
+<tr><td class="k">⑥ 인용 정확성</td><td>검색·검증 에이전트 분리로 근거 누락 대폭 감소. 상용 RAG도 17~33% 오류가 남음</td><td><span class="tag t-good">강함 (0은 아님)</span></td><td>인용 실존·조문 번호·원문 일치의 결정적 대조, 발행 전 차단</td></tr>
+</tbody></table></div>
+</section>
+
+<!-- 09 -->
+<section class="chapter" id="s9">
+<p class="num">09</p>
+<h2>권장 구조 — 근거가 지지하는 범위에서만 에이전트를 쓴다</h2>
+<figure>
+<div class="svgwrap">
+<svg viewBox="0 0 960 760" overflow="visible" role="img" aria-labelledby="archT archD" xmlns="http://www.w3.org/2000/svg" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif">
+<title id="archT">법률 해석 멀티에이전트 권장 구조</title>
+<desc id="archD">질의에서 시작해 결정적 준비, 독립 해석, 근거 감사, 불일치 분류, 변호사 검토로 이어지는 다섯 단계 흐름</desc>
+<defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#566a75"/></marker></defs>
+<!-- query -->
+<rect x="300" y="12" width="360" height="54" rx="8" fill="#f2f5f5" stroke="#9fb0b8"/>
+<text x="480" y="36" text-anchor="middle" font-size="15" font-weight="700" fill="#182b3a">질의 · 사실관계 · 사실 발생 기준일</text>
+<text x="480" y="56" text-anchor="middle" font-size="12" fill="#586773">기준일이 없으면 진행하지 않고 되묻는다</text>
+<line x1="480" y1="66" x2="480" y2="92" stroke="#566a75" stroke-width="1.6" marker-end="url(#ah)"/>
+<!-- stage 1 -->
+<rect x="30" y="96" width="900" height="130" rx="10" fill="#e2f1ee" stroke="#14665d"/>
+<text x="50" y="122" font-size="15" font-weight="700" fill="#14665d">① 준비 — 결정적 도구 (LLM 판단 없음)</text>
+<g font-size="13" fill="#182b3a">
+<rect x="50" y="136" width="275" height="74" rx="6" fill="#fff" stroke="#8cc2b8"/>
+<text x="187" y="162" text-anchor="middle" font-weight="700">시점 확정</text>
+<text x="187" y="184" text-anchor="middle" fill="#42535d">기준일 유효 조문 · 부칙 적용례</text>
+<text x="187" y="201" text-anchor="middle" fill="#42535d">경과조치 · 판례 변경 여부</text>
+<rect x="342" y="136" width="275" height="74" rx="6" fill="#fff" stroke="#8cc2b8"/>
+<text x="479" y="162" text-anchor="middle" font-weight="700">조문 그래프 펼치기</text>
+<text x="479" y="184" text-anchor="middle" fill="#42535d">같은 법: 항·호·목 · 단서 · 준용 · 정의</text>
+<text x="479" y="201" text-anchor="middle" fill="#42535d">다른 법: 위임 · 특별법 · 타법 준용</text>
+<rect x="634" y="136" width="275" height="74" rx="6" fill="#fff" stroke="#8cc2b8"/>
+<text x="771" y="162" text-anchor="middle" font-weight="700">권위 자료 수집</text>
+<text x="771" y="184" text-anchor="middle" fill="#42535d">판례 · 법령해석례 · 예규</text>
+<text x="771" y="201" text-anchor="middle" fill="#42535d">권위 등급 부여 · 근거 묶음 고정</text>
+</g>
+<line x1="480" y1="226" x2="480" y2="252" stroke="#566a75" stroke-width="1.6" marker-end="url(#ah)"/>
+<!-- stage 2 -->
+<rect x="30" y="256" width="900" height="140" rx="10" fill="#e6eef7" stroke="#2d5f93"/>
+<text x="50" y="282" font-size="15" font-weight="700" fill="#2d5f93">② 독립 해석 — 서로의 답을 보지 않음 (동급 · 서로 다른 회사 모델)</text>
+<g font-size="13" fill="#182b3a">
+<rect x="50" y="296" width="275" height="84" rx="6" fill="#fff" stroke="#9db8d6"/>
+<text x="187" y="322" text-anchor="middle" font-weight="700">해석자 A · 모델사 1</text>
+<text x="187" y="344" text-anchor="middle" fill="#42535d">요건별 분해 → 포섭 → 결론</text>
+<text x="187" y="362" text-anchor="middle" fill="#42535d">주장마다 근거 조각 연결</text>
+<rect x="342" y="296" width="275" height="84" rx="6" fill="#fff" stroke="#9db8d6"/>
+<text x="479" y="322" text-anchor="middle" font-weight="700">해석자 B · 모델사 2</text>
+<text x="479" y="344" text-anchor="middle" fill="#42535d">같은 근거 묶음, 같은 출력 형식</text>
+<text x="479" y="362" text-anchor="middle" fill="#42535d">조문 누락 시 추가 검색 요청</text>
+<rect x="634" y="296" width="275" height="84" rx="6" fill="#fff" stroke="#9db8d6"/>
+<text x="771" y="322" text-anchor="middle" font-weight="700">반대측 · 모델사 3</text>
+<text x="771" y="344" text-anchor="middle" fill="#42535d">쟁점만 받고 독립 검색 계획</text>
+<text x="771" y="362" text-anchor="middle" fill="#42535d">상대방 · 과세관청 관점 결론</text>
+</g>
+<line x1="480" y1="396" x2="480" y2="422" stroke="#566a75" stroke-width="1.6" marker-end="url(#ah)"/>
+<!-- stage 3 -->
+<rect x="30" y="426" width="900" height="92" rx="10" fill="#e2f1ee" stroke="#14665d"/>
+<text x="50" y="452" font-size="15" font-weight="700" fill="#14665d">③ 근거 감사 — 원문 대조</text>
+<text x="50" y="478" font-size="13" fill="#182b3a">결정적: 원문 존재 · 사건번호·조문번호 · 기준일 유효 버전 · 권위 등급</text>
+<text x="50" y="502" font-size="13" fill="#2d5f93">LLM(초안과 다른 모델): 주장이 인용 원문에 함의되는가 — 과장·일반화·부정 누락</text>
+<line x1="480" y1="518" x2="480" y2="544" stroke="#566a75" stroke-width="1.6" marker-end="url(#ah)"/>
+<!-- stage 4 -->
+<rect x="30" y="548" width="900" height="112" rx="10" fill="#fff" stroke="#566a75" stroke-dasharray="5 4"/>
+<text x="50" y="574" font-size="15" font-weight="700" fill="#182b3a">④ 불일치 분류 — 합의로 없애지 않는다</text>
+<g font-size="13">
+<rect x="50" y="586" width="275" height="60" rx="6" fill="#f8e5e2" stroke="#d49a92"/>
+<text x="187" y="610" text-anchor="middle" font-weight="700" fill="#a8392f">근거·시점 오류</text>
+<text x="187" y="630" text-anchor="middle" fill="#42535d">해당 해석자에 1회 반려</text>
+<rect x="342" y="586" width="275" height="60" rx="6" fill="#fbf1dd" stroke="#dcb56d"/>
+<text x="479" y="610" text-anchor="middle" font-weight="700" fill="#9a6512">진짜 해석 대립</text>
+<text x="479" y="630" text-anchor="middle" fill="#42535d">양론 병기 · 각 근거 · 권위 비교</text>
+<rect x="634" y="586" width="275" height="60" rx="6" fill="#e5f3ea" stroke="#8cc5a3"/>
+<text x="771" y="610" text-anchor="middle" font-weight="700" fill="#1c7a4a">결론 일치</text>
+<text x="771" y="630" text-anchor="middle" fill="#42535d">감사 통과해도 위험등급별 표본 검토</text>
+</g>
+<path d="M50,616 H14 V338 H48" fill="none" stroke="#a8392f" stroke-width="1.4" stroke-dasharray="4 3" marker-end="url(#ah)"/>
+<line x1="480" y1="660" x2="480" y2="686" stroke="#566a75" stroke-width="1.6" marker-end="url(#ah)"/>
+<!-- stage 5 -->
+<rect x="300" y="690" width="360" height="58" rx="8" fill="#fbf0dc" stroke="#8a5a12"/>
+<text x="480" y="715" text-anchor="middle" font-size="15" font-weight="700" fill="#8a5a12">⑤ 변호사 검토 · 서명</text>
+<text x="480" y="736" text-anchor="middle" font-size="12" fill="#586773">승인은 의견 내용 해시에 성립</text>
+</svg>
+</div>
+<figcaption>그림 3. 초록은 결정적 도구, 파랑은 LLM, 주황은 사람의 책임 구간입니다. 빨간 점선은 근거·시점 오류가 있을 때 해당 해석자에게 한 번만 반려하는 경로입니다. 토론 라운드는 두지 않습니다.</figcaption>
+</figure>
+
+<h3>설계 원칙과 각각의 근거</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>원칙</th><th>근거</th></tr></thead>
+<tbody>
+<tr><td class="k">조항·법률 연결은 그래프가 펼치고 LLM은 읽기만</td><td>하위조항 혼동<a class="cite" href="#r33">[33]</a>, 조문-번호 연결 23~49%<a class="cite" href="#r38">[38]</a>, 다단계 하락<a class="cite" href="#r40">[40]</a></td></tr>
+<tr><td class="k">해석자는 서로 다른 회사의 <em>동급</em> 모델</td><td>이질 앙상블 이득<a class="cite" href="#r30">[30]</a>, 약한 모델 혼합 시 손해<a class="cite" href="#r12">[12]</a><a class="cite" href="#r13">[13]</a></td></tr>
+<tr><td class="k">해석자끼리 답을 보여 주지 않음</td><td>동조에 의한 조기 합의 붕괴<a class="cite" href="#r14">[14]</a>, 토론 이득은 다수결이 설명<a class="cite" href="#r10">[10]</a></td></tr>
+<tr><td class="k">반려는 1회, 토론 라운드 없음</td><td>라운드 증가 시 정확도 하락<a class="cite" href="#r31">[31]</a></td></tr>
+<tr><td class="k">감사자는 원문을 쥐고, 초안과 다른 모델</td><td>외부 근거 없는 자기 교정 악화<a class="cite" href="#r9">[9]</a>, 자기 선호<a class="cite" href="#r17">[17]</a></td></tr>
+<tr><td class="k">일치를 검토 면제 사유로 쓰지 않음</td><td>상관된 오류 약 60%<a class="cite" href="#r16">[16]</a>, 상용 RAG 17~33%<a class="cite" href="#r43">[43]</a></td></tr>
+<tr><td class="k">해석 대립은 출력 형식으로 보존</td><td>같은 질문에도 답이 10.6~50.4% 바뀜<a class="cite" href="#r35">[35]</a>. 변호사는 판단형 종합에서 우세<a class="cite" href="#r46">[46]</a></td></tr>
+<tr><td class="k">규칙형 조문(세액·기간·요건 조합)은 솔버·코드</td><td>솔버 기여 최대<a class="cite" href="#r28">[28]</a>, 세법 형식화<a class="cite" href="#r29">[29]</a></td></tr>
+<tr><td class="k">강한 추론 모델에는 파이프라인을 얇게</td><td>추론 모델에서 다단 파이프라인 역효과<a class="cite" href="#r29">[29]</a>, 같은 예산 단일 우세<a class="cite" href="#r18">[18]</a></td></tr>
+<tr><td class="k">검색 결과를 정제한 뒤 앙상블에 투입</td><td>관련 없는 조문이 섞이면 앙상블이 단일에 짐<a class="cite" href="#r30">[30]</a></td></tr>
+</tbody></table></div>
+
+<h3>피해야 할 구성</h3>
+<ul>
+<li>같은 모델을 여러 개 띄워 온도만 바꾸고 “군집”이라 부르는 구성</li>
+<li>합의가 날 때까지 반복하는 토론 루프 — 비용은 늘고 소수 해석은 사라짐</li>
+<li>초안 모델이 스스로 “검토했음”을 표시하는 자기 검증</li>
+<li>에이전트 합의율을 확신도로 바로 보여 주는 화면(보정되지 않은 수치)</li>
+<li>작은 로컬 모델을 비용 절감용 해석자로 섞는 구성</li>
+</ul>
+</section>
+
+<!-- 10 -->
+<section class="chapter" id="s10">
+<p class="num">10</p>
+<h2>MyBee Legal/Tax Agent 기획서 v1.4와의 대조</h2>
+<p>기획서 v1.4는 이미 이번 조사 결과와 같은 방향을 택하고 있습니다. 주 EA와 다른 기반 모델로 교차검증(설계지시문 제6.5.5조 인용), 블라인드 1단계 뒤 공격 2단계로 나눈 Opponent Agent(14장), 결정적 검사 중심의 Evidence Auditor와 Legal Trust Gate(13장), 기준일을 둔 Golden Set(19장)이 해당합니다. 아래는 근거에 비추어 보강할 점입니다.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>번호</th><th>v1.4 현재</th><th>근거</th><th>보강 제안</th></tr></thead>
+<tbody>
+<tr><td class="k">P-01</td><td>교차검증 EA는 “다른 기반 모델”</td><td>약한 모델 혼합 시 평균 하락<a class="cite" href="#r12">[12]</a><a class="cite" href="#r30">[30]</a></td><td>“다른 기반 모델”에 <strong>동급 요건</strong>을 추가: HOLDOUT에서 주 EA 대비 성능 차이가 기준 이내인 모델만 교차검증에 등록. Local LLM 교체(16장) 시에도 같은 기준</td></tr>
+<tr><td class="k">P-02</td><td>G-05 불일치 → 자격자 검토. 일치 시 규정 없음</td><td>상관된 오류<a class="cite" href="#r16">[16]</a></td><td>일치를 검토 완화 사유로 쓰지 않음을 명시. 일치 사안도 위험등급별 표본 검토 비율을 데이터로 등록</td></tr>
+<tr><td class="k">P-03</td><td><code>interpretation_agreement</code> 0.88을 확신도 벡터 항목으로 사용</td><td>합의 ≠ 정답<a class="cite" href="#r14">[14]</a><a class="cite" href="#r16">[16]</a></td><td>이 항목은 Golden Set에서 정답률과 따로 보정(ECE)한 뒤에만 게이트 기준에 사용. 보정 전에는 “불일치 신호”로만 사용</td></tr>
+<tr><td class="k">P-04</td><td>G-05 불일치는 한 종류</td><td>대립 탐지에 유효, 결정에 부적합(8장 ④)</td><td>불일치를 <strong>근거·시점 오류</strong>(반려 1회)와 <strong>해석 대립</strong>(양론 병기 필수)으로 나누는 분류 코드 추가. LegalOpinion 출력 스키마에 대립 해석 목록 필드</td></tr>
+<tr><td class="k">P-05</td><td>Opponent 2단계 공격 후 재작성 상한 존재</td><td>라운드 증가 시 하락<a class="cite" href="#r31">[31]</a></td><td>공격 → 재작성 반복을 1회로 고정하고, 재작성 후 재공격하지 않음을 명시</td></tr>
+<tr><td class="k">P-06</td><td>Semantic 검사는 NLI + LLM 판정</td><td>자기 선호<a class="cite" href="#r17">[17]</a></td><td>Semantic 판정 LLM은 해당 의견을 쓴 모델과 다른 모델로 강제</td></tr>
+<tr><td class="k">P-07</td><td>Legal Knowledge Graph(10장)</td><td>조항·법률 연결 직접 연구 없음(8장 ①②)</td><td>Golden Set에 <strong>조항 연결 전용 사례군</strong> 신설: 준용·단서·정의·위임·특별법 우선이 결론을 바꾸는 사례. 연결 누락률을 독립 지표로 측정</td></tr>
+<tr><td class="k">P-08</td><td>Benchmark는 구성별 비교 기준 미정</td><td>계산량 일치 비교 필요<a class="cite" href="#r18">[18]</a></td><td>배포 게이트에 “같은 토큰 예산의 단일 최강 모델 + 같은 RAG” 대조군을 두고, 멀티 구성의 이득이 대조군을 넘을 때만 채택</td></tr>
+<tr><td class="k">P-09</td><td>—</td><td>답변 불안정 10.6~50.4%<a class="cite" href="#r35">[35]</a></td><td>같은 질의 반복 호출 시 결론 변동률을 모델 등록 지표로 추가</td></tr>
+</tbody></table></div>
+<p class="note">위 제안은 기획서 v1.4 본문 중 13·14·19장과 교차검증 조항만 대조한 결과입니다. 반영 시 설계지시문 v4.6의 조항 번호·약어 체계와 다시 대조해야 합니다.</p>
+</section>
+
+<!-- 11 -->
+<section class="chapter" id="s11">
+<p class="num">11</p>
+<h2>한국법 검증 실험 설계 — 효과를 직접 측정하는 방법</h2>
+<p>한국법 대상 근거가 없으므로 도입 전에 자체 실험으로 확인해야 합니다. 법제처 법령해석례와 국세청 질의회신은 <strong>정답(유권해석)과 적용 조문이 공개된 사례</strong>여서 조항 연결 평가셋으로 쓰기 좋습니다. 다만 해석례의 결론을 정답으로 쓸 때도 기준일을 붙여 두어야 합니다.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>조건</th><th>구성</th><th>확인하려는 것</th></tr></thead>
+<tbody>
+<tr><td class="k">A 기준</td><td>단일 최강 추론 모델 + 같은 RAG·그래프, 호출 1회</td><td>출발점</td></tr>
+<tr><td class="k">B 같은 예산 단일</td><td>A 모델을 N회 샘플링 후 다수결 (토큰 예산 = D와 동일)</td><td>계산량만으로 얻는 이득</td></tr>
+<tr><td class="k">C 이질 독립</td><td>서로 다른 회사 동급 모델 3개 독립 답변 + 다수결</td><td>모델 다양성의 순수 이득</td></tr>
+<tr><td class="k">D 이질 + 감사</td><td>C + 원문 감사 + 1회 반려</td><td>검증 단계의 이득</td></tr>
+<tr><td class="k">E 이질 + 토론</td><td>C + 서로의 답을 보는 2라운드 토론</td><td>토론의 추가 이득 또는 손해</td></tr>
+<tr><td class="k">F 그래프 제거</td><td>D에서 조문 그래프 펼치기 제거</td><td>조항 연결에서 그래프의 기여</td></tr>
+</tbody></table></div>
+<h4>측정 지표</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>지표</th><th>정의</th></tr></thead>
+<tbody>
+<tr><td class="k">결론 정확도</td><td>유권해석·확정 판례 결론과 일치</td></tr>
+<tr><td class="k">적용 조문 F1</td><td>결론에 필요한 조문(준용·위임 대상 포함) 집합 대비</td></tr>
+<tr><td class="k">연결 누락률</td><td>결론을 바꾸는 단서·준용·특별법 조항을 빠뜨린 비율</td></tr>
+<tr><td class="k">시점 오류율</td><td>기준일에 유효하지 않은 조문 버전 사용</td></tr>
+<tr><td class="k">대립 탐지 재현율</td><td>판례·해석례가 갈리는 쟁점에서 양론을 모두 제시한 비율</td></tr>
+<tr><td class="k">결론 변동률</td><td>같은 입력 5회 반복 시 결론이 바뀐 비율</td></tr>
+<tr><td class="k">건당 비용·지연</td><td>토큰, 초 단위 지연</td></tr>
+</tbody></table></div>
+<p>판정 규칙: <strong>C·D가 B를 통계적으로 넘지 못하면 멀티 LLM 구성을 채택하지 않습니다.</strong> E가 D보다 낮거나 같으면 토론 단계를 두지 않습니다. 결과는 법 영역(민사·형사·공법·세법)별로 따로 봅니다. KBL에서 공법만 검색 효과가 역전된 사례가 있기 때문입니다<a class="cite" href="#r38">[38]</a>.</p>
+</section>
+
+<!-- 12 -->
+<section class="chapter" id="s12">
+<p class="num">12</p>
+<h2>법적 경계 — 구성이 좋아도 바뀌지 않는 것</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>규범</th><th>내용</th><th>설계 영향</th></tr></thead>
+<tbody>
+<tr><td class="k">변호사법 제109조<a class="cite" href="#r65">[65]</a></td><td>변호사가 아닌 자가 금품 등 이익을 받거나 약속하고 법률 상담·문서 작성 등을 취급하면 7년 이하 징역 또는 5천만 원 이하 벌금. 완전 무료 AI 서비스는 이익 요건이 없어 저촉되지 않는다는 견해가 보도됨</td><td>에이전트 수와 무관하게 유상 SaaS가 타사에 의견을 주면 위험. 발행 주체는 자격자(기획서 v1.4 2장)</td></tr>
+<tr><td class="k">인공지능기본법(2026-01-22 시행)<a class="cite" href="#r66">[66]</a></td><td>고영향 AI 영역에 법률 서비스·재판은 명시되지 않음. 권리·의무에 중대한 영향을 주는 판단 영역의 확대 해석이나 시행령으로 해당될 여지. 고영향·생성형 AI 사전 고지 의무</td><td>해당 여부 미결(기획서 v1.4 O-02). 사람 감독 구조는 해당 여부와 무관하게 유지</td></tr>
+<tr><td class="k">법원 AI 가이드라인·규칙 개정 추진<a class="cite" href="#r57">[57]</a><a class="cite" href="#r58">[58]</a></td><td>AI 사용·검증 과정 공개 명령 가능, 허위 인용 과태료 검토</td><td>의견마다 사용 모델·근거·감사 결과·검토자 이력을 보존해야 함</td></tr>
+<tr><td class="k">대한변협<a class="cite" href="#r64">[64]</a></td><td>2025-07 법률 AI TF 구성, 지침 논의 중. 공식 채택 지침은 확인하지 못함</td><td>지침 확정 시 재검토</td></tr>
+</tbody></table></div>
+<div class="note">이 장은 설계 영향 정리이며 법률의견이 아닙니다. 인공지능기본법 고영향 영역 해석은 법안 문언 해설 자료에 기댄 것이어서 국가법령정보센터 확정 조문으로 다시 확인해야 합니다.</div>
+</section>
+
+<!-- 13 -->
+<section class="chapter" id="s13">
+<p class="num">13</p>
+<h2>한계와 확인 범위</h2>
+<ul>
+<li><strong>확인 방법:</strong> 논문은 arXiv·ACL Anthology·학회 논문집 페이지에서, 사례는 1차 자료 또는 보도에서 확인했습니다. 일부 수치는 페이지 본문 추출을 거쳤으므로 외부 인용 전에 원 논문 표로 다시 확인하십시오. 확인하지 못한 수치는 싣지 않았습니다(LawLuo·G-DSR 수치, VERDICT 멀티에이전트 제거 수치 등).</li>
+<li><strong>동료 심사:</strong> 2026년 프리프린트(L-MAD, VERDICT, L4L, Tran &amp; Kiela, L-MARS v4 등)는 심사 전 자료입니다.</li>
+<li><strong>관할 편중:</strong> 법률 연구는 중국 형법·판결, 미국 세법·판례, EU GDPR, 일본 민법에 집중되어 있습니다. 한국법 멀티에이전트 연구는 없습니다.</li>
+<li><strong>과제 불일치:</strong> 사용자 질문의 핵심인 같은 법률 안 조항 연결, 법률 간 연결, 해석 대립을 직접 측정한 연구는 없어 8장 판정 중 ①②④는 간접 근거입니다.</li>
+<li><strong>제품 자료:</strong> 상용 제품의 구조 설명과 엘박스·슈퍼로이어 수치는 자사 발표이며 독립 검증되지 않았습니다.</li>
+<li><strong>시점:</strong> 모델 세대 교체가 빨라 2024년 이전 모델 기준 결과는 현재 모델에서 달라질 수 있습니다(7장).</li>
+<li><strong>보고서 범위:</strong> 문헌·사례 분석이며, 제안한 구조와 실험의 효과를 직접 측정하지 않았습니다.</li>
+</ul>
+</section>
+
+<!-- 14 -->
+<section class="chapter" id="s14">
+<p class="num">14</p>
+<h2>참고 근거</h2>
+<p class="note">확인 수준 표기 — 원문: 논문·판결·공식 페이지 본문 확인 · 초록: 초록 수준 확인 · 보도: 언론 보도 확인 · 자사: 회사 자체 발표. 확인일 2026-09-17.</p>
+
+<h3>일반 멀티에이전트 연구</h3>
+<ol class="refs">
+<li id="r1"><span class="rn">[1]</span><span>Du et al. “Improving Factuality and Reasoning in Language Models through Multiagent Debate.” ICML 2024. <a href="https://arxiv.org/abs/2305.14325">arXiv:2305.14325</a> <span class="lv">원문</span></span></li>
+<li id="r2"><span class="rn">[2]</span><span>Liang et al. “Encouraging Divergent Thinking in Large Language Models through Multi-Agent Debate.” EMNLP 2024. <a href="https://arxiv.org/abs/2305.19118">arXiv:2305.19118</a> <span class="lv">원문</span></span></li>
+<li id="r3"><span class="rn">[3]</span><span>J. Wang et al. “Mixture-of-Agents Enhances Large Language Model Capabilities.” ICLR 2025. <a href="https://arxiv.org/abs/2406.04692">arXiv:2406.04692</a> <span class="lv">원문</span></span></li>
+<li id="r4"><span class="rn">[4]</span><span>Li et al. “More Agents Is All You Need.” TMLR. <a href="https://arxiv.org/abs/2402.05120">arXiv:2402.05120</a> <span class="lv">원문</span></span></li>
+<li id="r5"><span class="rn">[5]</span><span>Hegazy. “Diversity of Thought Elicits Stronger Reasoning Capabilities in Multi-Agent Debate Frameworks.” 2024. <a href="https://arxiv.org/abs/2410.12853">arXiv:2410.12853</a> <span class="lv">원문 · 단독 저자·소규모 학술지</span></span></li>
+<li id="r6"><span class="rn">[6]</span><span>Chai et al. “SciMaster: Towards General-Purpose Scientific AI Agents, Part I. X-Master as Foundation.” 2025. <a href="https://arxiv.org/abs/2507.05241">arXiv:2507.05241</a> <span class="lv">원문</span></span></li>
+<li id="r7"><span class="rn">[7]</span><span>Smit et al. “Should we be going MAD? A Look at Multi-Agent Debate Strategies for LLMs.” ICML 2024. <a href="https://arxiv.org/abs/2311.17371">arXiv:2311.17371</a> <span class="lv">원문</span></span></li>
+<li id="r8"><span class="rn">[8]</span><span>Q. Wang et al. “Rethinking the Bounds of LLM Reasoning: Are Multi-Agent Discussions the Key?” ACL 2024. <a href="https://arxiv.org/abs/2402.18272">arXiv:2402.18272</a> <span class="lv">원문</span></span></li>
+<li id="r9"><span class="rn">[9]</span><span>Huang et al. “Large Language Models Cannot Self-Correct Reasoning Yet.” ICLR 2024. <a href="https://arxiv.org/abs/2310.01798">arXiv:2310.01798</a> <span class="lv">원문</span></span></li>
+<li id="r10"><span class="rn">[10]</span><span>Choi et al. “Debate or Vote: Which Yields Better Decisions in Multi-Agent Large Language Models?” NeurIPS 2025. <a href="https://arxiv.org/abs/2508.17536">arXiv:2508.17536</a> <span class="lv">원문</span></span></li>
+<li id="r11"><span class="rn">[11]</span><span>H. Zhang et al. “Stop Overvaluing Multi-Agent Debate — We Must Rethink Evaluation and Embrace Model Heterogeneity.” 2025. <a href="https://arxiv.org/abs/2502.08788">arXiv:2502.08788</a> <span class="lv">원문 · 입장 논문</span></span></li>
+<li id="r12"><span class="rn">[12]</span><span>W. Li et al. “Rethinking Mixture-of-Agents: Is Mixing Different Large Language Models Beneficial?” 2025. <a href="https://arxiv.org/abs/2502.00674">arXiv:2502.00674</a> <span class="lv">원문</span></span></li>
+<li id="r13"><span class="rn">[13]</span><span>Wynn et al. “Talk Isn’t Always Cheap: Understanding Failure Modes in Multi-Agent Debate.” ICML 2025 워크숍. <a href="https://arxiv.org/abs/2509.05396">arXiv:2509.05396</a> <span class="lv">원문</span></span></li>
+<li id="r14"><span class="rn">[14]</span><span>Yao et al. “Peacemaker or Troublemaker: How Sycophancy Shapes Multi-Agent Debate.” 2025. <a href="https://arxiv.org/abs/2509.23055">arXiv:2509.23055</a> <span class="lv">원문 · 프리프린트</span></span></li>
+<li id="r15"><span class="rn">[15]</span><span>Cemri et al. “Why Do Multi-Agent LLM Systems Fail?” NeurIPS 2025 Datasets &amp; Benchmarks. <a href="https://arxiv.org/abs/2503.13657">arXiv:2503.13657</a> <span class="lv">원문</span></span></li>
+<li id="r16"><span class="rn">[16]</span><span>E. Kim et al. “Correlated Errors in Large Language Models.” ICML 2025. <a href="https://arxiv.org/abs/2506.07962">arXiv:2506.07962</a> <span class="lv">원문</span></span></li>
+<li id="r17"><span class="rn">[17]</span><span>Panickssery et al. “LLM Evaluators Recognize and Favor Their Own Generations.” NeurIPS 2024. <a href="https://arxiv.org/abs/2404.13076">arXiv:2404.13076</a> <span class="lv">원문</span></span></li>
+<li id="r18"><span class="rn">[18]</span><span>Tran &amp; Kiela. “Single-Agent LLMs Outperform Multi-Agent Systems on Multi-Hop Reasoning Under Equal Thinking Token Budgets.” 2026. <a href="https://arxiv.org/abs/2604.02460">arXiv:2604.02460</a> <span class="lv">원문 · 프리프린트</span></span></li>
+</ol>
+
+<h3>법률 특화 연구</h3>
+<ol class="refs">
+<li id="r19"><span class="rn">[19]</span><span>Yuan et al. “Can Large Language Models Grasp Legal Theories? Enhance Legal Reasoning with Insights from Multi-Agent Collaboration.” Findings of EMNLP 2024. <a href="https://arxiv.org/abs/2410.02507">arXiv:2410.02507</a> <span class="lv">원문</span></span></li>
+<li id="r20"><span class="rn">[20]</span><span>Servantez et al. “Chain of Logic: Rule-Based Reasoning with Large Language Models.” Findings of ACL 2024. <a href="https://arxiv.org/abs/2402.10400">arXiv:2402.10400</a> <span class="lv">원문</span></span></li>
+<li id="r21"><span class="rn">[21]</span><span>Wang &amp; Yuan. “L-MARS: Legal Multi-Agent Workflow with Orchestrated Reasoning and Agentic Search.” 2025, v4 2026-07. <a href="https://arxiv.org/abs/2509.00761">arXiv:2509.00761</a> <span class="lv">원문 · 프리프린트 · 판별 수치 상이</span></span></li>
+<li id="r22"><span class="rn">[22]</span><span>Raptopoulos et al. “PAKTON: A Multi-Agent Framework for Question Answering in Long Legal Agreements.” 2025. <a href="https://arxiv.org/abs/2506.00608">arXiv:2506.00608</a> <span class="lv">원문 · EMNLP 2025 채택은 저장소 표기로만 확인</span></span></li>
+<li id="r23"><span class="rn">[23]</span><span>Jing et al. “MASLegalBench: Benchmarking Multi-Agent Systems in Deductive Legal Reasoning.” 2025. <a href="https://arxiv.org/abs/2509.24922">arXiv:2509.24922</a> <span class="lv">원문 · 프리프린트</span></span></li>
+<li id="r24"><span class="rn">[24]</span><span>He et al. “AgentsCourt: Building Judicial Decision-Making Agents with Court Debate Simulation and Legal Knowledge Augmentation.” Findings of EMNLP 2024. <a href="https://arxiv.org/abs/2403.02959">arXiv:2403.02959</a> <span class="lv">원문</span></span></li>
+<li id="r25"><span class="rn">[25]</span><span>Chen et al. “AgentCourt: Simulating Court with Adversarial Evolvable Lawyer Agents.” <a href="https://arxiv.org/abs/2408.08089">arXiv:2408.08089</a> <span class="lv">원문</span></span></li>
+<li id="r26"><span class="rn">[26]</span><span>X. Chen et al. “Debate-Feedback: A Multi-Agent Framework for Efficient Legal Judgment Prediction.” NAACL 2025. <a href="https://arxiv.org/abs/2504.05358">arXiv:2504.05358</a> <span class="lv">원문</span></span></li>
+<li id="r27"><span class="rn">[27]</span><span>Liao et al. “VERDICT: Verifiable Evolving Reasoning with Directive-Informed Collegial Teams for Legal Judgment Prediction.” 2026. <a href="https://arxiv.org/abs/2603.19306">arXiv:2603.19306</a> <span class="lv">원문 · 프리프린트</span></span></li>
+<li id="r28"><span class="rn">[28]</span><span>L. Chen et al. “Towards Trustworthy Legal AI through LLM Agents and Formal Reasoning.” 2025, v2 2026. <a href="https://arxiv.org/abs/2511.21033">arXiv:2511.21033</a> <span class="lv">원문 · 프리프린트</span></span></li>
+<li id="r29"><span class="rn">[29]</span><span>Sadowski &amp; Chudziak. “On Verifiable Legal Reasoning: A Multi-Agent Framework with Formalized Knowledge Representations.” CIKM 2025. <a href="https://arxiv.org/abs/2509.00710">arXiv:2509.00710</a> <span class="lv">원문</span></span></li>
+<li id="r30"><span class="rn">[30]</span><span>Alshehri et al. “Cross-Architecture LLM Ensembles, Feature-Based Reranking and Retrieval-Augmented Prompting for Legal Information Processing.” COLIEE 2026. <a href="https://arxiv.org/abs/2607.11400">arXiv:2607.11400</a> <span class="lv">원문</span></span></li>
+<li id="r31"><span class="rn">[31]</span><span>Nguyen et al. “L-MAD: A Systematic Evaluation of Multi-Agent Debate Structures in Legal Reasoning.” 2026. <a href="https://arxiv.org/abs/2607.09099">arXiv:2607.09099</a> <span class="lv">원문 · 프리프린트</span></span></li>
+<li id="r32"><span class="rn">[32]</span><span>Steging, van Leeuwen, Zbiegień. “Investigating Multi-Agent Deliberation in Law.” ICAIL 2026 AIDA2J 워크숍. <a href="https://arxiv.org/abs/2606.30906">arXiv:2606.30906</a> <span class="lv">원문</span></span></li>
+<li id="r33"><span class="rn">[33]</span><span>Blair-Stanek, Holzenberger, Van Durme. “Can GPT-3 Perform Statutory Reasoning?” ICAIL 2023. <a href="https://arxiv.org/abs/2302.06100">arXiv:2302.06100</a> <span class="lv">원문</span></span></li>
+<li id="r34"><span class="rn">[34]</span><span>Blair-Stanek et al. “BLT: Can Large Language Models Handle Basic Legal Text?” NLLP Workshop 2024. <a href="https://arxiv.org/abs/2311.09693">arXiv:2311.09693</a> <span class="lv">원문</span></span></li>
+<li id="r35"><span class="rn">[35]</span><span>Blair-Stanek &amp; Van Durme. “LLMs Provide Unstable Answers to Legal Questions.” 2025. <a href="https://arxiv.org/abs/2502.05196">arXiv:2502.05196</a> <span class="lv">원문</span></span></li>
+<li id="r36"><span class="rn">[36]</span><span>de Martim. “An Ontology-Driven Graph RAG for Legal Norms: A Structural, Temporal, and Deterministic Approach.” JURIX 2025. <a href="https://arxiv.org/abs/2505.00039">arXiv:2505.00039</a> <span class="lv">원문</span></span></li>
+<li id="r37"><span class="rn">[37]</span><span>Louis et al. “Finding the Law: Enhancing Statutory Article Retrieval via Graph Neural Networks.” EACL 2023. <a href="https://arxiv.org/abs/2301.12847">arXiv:2301.12847</a> <span class="lv">초록</span></span></li>
+<li id="r38"><span class="rn">[38]</span><span>Kim et al. “Developing a Pragmatic Benchmark for Assessing Korean Legal Language Understanding in Large Language Models.” Findings of EMNLP 2024. <a href="https://aclanthology.org/2024.findings-emnlp.319/">ACL Anthology</a> · <a href="https://arxiv.org/abs/2410.08731">arXiv:2410.08731</a> <span class="lv">원문 · 영역별 수치는 원표 재확인 권장</span></span></li>
+<li id="r39"><span class="rn">[39]</span><span>Oh, Hwang, On. “Korean Canonical Legal Benchmark.” EACL 2026. <a href="https://aclanthology.org/2026.eacl-short.17/">ACL Anthology</a> <span class="lv">원문</span></span></li>
+<li id="r40"><span class="rn">[40]</span><span>H. Li et al. “LegalAgentBench.” ACL 2025. <a href="https://arxiv.org/abs/2412.17259">arXiv:2412.17259</a> <span class="lv">원문</span></span></li>
+<li id="r41"><span class="rn">[41]</span><span>“LegalGraphRAG: Multi-Agent Graph Retrieval-Augmented Generation for Reliable Legal Reasoning.” ACL 2026 (Long), pp. 37455–37484. <a href="https://arxiv.org/abs/2605.28120">arXiv:2605.28120</a> <span class="lv">서지 · Legal/Tax Agent 기획서 v1.4 28장에서 확인</span></span></li>
+<li id="r42"><span class="rn">[42]</span><span>Sun et al. “LawLuo: A Multi-Agent Collaborative Framework for Multi-Round Chinese Legal Consultation.” <a href="https://arxiv.org/abs/2407.16252">arXiv:2407.16252</a> <span class="lv">초록</span></span></li>
+</ol>
+
+<h3>실증 사례·제품·법원</h3>
+<ol class="refs">
+<li id="r43"><span class="rn">[43]</span><span>Magesh et al. “Hallucination-Free? Assessing the Reliability of Leading AI Legal Research Tools.” J. Empirical Legal Studies 22(2), 2025. <a href="https://arxiv.org/abs/2405.20362">arXiv:2405.20362</a> <span class="lv">원문</span></span></li>
+<li id="r44"><span class="rn">[44]</span><span>Dahl et al. “Large Legal Fictions: Profiling Legal Hallucinations in Large Language Models.” J. Legal Analysis 16(1), 2024. <a href="https://academic.oup.com/jla/article/16/1/64/7699227">OUP</a> <span class="lv">원문</span></span></li>
+<li id="r45"><span class="rn">[45]</span><span>Vals AI. Vals Legal AI Report, 2025-02-27. <a href="https://www.vals.ai/industry-reports/vlair-2-27-25">vals.ai</a> <span class="lv">원문</span></span></li>
+<li id="r46"><span class="rn">[46]</span><span>Vals AI. VLAIR – Legal Research, 2025-10-14. <a href="https://www.vals.ai/industry-reports/vlair-10-14-25">vals.ai</a> <span class="lv">원문</span></span></li>
+<li id="r47"><span class="rn">[47]</span><span>Harvey. “Why Harvey is Multi-Model by Design.” 2026-03-10. <a href="https://www.harvey.ai/blog/why-harvey-is-multi-model-by-design">harvey.ai</a> <span class="lv">자사</span></span></li>
+<li id="r48"><span class="rn">[48]</span><span>Thomson Reuters. CoCounsel Legal 출시(에이전트형 Deep Research), 2025-08-05. <a href="https://www.thomsonreuters.com/en/press-releases/2025/august/thomson-reuters-launches-cocounsel-legal-transforming-legal-work-with-agentic-ai-and-deep-research">보도자료</a> <span class="lv">자사</span></span></li>
+<li id="r49"><span class="rn">[49]</span><span>Thomson Reuters. Next generation of CoCounsel Legal, 2026-08-20. <a href="https://www.thomsonreuters.com/en/press-releases/2026/august/thomson-reuters-launches-next-generation-of-cocounsel-legal-the-ai-ecosystem-built-for-legal-professionals">보도자료</a> <span class="lv">자사</span></span></li>
+<li id="r50"><span class="rn">[50]</span><span>LawSites(lawnext.com). LexisNexis Protégé General AI 출시 보도, 2025-08-11. <a href="https://www.lawnext.com/">lawnext.com</a> <span class="lv">보도</span></span></li>
+<li id="r51"><span class="rn">[51]</span><span>LawSites(lawnext.com). LexisNexis Legal Intelligence Engine 공개 보도, 2026-08-24. <a href="https://www.lawnext.com/">lawnext.com</a> <span class="lv">보도</span></span></li>
+<li id="r52"><span class="rn">[52]</span><span>Mata v. Avianca, Inc. (S.D.N.Y. 2023-06-22) 제재 결정 요약. <a href="https://www.seyfarth.com/news-insights/update-on-the-chatgpt-case-counsel-who-submitted-fake-cases-are-sanctioned.html">Seyfarth Shaw</a> <span class="lv">2차 자료</span></span></li>
+<li id="r53"><span class="rn">[53]</span><span>D. Charlotin. AI Hallucination Cases Database (2026-09-14 갱신). <a href="https://www.damiencharlotin.com/hallucinations/">damiencharlotin.com</a> <span class="lv">원문</span></span></li>
+<li id="r54"><span class="rn">[54]</span><span>Ayinde v London Borough of Haringey; Al-Haroun v Qatar National Bank [2025] EWHC 1383 (Admin). <a href="https://www.judiciary.uk/wp-content/uploads/2025/06/Ayinde-v-London-Borough-of-Haringey-and-Al-Haroun-v-Qatar-National-Bank.pdf">판결문 PDF</a> <span class="lv">원문</span></span></li>
+<li id="r55"><span class="rn">[55]</span><span>머니투데이. 울산지법 사건 허위 대법원 판례 인용 보도, 2026-05-12. <a href="https://www.mt.co.kr/society/2026/05/12/2026051120223293803">mt.co.kr</a> <span class="lv">보도</span></span></li>
+<li id="r56"><span class="rn">[56]</span><span>법률신문. 법원 허위 판례 인용 사례 보도, 2026-09-12. <a href="https://www.lawtimes.co.kr/news/articleView.html?idxno=226218">lawtimes.co.kr</a> <span class="lv">보도</span></span></li>
+<li id="r57"><span class="rn">[57]</span><span>한국경제. 법원행정처 AI 사용 고지·허위 인용 제재 추진 보도, 2026-04-08. <a href="https://www.hankyung.com/article/2026040879471">hankyung.com</a> <span class="lv">보도 · 기사 내 미국 제재액 표기 오류 있음</span></span></li>
+<li id="r58"><span class="rn">[58]</span><span>리걸타임즈. 법원 AI 연구회 재판 업무 AI 활용 가이드라인 보도, 2025-03-10. <a href="https://www.legaltimes.co.kr/news/articleView.html?idxno=85019">legaltimes.co.kr</a> <span class="lv">보도</span></span></li>
+<li id="r59"><span class="rn">[59]</span><span>엘박스 제15회 변호사시험 결과 발표 보도, 2026-04-24. <a href="https://www.epnc.co.kr/news/articleView.html?idxno=400945">epnc.co.kr</a> <span class="lv">자사 · 보도</span></span></li>
+<li id="r60"><span class="rn">[60]</span><span>슈퍼로이어 이용자 수 보도. <a href="https://www.fnnews.com/news/202410150855064221">파이낸셜뉴스 2024-10-15</a> · <a href="https://besuccess.com/?p=181218">besuccess</a> <span class="lv">자사 · 보도</span></span></li>
+<li id="r61"><span class="rn">[61]</span><span>법제처 국가법령정보 공동활용 Open API 안내. <a href="https://open.law.go.kr/LSO/openApi/guideList.do">open.law.go.kr</a> <span class="lv">원문</span></span></li>
+<li id="r62"><span class="rn">[62]</span><span>법제처 지능형 법령검색 개통 보도자료, 2024-12. <a href="https://www.moleg.go.kr/board.es?mid=a10501000000&amp;bid=0048&amp;act=view&amp;list_no=136336">moleg.go.kr</a> <span class="lv">원문</span></span></li>
+<li id="r63"><span class="rn">[63]</span><span>뉴스서울. 법제처 생성형 AI 법령검색 2027년 도입 계획 보도, 2026-06-26. <a href="https://newsseoul.co.kr/news/view/1065606623903748">newsseoul.co.kr</a> <span class="lv">보도</span></span></li>
+<li id="r64"><span class="rn">[64]</span><span>뉴스핌. 대한변협 법률 AI TF 회의 보도, 2026-02-06. <a href="https://www.newspim.com/news/view/20260206000506">newspim.com</a> <span class="lv">보도</span></span></li>
+<li id="r65"><span class="rn">[65]</span><span>법률신문. 변호사법 제109조와 AI 법률서비스 보도, 2024-03-23. <a href="https://www.lawtimes.co.kr/news/articleView.html?idxno=197014">lawtimes.co.kr</a> <span class="lv">보도</span></span></li>
+<li id="r66"><span class="rn">[66]</span><span>법무법인(유한) 태평양 뉴스레터. 인공지능기본법 해설. <a href="https://www.bkl.co.kr/newsLetter/itemUrl.do?itemNo=5848">bkl.co.kr</a> <span class="lv">2차 자료 · 확정 조문 재확인 필요</span></span></li>
+<li id="r67"><span class="rn">[67]</span><span>E. Y. Lim, J. Park. “Agentic RAG for Legal Question Answering in Civil Law: Evidence From the Korean Bar Examination.” IEEE Access 14, pp. 124441–124458, 2026. doi:10.1109/ACCESS.2026.3722717 <span class="lv">서지만 확인 · 성능 수치 미확인(기획서 v1.4 V-40)</span></span></li>
+</ol>
+<p class="foot">본 문서는 AI/정보시스템 설계를 위한 문헌·사례 분석이며 개별 사건에 대한 법률의견이 아닙니다.</p>
+</section>
+</main>
+<button type="button" class="to-top" onclick="scrollTo({top:0})">맨 위로 ↑</button>
+<script>
+document.getElementById('print').addEventListener('click',()=>window.print());
+(function(){const links=[...document.querySelectorAll('#toc a')];const map=new Map(links.map(a=>[a.getAttribute('href').slice(1),a]));
+if(!('IntersectionObserver' in window))return;const io=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){links.forEach(l=>l.classList.remove('active'));const a=map.get(e.target.id);if(a)a.classList.add('active');}})},{rootMargin:'-20% 0px -70% 0px'});
+document.querySelectorAll('section.chapter').forEach(s=>io.observe(s));})();
+</script>
+</body>
+</html>

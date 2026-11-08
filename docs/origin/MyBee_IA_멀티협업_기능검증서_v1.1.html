@@ -1,0 +1,434 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MyBee IA 멀티 협업 기능 검증서 v1.1</title>
+<style>
+:root{--bg:#fbfcfe;--fg:#16181d;--mut:#5a6b80;--line:#c6d2e2;--head:#12315c;--acc:#2d6cb5;
+ --soft:#e8eef7;--zebra:#f7f9fc;--warn:#fff8e6;--warnl:#d9a441;--bad:#fdeceb;--badl:#c0392b;
+ --ok:#ecf7ee;--okl:#2e8b57;}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Malgun Gothic","맑은 고딕",sans-serif;font-size:15px;line-height:1.75;
+ color:var(--fg);background:var(--bg)}
+header.top{position:sticky;top:0;z-index:50;background:var(--head);color:#fff;padding:10px 20px;
+ display:flex;flex-wrap:wrap;gap:12px;align-items:center;box-shadow:0 2px 8px rgba(0,0,0,.18)}
+header.top b{font-size:16px;letter-spacing:.5px}
+header.top .sp{flex:1}
+header.top a{color:#cfe0f5;text-decoration:none;font-size:13px;padding:3px 8px;border-radius:4px}
+header.top a:hover{background:rgba(255,255,255,.14);color:#fff}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px 80px}
+.hero{background:linear-gradient(160deg,#12315c,#2d6cb5 70%,#4a8fd4);color:#fff;padding:56px 20px;margin-bottom:8px}
+.hero .in{max-width:1180px;margin:0 auto}
+.hero h1{margin:0 0 6px;font-size:34px;letter-spacing:-.5px}
+.hero p{margin:4px 0;opacity:.92;font-size:15px}
+.hero .meta{margin-top:22px;font-size:13px;opacity:.85;line-height:2}
+h2{font-size:25px;color:var(--head);margin:46px 0 10px;padding-bottom:8px;border-bottom:3px solid var(--head)}
+h3{font-size:19px;color:#1b3a6b;margin:30px 0 8px;padding-left:11px;border-left:5px solid var(--acc)}
+h4{font-size:16px;color:#24406b;margin:20px 0 6px}
+p{margin:9px 0}
+ul,ol{margin:9px 0 9px 20px;padding-left:8px}
+li{margin:4px 0}
+table{width:100%;border-collapse:collapse;margin:14px 0 20px;font-size:13px}
+th{background:var(--soft);border:1px solid #9fb4d0;padding:7px 8px;text-align:left;color:var(--head);font-weight:600;
+ position:sticky;top:44px;z-index:5}
+td{border:1px solid var(--line);padding:6px 8px;vertical-align:top}
+tbody tr:nth-child(even){background:var(--zebra)}
+tbody tr:hover{background:#eef3fa}
+code,.mono{font-family:Consolas,"D2Coding",monospace;font-size:13px;background:#f0f3f8;padding:1px 5px;border-radius:3px}
+pre{font-family:Consolas,"D2Coding",monospace;font-size:13px;background:#f4f6fa;border:1px solid #d6deea;
+ border-left:4px solid var(--acc);padding:12px 14px;overflow-x:auto;white-space:pre;border-radius:4px}
+.note{background:var(--warn);border:1px solid #e8d59a;border-left:5px solid var(--warnl);padding:12px 15px;margin:14px 0;border-radius:4px}
+.warn{background:var(--bad);border:1px solid #eab4ae;border-left:5px solid var(--badl);padding:12px 15px;margin:14px 0;border-radius:4px}
+.ok{background:var(--ok);border:1px solid #a9d4b2;border-left:5px solid var(--okl);padding:12px 15px;margin:14px 0;border-radius:4px}
+.kv{display:flex;flex-wrap:wrap;gap:10px;margin:18px 0}
+.kv > div{flex:1 1 130px;border:1px solid var(--line);border-top:4px solid var(--acc);padding:11px 13px;background:#fff;border-radius:4px}
+.kv .k{font-size:12px;color:var(--mut)}
+.kv .v{font-size:24px;font-weight:700;color:var(--head);line-height:1.3}
+.tools{position:sticky;top:44px;z-index:20;background:var(--bg);padding:12px 0;border-bottom:1px solid var(--line);
+ display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.tools input{flex:1 1 260px;padding:9px 12px;border:1px solid var(--line);border-radius:5px;font-size:14px;font-family:inherit}
+.tools select{padding:9px 10px;border:1px solid var(--line);border-radius:5px;font-size:14px;font-family:inherit}
+.tools .cnt{font-size:13px;color:var(--mut);white-space:nowrap}
+.badge{display:inline-block;padding:1px 7px;border-radius:10px;font-size:11px;font-weight:600;white-space:nowrap}
+.b-A{background:#e3f0e7;color:#226b44}.b-H{background:#fde8e6;color:#a5352a}.b-Y{background:#fdf2dc;color:#8a6415}
+.r-L{background:#eef2f7;color:#5a6b80}.r-M{background:#e6eefb;color:#24508f}
+.r-H{background:#fdf0dc;color:#96621a}.r-C{background:#fce0dd;color:#9c2b20}
+.u-M{background:#f1f1f1;color:#666}.u-A{background:#eaf0f9;color:#3a5d91}
+.u-S{background:#e4eefb;color:#1f4f96}.u-F{background:#e0f0e6;color:#1d6b42}
+.domhead{background:#fff;border:1px solid var(--line);border-radius:6px;padding:16px 18px;margin:16px 0}
+.domhead .t{font-size:12px;color:var(--mut);text-transform:uppercase;letter-spacing:1px}
+.domhead .n{font-size:21px;font-weight:700;color:var(--head);margin:2px 0 6px}
+.domhead .d{font-size:14px}
+.domhead .l{font-size:13px;color:var(--mut);margin-top:8px}
+.toc{columns:2;column-gap:34px;margin:14px 0}
+.toc a{color:var(--fg);text-decoration:none;display:block;padding:3px 0;font-size:14px}
+.toc a:hover{color:var(--acc)}
+.small{font-size:13px;color:var(--mut)}
+.nw{white-space:nowrap}
+footer{margin-top:60px;padding:24px 0;border-top:1px solid var(--line);font-size:13px;color:var(--mut)}
+.m{display:inline-block;padding:1px 6px;border-radius:3px;font-size:11px;font-weight:600;color:#fff;white-space:nowrap}
+.m-T1{background:#5a6b80}.m-T2{background:#8a5a2b}.m-T3{background:#7d4a9e}.m-T4{background:#c0392b}
+.m-T5{background:#c0602b}.m-T6{background:#2e7d5b}.m-T7{background:#2d6cb5}.m-T8{background:#4f8a76}
+.m.ref{opacity:.55}.m.ref:after{content:" 참고"}
+.hid{display:inline-block;padding:1px 6px;border-radius:3px;font-size:11px;background:#fff0c2;color:#7a5a12;border:1px solid #e8d59a;white-space:nowrap}
+figure{margin:18px 0;text-align:center}figure svg{width:100%;height:auto;background:#fff;border:1px solid var(--line);border-radius:6px}
+figcaption{font-size:13px;color:var(--mut);margin-top:6px}
+.chg{background:#fff;border:1px solid var(--line);border-left:5px solid #2e7d5b;padding:12px 16px;border-radius:4px;margin:14px 0}
+.qual{display:inline-block;padding:0 6px;margin-left:4px;border-radius:3px;font-size:11px;font-weight:600;background:#fde8d8;color:#8a3b12;border:1px solid #f0b894;white-space:nowrap}
+.trv{display:inline-block;padding:0 6px;margin-left:4px;border-radius:3px;font-size:11px;background:#eee6f7;color:#5a3d8a;border:1px solid #cbb8e6;white-space:nowrap}
+.irs{display:inline-block;padding:0 6px;margin-left:4px;border-radius:3px;font-size:11px;font-weight:600;background:#e3f1ea;color:#1f6b47;border:1px solid #9fcfb4;white-space:nowrap}
+.aud{display:inline-block;padding:0 6px;margin-left:4px;border-radius:3px;font-size:11px;font-weight:600;background:#ece6f6;color:#553a86;border:1px solid #c2b2e0;white-space:nowrap}
+.ret{background:#f7f7f7;color:#777}
+@media print{header.top,.tools{position:static}h2{page-break-before:always}tr{page-break-inside:avoid}}
+
+.gloss{border:1px solid #c6d2e2;border-radius:8px;background:#fbfcfe;padding:14px 16px;margin:18px 0}
+.gloss h3{margin:0 0 8px;font-size:15px;color:#12315c}
+.gloss table{width:100%;border-collapse:collapse;font-size:12.5px}
+.gloss td{border-top:1px solid #e6ecf4;padding:6px 8px;vertical-align:top}
+.gloss td:first-child{width:22%;font-weight:700;color:#12315c;white-space:nowrap}
+.gloss td:last-child{width:34%;color:#5a6b80}
+@media(max-width:760px){.gloss td:first-child{white-space:normal}}
+
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:16px 0}
+@media(max-width:820px){.grid2{grid-template-columns:1fr}}
+.card{background:#fff;border:1px solid var(--line);border-top:4px solid var(--acc);border-radius:5px;padding:14px 16px}
+.card .h{font-weight:700;color:var(--head);margin-bottom:6px}
+.gap{background:#fff;border:1px solid var(--line);border-left:5px solid var(--badl);border-radius:4px;padding:12px 16px;margin:12px 0}
+.gap .id{display:inline-block;background:var(--badl);color:#fff;border-radius:3px;padding:0 7px;font-size:12px;font-weight:700;margin-right:7px}
+.sol{background:#fff;border:1px solid var(--line);border-left:5px solid var(--okl);border-radius:4px;padding:12px 16px;margin:12px 0}
+.sol .id{display:inline-block;background:var(--okl);color:#fff;border-radius:3px;padding:0 7px;font-size:12px;font-weight:700;margin-right:7px}
+.cite{font-size:12px;color:var(--mut)}
+.new{display:inline-block;padding:0 6px;border-radius:3px;font-size:11px;font-weight:600;background:#e4eefb;color:#1f4f96;border:1px solid #9fc0e8}
+.mod{display:inline-block;padding:0 6px;border-radius:3px;font-size:11px;font-weight:600;background:#fdf2dc;color:#8a6415;border:1px solid #e8d59a}
+.keep{display:inline-block;padding:0 6px;border-radius:3px;font-size:11px;font-weight:600;background:#eef2f7;color:#5a6b80;border:1px solid #c6d2e2}
+td.c,th.c{text-align:center}
+table.dd{font-size:12.5px}
+table.dd td:first-child{font-family:Consolas,"D2Coding",monospace;white-space:nowrap}
+
+.gloss{border:1px solid #c6d2e2;border-radius:8px;background:#fbfcfe;padding:14px 16px;margin:18px 0}
+.gloss h3{margin:0 0 8px;font-size:15px;color:#12315c}
+.gloss table{width:100%;border-collapse:collapse;font-size:12.5px}
+.gloss td{border-top:1px solid #e6ecf4;padding:6px 8px;vertical-align:top}
+.gloss td:first-child{width:22%;font-weight:700;color:#12315c;white-space:nowrap}
+.gloss td:last-child{width:34%;color:#5a6b80}
+@media(max-width:760px){.gloss td:first-child{white-space:normal}}
+
+table.tight{font-size:12.5px}table.tight td,table.tight th{padding:4px 6px}
+.g{display:inline-block;padding:0 7px;border-radius:10px;font-size:11px;font-weight:700;background:#e4eefb;color:#1f4f96}
+.gT1{background:#fde8e4;color:#9c2b20}.gT6{background:#e3f1ea;color:#1f6b47}.gT7{background:#efeaf7;color:#553a86}.gT8{background:#eef2f7;color:#33475f}
+.gT2,.gT3,.gT4,.gT5{background:#fff3d6;color:#8a5a12}
+pre.code{background:#0f1f33;color:#e6edf7;padding:12px 14px;border-radius:8px;overflow-x:auto;font-size:12px;line-height:1.5;white-space:pre}
+figure{margin:14px 0}figcaption{font-size:12.5px;color:#5a6b80;margin-top:6px}
+svg text{font-family:Malgun Gothic, 맑은 고딕, sans-serif}
+@media(max-width:760px){.wrap table{display:block;overflow-x:auto;max-width:100%}.wrap svg{max-width:100%;height:auto}}
+</style></head><body>
+<div class="hero"><div class="in"><p style="opacity:.8;letter-spacing:6px;font-size:13px">MYBEE PLATFORM</p><h1>IA 멀티 협업 기능 검증서 — 내 · 외부 사람과 에이전트, 모든 조합</h1><p>허락된 사람↔사람 · 사람↔에이전트 · 에이전트↔에이전트가 여럿이 협업할 기능이 모두 있는가 — 10개 조합 × 10개 능력 · 외부 사람과는 메일로도</p><div class="meta">문서번호 MB-COL-2026-002 &nbsp;·&nbsp; 버전 <b>v1.1</b> &nbsp;·&nbsp; 작성일 2026-09-30<br>근거 MyBee 설계지시문 v5.16 · DB 테이블설계서 v3.22 · IA 협업 공간 확장 분석서 v1.2 · 검증 문서(설계 반영 전)</div></div></div>
+<header class="top"><b>IA 멀티 협업 기능 검증서</b><a href="#s0">용어</a><a href="#s1">결론</a><a href="#s2">방법</a><a href="#s3">판정표</a><a href="#s4">조합별</a><a href="#s5">능력별</a><a href="#s6">보완안</a><a href="#s6m">메일 협업</a><a href="#s7">보완 후</a><a href="#s8">DB · 규칙</a><a href="#s9">결정</a><a href="#s10">근거</a></header>
+<div class="wrap">
+<h2 id="s0">용어 정의</h2>
+<div class="gloss"><h3>용어 정의 — 이 문서에서 쓰는 말</h3><p style="font-size:12.5px;margin:0 0 8px;color:#5a6b80">「버전」은 <b>버전</b>, 데이터베이스의 표는 <b>DB Table</b>, 「중복 실행 방지」은 <b>중복 실행 방지</b>로 부른다(설계지시문 19.1.4).</p><table><tbody><tr><td>버전 (version)</td><td>문서 · 기준 · 정의가 고쳐질 때마다 매기는 번호. v1.0 → v1.1 처럼 올라간다. 예전 문서에서 「버전」이라고 부르던 것을 이 문서부터 <b>버전</b>으로 부른다.</td><td>옛 버전은 고치지 않고 그대로 두고 새 버전을 따로 낸다. 그래야 그때 무엇을 보고 결정했는지 나중에 되살릴 수 있다.</td></tr><tr><td>DB Table</td><td>데이터베이스에 실제로 만들어지는 표. 예) <span class="mono">mbproj.project_request</span>. 예전 문서에서 그냥 「표」라고 부르던 것을 <b>DB Table</b> 로 부른다.</td><td>문서 안에서 읽으라고 그린 표(비교표 · 목록표)는 그대로 「표」라고 부른다. 둘을 섞지 않는다.</td></tr><tr><td>중복 실행 방지 (idempotency)</td><td>같은 요청이 두 번, 세 번 들어와도 <b>결과가 한 번 처리한 것과 똑같게</b> 만드는 성질. 예를 들어 신청서 제출 버튼을 두 번 눌러도 신청은 하나만 생기고, 통신이 끊겨 시스템이 같은 요청을 다시 보내도 돈이 두 번 나가지 않는다.</td><td>왜 필요한가 — 네트워크는 끊기고, 시스템은 답이 없으면 다시 보내고, 사람은 버튼을 두 번 누른다. 이 세 가지는 막을 수 없으므로 <b>두 번 와도 안전하게</b> 만든다.</td></tr><tr><td>중복 실행 방지 키 (중복 실행 방지 키)</td><td>같은 요청인지 가리는 열쇠. 이 열쇠가 같으면 새로 처리하지 않고 <b>먼저 처리한 결과를 그대로 돌려준다</b>. 예) 프로젝트 신청의 열쇠는 「회사 + 신청번호 + 개정차수」다 — 같은 신청서를 두 번 보내도 신청은 하나다.</td><td>열쇠는 <b>업무적으로 뜻이 있는 값</b>으로 만든다. 시각 · 난수 · 재시도 횟수 · 서버 이름처럼 매번 달라지는 값은 넣지 않는다. 넣으면 두 번째 요청이 「다른 요청」이 되어 중복이 생긴다.</td></tr><tr><td>되돌릴 수 없는 일 (non-idempotent)</td><td>이체 · 발송 · 신고처럼 한 번 나가면 되돌리기 어려운 일. 이런 단계는 중복 실행 방지 키를 반드시 두고, 답이 없으면 다시 보내지 않고 <b>조회해서 결과를 확인</b>한다.</td><td>답이 없는 상태를 「모름」으로 두고 사람이 확인하게 한다. 다시 보내는 것이 가장 위험하다.</td></tr><tr><td>업무코드</td><td>회사의 일을 더 쪼갤 수 없는 단위로 나눠 붙인 코드. 예) <span class="mono">FL0012001</span> 프로젝트 신청. 사람이 하든 에이전트가 하든 같은 코드로 부른다.</td><td>모든 일은 업무코드로 수행되고, 보상 · 원가 · 기록이 모두 이 코드에 붙는다.</td></tr><tr><td>업무영역</td><td>업무코드를 묶는 큰 분류. D01 HW개발 … D18 감사 · D19 프로젝트기획·생성 · <b>D20 지식관리</b>(2026-09-29 신설) — 모두 20개.</td><td>코드 안의 두 자리(FL00<b>19</b>001)가 업무영역이다.</td></tr><tr><td>스킬 · 도구 · 규칙</td><td>업무코드를 수행하는 세 가지 수단. <b>스킬</b>은 AI 가 문장을 읽고 쓰는 일, <b>도구</b>는 계산 · 서식 · 외부 연결처럼 정해진 대로 도는 프로그램, <b>규칙</b>은 조건과 결론을 표로 적어 둔 판정.</td><td>수치와 판정은 도구와 규칙이 한다. AI 는 수치를 만들지 않는다.</td></tr><tr><td>PA · IA · EA · TA · VA</td><td>PA 는 프로젝트를 맡는 에이전트(프로젝트 1개에 1개), IA 는 사람의 말을 알아듣고 업무로 잇는 에이전트, EA 는 법무 · 회계 같은 전문가 의견을 내는 에이전트, TA 는 외부 시스템을 부르는 에이전트, VA 는 결과를 검증하는 에이전트.</td><td>외부로 나가는 일은 TA 만 한다.</td></tr><tr><td>자율 수준 L1 · L2 · L3</td><td>에이전트가 사람 없이 어디까지 갈 수 있는지. <b>L1</b> 은 사람이 결정, <b>L2</b> 는 에이전트가 하되 사람이 승인, <b>L3</b> 는 에이전트가 하고 사람은 나중에 본다.</td><td>위험이 큰 업무일수록 낮은 수준을 쓴다.</td></tr><tr><td>NVT 토큰</td><td>업무를 수행하면 쌓이는 회사 안의 점수. 연말에 단가를 곱해 인센티브 · 연봉에 반영된다.</td><td>직책이 아니라 <b>수행한 업무</b>에 붙는다.</td></tr><tr><td>채택 보상금</td><td>제안이 채택되었을 때 제안자에게 한 번 주는 보상. 직원은 토큰으로, 외부 제안자는 현금으로 받는다. 상한 500만 원.</td><td>가결(직원) 또는 용역 계약 체결(외부) 때 지급한다.</td></tr><tr><td>사업화 성과 보상</td><td>제품 · 서비스가 실제로 팔린 뒤 해마다 나누는 보상. 연간 순매출의 0 ~ 3% 안에서 위원회가 정한다.</td><td>제안 20% · 원 기여 30% · 진행 기여 50% 로 나눈다. 진행 기여는 해마다 다시 계산한다.</td></tr><tr><td>판정 기준 버전</td><td>문턱 값 · 요율 · 가중치처럼 나중에 바뀔 수 있는 숫자를 화면이나 규칙 본문에 박지 않고 따로 모아 둔 것. 예) PRJ-ECON(경제성) · PRJ-RESEARCH(조사) · PRJ-REWARD(보상).</td><td>값이 바뀌면 새 버전을 게시하고, 지난 판정은 그때 버전으로 다시 볼 수 있다.</td></tr><tr><td>개정차수</td><td>한 신청서를 고쳐 다시 낼 때 올라가는 번호. 제출한 개정차수는 고치지 않고 새 개정차수를 만든다.</td><td>중복 실행 방지 키의 한 조각이기도 하다.</td></tr><tr><td>관리 최소집합</td><td>모든 프로젝트에 반드시 담기는 D12 업무코드 5건(개설 · 업무 구성 확정 · PM 지정 · 진행 보고 집계 · 종결).</td><td>빼거나 바꿀 수 없다.</td></tr><tr><td>게이트</td><td>다음 단계로 넘어가려면 통과해야 하는 관문. 이 문서에서는 G-1 등재 · G0 아이디어 · G1 기획 · G2 신청 · G3 심의 · G4 착수.</td><td>게이트마다 무엇을 확인하는지 정해 둔다.</td></tr><tr><td>사전 조사</td><td>신청 전에 에이전트가 하는 조사. <b>시장 조사</b>(시장 규모 · 경쟁 동향)와 <b>소요 비용 조사</b>(개발 기간 · 단계별 비용) 두 가지다.</td><td>조사는 에이전트가 하고, 채택은 사람이 승인한다.</td></tr><tr><td>TAM · SAM · SOM</td><td>시장 크기를 세 겹으로 본 것. <b>TAM</b> 은 품목 전체 시장, <b>SAM</b> 은 우리가 닿을 수 있는 시장, <b>SOM</b> 은 실제로 가져올 수 있는 몫(하단 · 상단).</td><td>편익의 판매 수량은 SOM 하단을 기본으로 쓴다.</td></tr><tr><td>위험 조정 편익 현재가치</td><td>앞으로 생길 편익을 <b>확신도</b>로 깎고(H 100% · M 70% · L 40%), 먼 미래의 돈을 <b>할인율</b>로 줄여 오늘 값으로 바꾼 금액.</td><td>이 값이 프로젝트의 「기대 가치」가 된다.</td></tr><tr><td>NPV · 편익/비용 · 회수 기간 · 민감도</td><td><b>NPV</b> 는 편익 현재가치에서 비용 현재가치를 뺀 값, <b>편익/비용</b> 은 그 둘의 비율, <b>회수 기간</b> 은 들인 돈을 되찾는 데 걸리는 햇수, <b>민감도</b> 는 편익이 20% 줄고 비용이 20% 늘어도 견디는지 본 것.</td><td>네 숫자를 함께 보아야 한 쪽으로 치우치지 않는다.</td></tr><tr><td>배경 IP</td><td>제안자가 <b>이 제안 이전부터 가지고 있던</b> 기술 · 저작물. 채택되어도 회사가 가져가지 않고 쓸 권리(통상실시권)만 받는다.</td><td>이것을 빼지 않으면 좋은 외부 제안자가 참여하지 않는다.</td></tr><tr><td>순매출</td><td>매출액에서 반품 · 에누리 · 할인을 뺀 금액. 사업화 성과 보상의 기준이 된다.</td><td>회계 원장에서 자동으로 뽑는다.</td></tr></tbody></table></div>
+<div class="note"><b>v1.1 에서 바뀐 것 — 메일로도 협업.</b> 「외부 사람과는 메일을 통해서도 협업할 수 있도록 해야 된다」를 받아 <b>6-1 메일로 협업하기</b>를 신설했다 — 계정 없는 메일 게스트 · 스레드 전용 회신 주소 · 수신 대조 순서 · 발신자 확인 · 새 글만 게시와 원본 보관 · 첨부 검사 · 메일 발신의 반출 관문과 만료 링크 · 메일로 확정하지 않는 것(확인 링크 · 전자서명) · 참조 · 전달 처리(M-1 ~ M-12). V-07 을 메일 협업으로 구체화했고, DB 초안 26 → 30 · 규칙 R39-34 ~ 40 · 결정 D-15 를 더했다.</div>
+<h2 id="s1">1. 결론</h2>
+<div class="warn" style="background:#fdeceb;border-left:5px solid #c0392b;padding:12px 15px;border-radius:4px"><b>판정 — 모두 포함되어 있지는 않다.</b> 내부끼리의 협업(사람 · 에이전트)은 현행 설계와 분석서 v1.2 로 대부분 갖춰지지만, <b>외부 사람이 끼는 네 조합(P2 · P5 · P6 · P7)은 비어 있고</b>, 내부 사람끼리(다른 프로젝트 · 1:1 · IA 를 통한 부탁) · 내부 에이전트끼리(IA↔IA 전달) · 내부↔외부 에이전트(외부 조직 에이전트 · 다른 테넌트)는 <b>부분</b>이다. 또 「누가 누구와 무엇을 해도 되는가」를 한 곳에서 정하는 <b>협업 허용 정책</b>이 없어, 허락이 프로젝트 참여 · 협조 블랙리스트 · 외부 참여자 서명 · 반출 허용표에 흩어져 있다.</div>
+<div class="kv"><div><div class="k">검증한 조합</div><div class="v">10</div></div><div><div class="k">현행 v5.16 충족</div><div class="v">0</div></div><div><div class="k">분석서 v1.2 반영 시 충족</div><div class="v">1 · 금지 1</div></div><div><div class="k">부분 · 없음(v1.2 기준)</div><div class="v">4 · 4</div></div><div><div class="k">보완안</div><div class="v">V-01 ~ V-13</div></div><div><div class="k">보완 후</div><div class="v">충족 9 · 금지 1</div></div></div>
+<p>보완은 새 체계를 만드는 일이 아니다. 분석서 v1.2 의 대화 층 · 지휘 · 유출 통제를 <b>외부 사람과 외부 조직 에이전트까지 넓히고</b>, 흩어진 허락을 <b>협업 허용 정책 하나</b>로 모으는 일이다(6장).</p>
+<h2 id="s2">2. 검증 방법</h2>
+<p><b>주체</b>를 네 유형으로 나누고 짝지을 수 있는 <b>10개 조합</b>(같은 유형끼리 4 + 다른 유형끼리 6)마다, 협업에 필요한 <b>10개 능력</b>이 설계에 있는지 대조했다. 「허락된」은 C2(허락)로, 「멀티」는 C4(여럿이 한 자리)로 따로 본다. 판정 근거는 조항 · DB Table · 분석서 절을 적었다.</p>
+<table>
+<colgroup><col style="width:16%"><col style="width:44%"><col style="width:40%"></colgroup>
+<thead><tr><th>주체 유형</th><th>포함</th><th>MyBee 안의 실체</th></tr></thead><tbody>
+<tr><td><b>내부 사람</b></td><td>임직원 — CEO · 그룹장 · PM · PL · Member</td><td>mbcore.employee · user_account(EMPLOYEE) · project_member</td></tr>
+<tr><td><b>외부 사람</b></td><td>고객 · 공급사 담당자 · 외부 제안자 · 용역 수행자 · 외부감사인 · 기관 담당자</td><td>mbcore.party(거래처 — 계정 없음) · external_party + user_account(EXTERNAL — 외부 제안 포털 권한만) · mbiaud.external_auditor</td></tr>
+<tr><td><b>내부 에이전트</b></td><td>IA · PA · EA · VA · TA · Trust Agent(TR)</td><td>mbagent.agent(6종)</td></tr>
+<tr><td><b>외부 에이전트</b></td><td>외부 AI 작업자(Claude Code · Codex · goose) · 외부 대화 참여 AI · 고객사 · 공급사 · 기관의 에이전트 · 다른 테넌트의 에이전트</td><td>현행 표 없음(7.4 는 원칙만) · 분석서 v1.2 external_ai_worker · external_participant</td></tr>
+</tbody></table>
+<table>
+<colgroup><col style="width:6%"><col style="width:20%"><col style="width:74%"></colgroup>
+<thead><tr><th>#</th><th>능력</th><th>무엇을 보나</th></tr></thead><tbody>
+<tr><td>C1</td><td>신원 · 인증</td><td>상대가 누구인지(사람 · 에이전트 · 소속 조직) 확인하고 인증 강도를 맞추는가</td></tr>
+<tr><td>C2</td><td><b>허락</b></td><td>이 둘이 협업해도 되는지 · 어디까지(대화 · 요청 · 검토 · 자료)를 정책으로 정하고 판정하는가</td></tr>
+<tr><td>C3</td><td>1:1 대화</td><td>둘이 직접 말을 주고받는 면이 있는가</td></tr>
+<tr><td>C4</td><td><b>여럿이 한 자리</b></td><td>셋 이상(사람 · 에이전트 섞여)이 같은 대화 · 같은 산출물을 함께 보는가</td></tr>
+<tr><td>C5</td><td>일 요청 · 지시 · 위임</td><td>말을 과업으로 바꾸고 맡기는 경로(착수 판정 포함)가 있는가</td></tr>
+<tr><td>C6</td><td>검토 · 승인 · 의견</td><td>상대의 결과를 검토 · 승인 · 의견 제시할 수 있는가</td></tr>
+<tr><td>C7</td><td>자료 · 공동 문서</td><td>파일 · 산출물을 나누고 함께 고치는가</td></tr>
+<tr><td>C8</td><td>맥락 기록 · 이어 가기</td><td>대화 · 결정이 남고 다음에 이어지는가</td></tr>
+<tr><td>C9</td><td>보안 경계</td><td>유출(반출) · 프롬프트 주입 · 합의성 발화를 막는가</td></tr>
+<tr><td>C10</td><td>기록 · 감사 · AI 고지</td><td>누가 무엇을 했는지 남고, 상대가 AI 인지 알 수 있는가</td></tr>
+</tbody></table>
+<h2 id="s3">3. 조합 판정표</h2>
+<p>세 시점으로 판정했다 — <b>현행</b>(설계지시문 v5.16 · DB v3.22) · <b>v1.2</b>(분석서 v1.2 제안을 반영했을 때) · <b>보완 후</b>(이 검증서 6장 보완안까지).</p>
+<table>
+<colgroup><col style="width:5%"><col style="width:20%"><col style="width:39%"><col style="width:12%"><col style="width:12%"><col style="width:12%"></colgroup>
+<thead><tr><th>#</th><th>조합</th><th>범위</th><th>현행</th><th>v1.2</th><th>보완 후</th></tr></thead><tbody>
+<tr><td>P1</td><td><b>내부 사람 ↔ 내부 사람</b></td><td>임직원끼리(같은 프로젝트 · 다른 프로젝트 · 1:1)</td><td><span style="display:inline-block;min-width:64px;padding:1px 8px;border-radius:10px;background:#fff3d6;font-weight:700">부분</span></td><td><span style="display:inline-block;min-width:64px;padding:1px 8px;border-radius:10px;background:#fff3d6;font-weight:700">부분</span></td><td><span style="display:inline-block;min-width:64px;padding:1px 8px;border-radius:10px;background:#e3f1ea;font-weight:700">충족</span></td></tr>
+<tr><td>P2</td><td><b>내부 사람 ↔ 외부 사람</b></td><td>임직원 ↔ 고객 · 공급사 담당자 · 외부 제안자 · 용역 · 외부감사인 · 기관</td><td><span style="display:inline-block;min-width:64px;padding:1px 8px;border-radius:10px;background:#fde8e4;font-weight:700">없음</span></td><td><span style="display:inline-block;min-width:64px;padding:1px 8px;border-radius:10px;background:#fde8e4;font-weight:700">없음</span></td><td><span style="display:inline-block;min-width:64px;padding:1px 8px;border-radius:10px;background:#e3f1ea;font-weight:700">충족</span></td></tr>
+<tr><td>P3</td><td><b>내부 사람 ↔ 내부 에이전트</b></td><td>임직원 ↔ IA · PA · EA (VA · TA · TR 은 판정 · 통로라 대화 상대가 아니다)</td><td><span style="display:inline-block;min-width:64px;padding:1px 8px;border-radius:10px;background:#fff3d6;font-weight:700">부분</span></td><td><span style="display:inline-block;min-width:64px;padding:1px 8px;border-radius:10px;background:#e3f1ea;font-weight:700">충족</span></td><td><span style="display:inline-block;min-width:64px;padding:1px 8px;border-radius:10px;background:#e3f1ea;font-weight:700">충족</span></td></tr>
+<tr><td>P4</td><td><b>내부 사람 ↔ 외부 에이전트</b></td><td>임직원 ↔ 외부 AI 작업자(Claude Code · Codex) · 외부 조직 에이전트</td><td><span style="display:inline-block;min-width:64px;padding:1px 8px;border-radius:10px;background:#fde8e4;font-weight:700">없음</span></td><td><span style="display:inline-block;min-width:64px;padding:1px 8px;border-radius:10px;background:#fff3d6;font-weight:700">부분</span></td><td><span style="display:inline-block;min-width:64px;padding:1px 8px;border-radius:10px;background:#e3f1ea;font-weight:700">충족</span></td></tr>
+<tr><td>P5</td><td><b>외부 사람 ↔ 외부 사람</b></td><td>우리 공간에서 고객과 공급사 등 외부끼리</td><td><span style="display:inline-block;min-width:64px;padding:1px 8px;border-radius:10px;background:#fde8e4;font-weight:700">없음</span></td><td><span style="display:inline-block;min-width:64px;padding:1px 8px;border-radius:10px;background:#fde8e4;font-weight:700">없음</span></td><td><span style="display:inline-block;min-width:64px;padding:1px 8px;border-radius:10px;background:#e3f1ea;font-weight:700">충족</span></td></tr>
+<tr><td>P6</td><td><b>외부 사람 ↔ 내부 에이전트</b></td><td>고객 · 제안자 ↔ 우리 PA · 담당자 IA(대리 응대)</td><td><span style="display:inline-block;min-width:64px;padding:1px 8px;border-radius:10px;background:#fde8e4;font-weight:700">없음</span></td><td><span style="display:inline-block;min-width:64px;padding:1px 8px;border-radius:10px;background:#fde8e4;font-weight:700">없음</span></td><td><span style="display:inline-block;min-width:64px;padding:1px 8px;border-radius:10px;background:#e3f1ea;font-weight:700">충족</span></td></tr>
+<tr><td>P7</td><td><b>외부 사람 ↔ 외부 에이전트</b></td><td>외부 사람이 데려온 AI · 외부 AI 작업자와 외부 사람</td><td><span style="display:inline-block;min-width:64px;padding:1px 8px;border-radius:10px;background:#fde8e4;font-weight:700">없음</span></td><td><span style="display:inline-block;min-width:64px;padding:1px 8px;border-radius:10px;background:#fde8e4;font-weight:700">없음</span></td><td><span style="display:inline-block;min-width:64px;padding:1px 8px;border-radius:10px;background:#e3f1ea;font-weight:700">충족</span></td></tr>
+<tr><td>P8</td><td><b>내부 에이전트 ↔ 내부 에이전트</b></td><td>IA · PA · EA · VA · TA · TR 사이(A2A · 메시지 큐 · 협조) · IA↔IA 전달</td><td><span style="display:inline-block;min-width:64px;padding:1px 8px;border-radius:10px;background:#fff3d6;font-weight:700">부분</span></td><td><span style="display:inline-block;min-width:64px;padding:1px 8px;border-radius:10px;background:#fff3d6;font-weight:700">부분</span></td><td><span style="display:inline-block;min-width:64px;padding:1px 8px;border-radius:10px;background:#e3f1ea;font-weight:700">충족</span></td></tr>
+<tr><td>P9</td><td><b>내부 에이전트 ↔ 외부 에이전트</b></td><td>PA · TA ↔ 외부 AI 작업자 · 고객사 · 공급사 · 기관 에이전트 · 다른 테넌트</td><td><span style="display:inline-block;min-width:64px;padding:1px 8px;border-radius:10px;background:#fff3d6;font-weight:700">부분</span></td><td><span style="display:inline-block;min-width:64px;padding:1px 8px;border-radius:10px;background:#fff3d6;font-weight:700">부분</span></td><td><span style="display:inline-block;min-width:64px;padding:1px 8px;border-radius:10px;background:#e3f1ea;font-weight:700">충족</span></td></tr>
+<tr><td>P10</td><td><b>외부 에이전트 ↔ 외부 에이전트</b></td><td>Claude Code ↔ Codex, 고객사 에이전트 ↔ 외부 AI 작업자</td><td><span style="display:inline-block;min-width:64px;padding:1px 8px;border-radius:10px;background:#fde8e4;font-weight:700">없음</span></td><td><span style="display:inline-block;min-width:64px;padding:1px 8px;border-radius:10px;background:#eef2f7;font-weight:700">금지 · 중개</span></td><td><span style="display:inline-block;min-width:64px;padding:1px 8px;border-radius:10px;background:#eef2f7;font-weight:700">금지 · 중개</span></td></tr>
+</tbody></table>
+<div class="tw"><table class="t"><thead><tr><th>v1.2 기준</th><th>내부 사람</th><th>외부 사람</th><th>내부 에이전트</th><th>외부 에이전트</th></tr></thead><tbody><tr><th>내부 사람</th><td style="background:#fff3d6;text-align:center"><b>P1</b><br>부분</td><td style="background:#fde8e4;text-align:center"><b>P2</b><br>없음</td><td style="background:#e3f1ea;text-align:center"><b>P3</b><br>충족</td><td style="background:#fff3d6;text-align:center"><b>P4</b><br>부분</td></tr><tr><th>외부 사람</th><td style="background:#fafbfd"></td><td style="background:#fde8e4;text-align:center"><b>P5</b><br>없음</td><td style="background:#fde8e4;text-align:center"><b>P6</b><br>없음</td><td style="background:#fde8e4;text-align:center"><b>P7</b><br>없음</td></tr><tr><th>내부 에이전트</th><td style="background:#fafbfd"></td><td style="background:#fafbfd"></td><td style="background:#fff3d6;text-align:center"><b>P8</b><br>부분</td><td style="background:#fff3d6;text-align:center"><b>P9</b><br>부분</td></tr><tr><th>외부 에이전트</th><td style="background:#fafbfd"></td><td style="background:#fafbfd"></td><td style="background:#fafbfd"></td><td style="background:#eef2f7;text-align:center"><b>P10</b><br>금지 · 중개</td></tr></tbody></table></div>
+<p class="small">대각선 아래는 위와 같은 조합이다. 「금지 · 중개」는 빈 곳이 아니라 설계 판단이다 — 외부 에이전트끼리 우리 공간에서 직접 주고받지 않게 하고 PA · TA 가 가운데서 전달한다(P10).</p>
+<h2 id="s4">4. 조합별 검증</h2>
+<h3>P1. 내부 사람 ↔ 내부 사람 <span style="font-weight:400;font-size:13px">— 현행 부분 · v1.2 부분 · 보완 후 충족</span></h3>
+<table>
+<colgroup><col style="width:12%"><col style="width:88%"></colgroup>
+<thead><tr><th>구분</th><th>내용</th></tr></thead><tbody>
+<tr><td><b>있는 것</b></td><td>같은 프로젝트: 직책 · 보고 계통(5.5.1 · project_member) · 담당 배정 · 수행 역할(role_activation) · 승인 · 알림. v1.2: 프로젝트 대화 · 멘션 · 스레드 개입 · 맥락 버전</td></tr>
+<tr><td><b>빈 곳</b></td><td>① <b>다른 프로젝트 사람끼리</b> — 협조(mbcoop)는 PA 끼리의 요청이고, 두 프로젝트 구성원이 함께 보는 스레드가 없다(v1.0 의 COOP 스레드를 v1.1 에서 뺐다). 감사 PA ↔ 피감 담당, 홍보 · IR 요청도 같다 ② <b>1:1 · 소그룹</b> — 프로젝트 밖 대화는 외부 사내 메신저에 맡겼다(v1.2 D-1a). 요구는 「사람과 사람」이므로 MyBee 안의 1:1 면이 필요하다 ③ <b>IA 를 통한 부탁</b> — 「김 과장에게 이 자료 요청해 줘」가 상대 IA 로 가는 경로가 정의되지 않았다(의도 종류 「협조 · 통지」는 있으나 대상이 사람일 때의 전달 · 수락 규칙 없음)</td></tr>
+</tbody></table>
+<h3>P2. 내부 사람 ↔ 외부 사람 <span style="font-weight:400;font-size:13px">— 현행 없음 · v1.2 없음 · 보완 후 충족</span></h3>
+<table>
+<colgroup><col style="width:12%"><col style="width:88%"></colgroup>
+<thead><tr><th>구분</th><th>내용</th></tr></thead><tbody>
+<tr><td><b>있는 것</b></td><td>대외 채널 수신 정리(mbcomm.inbound_email · inbound_call · inbound_message — 임직원 IA 가 요약) · 대외 발신 사전 승인(outbound_message.requires_approval) · AI 고지(18.4.5 · channel.ai_disclosure_text) · 외부 제안 포털(D19 — external_party · user_account EXTERNAL · 비밀유지 동의 proposal_agreement) · 외부감사인 원장</td></tr>
+<tr><td><b>빈 곳</b></td><td>고객 · 공급사 담당자는 <b>계정 자체가 없다</b>(mbcore.party). 외부 계정은 제안 포털 권한만 가진다. 임직원과 외부 사람이 <b>같은 스레드 · 같은 문서</b>를 보는 면, 초대 · 기한 · 비밀유지 · 열람 범위, 이메일로 답해도 스레드에 쌓이는 연결, 외부 사람에게 가는 게시의 반출 검사(v1.2 반출 관문은 외부 AI 로 가는 것만 본다)가 모두 없다</td></tr>
+</tbody></table>
+<h3>P3. 내부 사람 ↔ 내부 에이전트 <span style="font-weight:400;font-size:13px">— 현행 부분 · v1.2 충족 · 보완 후 충족</span></h3>
+<table>
+<colgroup><col style="width:12%"><col style="width:88%"></colgroup>
+<thead><tr><th>구분</th><th>내용</th></tr></thead><tbody>
+<tr><td><b>있는 것</b></td><td>IA 1:1(6.2 · 6.3) · v1.2: PA · EA 게시(6.1.1 개정 전제) · 멘션 → 발화자 IA 해석 · 개입 · 승인 카드 · 대화 기록 · 맥락 버전</td></tr>
+<tr><td><b>빈 곳</b></td><td>v1.2 로 충족. 단 6.1.1 「PA 는 사람에게 직접 말하지 않는다」 개정(v1.2 D-1)이 전제다</td></tr>
+</tbody></table>
+<h3>P4. 내부 사람 ↔ 외부 에이전트 <span style="font-weight:400;font-size:13px">— 현행 없음 · v1.2 부분 · 보완 후 충족</span></h3>
+<table>
+<colgroup><col style="width:12%"><col style="width:88%"></colgroup>
+<thead><tr><th>구분</th><th>내용</th></tr></thead><tbody>
+<tr><td><b>있는 것</b></td><td>v1.2: IA 지휘로 외부 AI 작업자에게 작성 · 검증을 맡김 · 외부 AI 대화 참여자(F-12) · 작성자 ≠ 검증자 · 샌드박스 · 반출 통제</td></tr>
+<tr><td><b>빈 곳</b></td><td><b>외부 조직의 에이전트</b>(고객사 구매 에이전트 · 공급사 납기 에이전트 · 기관 에이전트)와 임직원이 대화하거나 그 제안을 검토하는 면이 없다 — 7.4 는 「구조를 갖추는 것까지」이고 표도 없다</td></tr>
+</tbody></table>
+<h3>P5. 외부 사람 ↔ 외부 사람 <span style="font-weight:400;font-size:13px">— 현행 없음 · v1.2 없음 · 보완 후 충족</span></h3>
+<table>
+<colgroup><col style="width:12%"><col style="width:88%"></colgroup>
+<thead><tr><th>구분</th><th>내용</th></tr></thead><tbody>
+<tr><td><b>있는 것</b></td><td>없음</td></tr>
+<tr><td><b>빈 곳</b></td><td>고객과 공급사를 한 스레드에 두는 3자 협업(예: 고객 요구 · 공급사 사양 조율, 공동 개발) — 기본은 금지가 맞지만 「허락된」 경우를 받을 틀(명시 승인 · 양측 비밀유지 · 상호 열람 격리 · 양방향 반출 검사)이 없다</td></tr>
+</tbody></table>
+<h3>P6. 외부 사람 ↔ 내부 에이전트 <span style="font-weight:400;font-size:13px">— 현행 없음 · v1.2 없음 · 보완 후 충족</span></h3>
+<table>
+<colgroup><col style="width:12%"><col style="width:88%"></colgroup>
+<thead><tr><th>구분</th><th>내용</th></tr></thead><tbody>
+<tr><td><b>있는 것</b></td><td>대외 발신 승인 · AI 고지 · 외부 입력은 데이터로만(8.5 · 7.4.5)</td></tr>
+<tr><td><b>빈 곳</b></td><td>외부 사람은 IA 가 없다(IA 는 임직원 1인 1개). 외부 사람의 말을 <b>누가 해석하고 누구 권한으로 처리하는지</b>(담당 임직원 IA 의 대리 응대인가, 프로젝트 PA 인가), 외부 사람 발화의 과업화 금지(요청 → 담당자 확인), 합의 · 약정처럼 들리는 우리 에이전트 발화의 사람 승인(7.4.6 은 에이전트 상대만 규정)이 없다</td></tr>
+</tbody></table>
+<h3>P7. 외부 사람 ↔ 외부 에이전트 <span style="font-weight:400;font-size:13px">— 현행 없음 · v1.2 없음 · 보완 후 충족</span></h3>
+<table>
+<colgroup><col style="width:12%"><col style="width:88%"></colgroup>
+<thead><tr><th>구분</th><th>내용</th></tr></thead><tbody>
+<tr><td><b>있는 것</b></td><td>없음</td></tr>
+<tr><td><b>빈 곳</b></td><td>외부 사람이 자기 AI 를 데려오는 경우(상대 회사의 요약 봇 · 번역 봇)와, 외부 사람이 우리 외부 AI 작업자의 결과를 보는 경우의 소유 · 허락 · 반출 규칙이 없다</td></tr>
+</tbody></table>
+<h3>P8. 내부 에이전트 ↔ 내부 에이전트 <span style="font-weight:400;font-size:13px">— 현행 부분 · v1.2 부분 · 보완 후 충족</span></h3>
+<table>
+<colgroup><col style="width:12%"><col style="width:88%"></colgroup>
+<thead><tr><th>구분</th><th>내용</th></tr></thead><tbody>
+<tr><td><b>있는 것</b></td><td>A2A 과업 · 메시지 · 서명(7.1) · 메시지 큐 · outbox · 데드레터 · 사가(7.2) · 협조와 블랙리스트(7.3) · 착수 순서 TR → VA → PA(6.11) · 능력 토큰(8.3) · v1.2 미러(F-7) · 연쇄 상한</td></tr>
+<tr><td><b>빈 곳</b></td><td><b>IA ↔ IA</b> — 사람 사이 부탁 · 일정 조율 · 자료 요청을 두 사람의 IA 가 주고받는 규칙(상대 IA 는 상대 권한으로만 해석, 상대가 수락하기 전에는 과업이 아니다)이 없다. IA 간 해석 불일치율 지표만 있다</td></tr>
+</tbody></table>
+<h3>P9. 내부 에이전트 ↔ 외부 에이전트 <span style="font-weight:400;font-size:13px">— 현행 부분 · v1.2 부분 · 보완 후 충족</span></h3>
+<table>
+<colgroup><col style="width:12%"><col style="width:88%"></colgroup>
+<thead><tr><th>구분</th><th>내용</th></tr></thead><tbody>
+<tr><td><b>있는 것</b></td><td>7.4 원칙(관문 · 신뢰 도메인 분리 · 카드 서명 검증 · 데이터 취급 · 합의성 교신 사람 승인) · v1.2: 외부 AI 작업자 등록부 · CN-41 · 반출 관문 · 반출 기록</td></tr>
+<tr><td><b>빈 곳</b></td><td><b>외부 조직 에이전트 등록부 · 신뢰 도메인 · 관문 기록</b> 표가 없다(mbagent.agent 는 6종 내부만). 허용 업무 · 방향(우리가 부르는가 · 그쪽이 부르는가) · 합의성 교신 판정 · <b>다른 테넌트</b>(같은 MyBee 를 쓰는 고객사 · 공급사) 사이의 교신 — RLS 로 격리되어 있어 연합 경로가 없다(H.6 기본 격리)</td></tr>
+</tbody></table>
+<h3>P10. 외부 에이전트 ↔ 외부 에이전트 <span style="font-weight:400;font-size:13px">— 현행 없음 · v1.2 금지 · 중개 · 보완 후 금지 · 중개</span></h3>
+<table>
+<colgroup><col style="width:12%"><col style="width:88%"></colgroup>
+<thead><tr><th>구분</th><th>내용</th></tr></thead><tbody>
+<tr><td><b>있는 것</b></td><td>v1.2: 작업자끼리 직접 교신하지 않고 PA 가 검토 의견을 데이터로 넘긴다(수정 루프)</td></tr>
+<tr><td><b>빈 곳</b></td><td>빈 곳이 아니라 <b>의도적 금지</b>로 둔다 — 외부 에이전트끼리 우리 공간에서 직접 주고받으면 반출 · 주입 · 책임이 흐려진다. 필요한 전달은 PA · TA 가 중개하고 기록한다(규칙으로 명시 필요 — R39-33)</td></tr>
+</tbody></table>
+<h2 id="s5">5. 능력별 가로 검증 (v1.2 기준)</h2>
+<table>
+<colgroup><col style="width:14%"><col style="width:9%"><col style="width:9%"><col style="width:9%"><col style="width:9%"><col style="width:50%"></colgroup>
+<thead><tr><th>능력</th><th>내부 사람끼리</th><th>외부 사람이 낌</th><th>내부 에이전트</th><th>외부 에이전트</th><th>빈 곳</th></tr></thead><tbody>
+<tr><td><b>C1 신원 · 인증</b></td><td><b style="color:#1f6b47">충족</b></td><td><b style="color:#9c2b20">없음</b></td><td><b style="color:#1f6b47">충족</b></td><td><b style="color:#8a5a12">부분</b></td><td>외부 사람 계정은 제안 포털 전용 — 거래처 담당자 · 초대 게스트의 신원 확인(메일 도메인 · 본인 확인) · 인증 강도가 없다. 외부 조직 에이전트는 카드 서명 검증 원칙만</td></tr>
+<tr><td><b>C2 허락</b></td><td><b style="color:#8a5a12">부분</b></td><td><b style="color:#9c2b20">없음</b></td><td><b style="color:#8a5a12">부분</b></td><td><b style="color:#8a5a12">부분</b></td><td>허락이 네 군데에 흩어져 있다 — 프로젝트 참여 · 협조 블랙리스트(에이전트) · 외부 참여자 서명(v1.2) · 반출 허용표(v1.2). 주체 유형 × 행위 × 등급으로 한 번에 판정하는 정책이 없다</td></tr>
+<tr><td><b>C3 1:1 대화</b></td><td><b style="color:#8a5a12">부분</b></td><td><b style="color:#9c2b20">없음</b></td><td><b style="color:#1f6b47">충족</b></td><td><b style="color:#8a5a12">부분</b></td><td>사람↔사람 1:1 은 MyBee 밖(외부 메신저), 외부 사람과는 이메일 · 전화 요약뿐</td></tr>
+<tr><td><b>C4 여럿이 한 자리</b></td><td><b style="color:#8a5a12">부분</b></td><td><b style="color:#9c2b20">없음</b></td><td><b style="color:#1f6b47">충족</b></td><td><b style="color:#8a5a12">부분</b></td><td>프로젝트 대화(v1.2)는 같은 프로젝트 구성원 + 에이전트만. 여러 프로젝트 · 외부 게스트 · 외부 조직 에이전트가 함께 있는 스레드가 없다</td></tr>
+<tr><td><b>C5 요청 · 지시 · 위임</b></td><td><b style="color:#1f6b47">충족</b></td><td><b style="color:#8a5a12">부분</b></td><td><b style="color:#1f6b47">충족</b></td><td><b style="color:#1f6b47">충족</b></td><td>외부 사람의 말을 과업으로 만들지 않고 「요청 → 담당자 확인」으로 바꾸는 규칙이 없다. IA↔IA 부탁의 수락 규칙 없음</td></tr>
+<tr><td><b>C6 검토 · 승인 · 의견</b></td><td><b style="color:#1f6b47">충족</b></td><td><b style="color:#9c2b20">없음</b></td><td><b style="color:#1f6b47">충족</b></td><td><b style="color:#8a5a12">부분</b></td><td>외부 사람의 검토 · 확인(예: 고객 사양 확인 · 공급사 도면 승인)을 스레드에서 받는 면 없음</td></tr>
+<tr><td><b>C7 자료 · 공동 문서</b></td><td><b style="color:#1f6b47">충족</b></td><td><b style="color:#9c2b20">없음</b></td><td><b style="color:#1f6b47">충족</b></td><td><b style="color:#8a5a12">부분</b></td><td>v1.2 캔버스는 프로젝트 안. 외부 게스트와 공유 · 공동 편집 · 워터마크 · 기한 만료가 없다</td></tr>
+<tr><td><b>C8 맥락 기록 · 이어 가기</b></td><td><b style="color:#1f6b47">충족</b></td><td><b style="color:#8a5a12">부분</b></td><td><b style="color:#1f6b47">충족</b></td><td><b style="color:#8a5a12">부분</b></td><td>외부와의 이메일 · 전화는 요약만 있고 스레드 맥락에 이어지지 않는다(연결 없음)</td></tr>
+<tr><td><b>C9 보안 경계</b></td><td><b style="color:#1f6b47">충족</b></td><td><b style="color:#8a5a12">부분</b></td><td><b style="color:#1f6b47">충족</b></td><td><b style="color:#8a5a12">부분</b></td><td>v1.2 반출 관문은 외부 AI 로 가는 호출만 본다. <b>외부 사람에게 가는 게시 · 메일 · 파일</b>도 같은 관문을 지나야 한다. 합의성 발화 사람 승인은 에이전트 상대(7.4.6)만</td></tr>
+<tr><td><b>C10 기록 · 감사 · AI 고지</b></td><td><b style="color:#1f6b47">충족</b></td><td><b style="color:#8a5a12">부분</b></td><td><b style="color:#1f6b47">충족</b></td><td><b style="color:#8a5a12">부분</b></td><td>AI 고지(18.4.5)는 있으나 외부 게스트 스레드 · 외부 조직 에이전트 교신의 기록 표가 없다</td></tr>
+</tbody></table>
+<h2 id="s6">6. 보완안</h2>
+<table>
+<colgroup><col style="width:6%"><col style="width:18%"><col style="width:60%"><col style="width:16%"></colgroup>
+<thead><tr><th>#</th><th>보완</th><th>설계 요지</th><th>메우는 조합</th></tr></thead><tbody>
+<tr><td>V-01</td><td><b>협업 허용 정책(허락 매트릭스)</b></td><td>〈주체 유형 · 소속(테넌트 · 조직 · 프로젝트)〉 × 〈상대 유형 · 소속〉 × 〈행위: 대화 · 요청 · 검토 · 자료 공유 · 공동 편집〉 × 〈자료 등급〉 → 허용 · 승인 필요 · 금지. 판정 기준 버전으로 게시하고 모든 초대 · 게시 · 요청 · 전달이 한 판정 함수를 지난다. 협조 블랙리스트 · 외부 참여자 범위 · 반출 허용표는 이 정책의 부분으로 흡수</td><td>전부(C2)</td></tr>
+<tr><td>V-02</td><td><b>교차 프로젝트 스레드</b></td><td>thread_kind COOP — 협조 요청(mbcoop) · 감사 기동 · 홍보 · IR 이벤트 · 선후(CROSS) 하나에 스레드 하나. 구성원 = 양쪽 프로젝트의 관련 담당 · PM + 양쪽 PA. 열람은 두 프로젝트 권한의 교집합</td><td>P1 · P8</td></tr>
+<tr><td>V-03</td><td><b>1:1 · 소그룹 대화(DIRECT)</b></td><td>프로젝트 밖 1:1 · 소그룹 스레드. 대화 · 자료 공유는 되지만 <b>과업은 만들지 않는다</b> — 일이 되려면 IA 가 「어느 프로젝트로 할까요」를 묻고 프로젝트 스레드로 옮긴다(5.1.3 유지). 사내 메신저 연동은 선택</td><td>P1</td></tr>
+<tr><td>V-04</td><td><b>IA ↔ IA 전달 규칙</b></td><td>「○○에게 요청해 줘」 → 내 IA 가 요청 카드를 만들어 상대 IA 로 보낸다. 상대 IA 는 <b>상대 권한</b>으로 해석하고, 상대가 수락해야 과업이 된다(거절 · 조건부 수락 · 다른 사람 추천). 일정 조율 · 자료 요청처럼 가벼운 것은 수락 없이 알림만. 보고 계통(5.5.1)상 지시면 수락 대신 확인</td><td>P1 · P8</td></tr>
+<tr><td>V-05</td><td><b>외부 게스트 구성원</b></td><td>고객 · 공급사 담당자 · 제안자 · 용역 · 외부감사인을 <b>지정 스레드에만</b> 초대. 초대는 담당 임직원 + PM 승인 · 기한 필수 · 비밀유지 동의(proposal_agreement 재사용) · 신원 확인(메일 도메인 · 본인 확인) · 인증 강도. 외부 계정(user_account EXTERNAL)을 제안 포털 전용에서 「게스트」로 넓히고 거래처(mbcore.party) 담당자와 잇는다. 게스트는 스레드 밖 아무것도 못 본다</td><td>P2 · P5 · P6 · P7</td></tr>
+<tr><td>V-06</td><td><b>외부 사람 발화 처리</b></td><td>외부 사람은 IA 가 없으므로 그 말은 <b>담당 임직원의 IA</b> 가 대리 해석한다(on_behalf_of = 담당 임직원, 원문 발화자 = 외부 사람). 외부 발화는 언제나 UNTRUSTED · 외부 유입(6.2.8 ④) — 과업이 아니라 <b>요청 카드</b>로 담당자 확인. 우리 에이전트가 외부 사람에게 쓰는 게시는 AI 고지 · 대외 발신 규칙 · 합의성 문구(가격 · 납기 · 계약 조건 확약) 사람 승인</td><td>P2 · P6</td></tr>
+<tr><td>V-07</td><td><b>메일 협업 · 채널 연결</b></td><td>외부 사람이 <b>계정 없이 메일만으로</b> 스레드에 참여한다 — 스레드 전용 회신 주소 · 발신자 확인 · 새 글만 게시 · 메일 발신 반출 관문 · 확정은 확인 링크(상세 6-1, M-1 ~ M-12). 메신저 · 전화(요약)도 같은 방식으로 스레드에 잇는다. 수신 원장(mbcomm.inbound_*)은 그대로 두고 게시가 가리킨다</td><td>P2 · P5 · P6 · P7</td></tr>
+<tr><td>V-08</td><td><b>반출 관문을 사람 상대로도</b></td><td>v1.2 TA 반출 관문을 외부 AI 뿐 아니라 <b>외부 사람 · 외부 조직 에이전트 · 다른 테넌트</b>로 가는 모든 게시 · 파일 · 메일에 적용. 게스트별 최대 등급(external_intake_policy.confidentiality_max 와 같은 발상) · 파일 워터마크 · 열람 기한</td><td>P2 · P5 · P6 · P7 · P9</td></tr>
+<tr><td>V-09</td><td><b>외부 에이전트 등록부 통합</b></td><td>분석서 v1.2 의 external_ai_worker 를 <b>external_agent</b>로 넓힌다 — kind(WORKER 외부 AI 작업자 · PARTICIPANT 대화 참여 AI · ORG_AGENT 외부 조직 에이전트 · TENANT_AGENT 다른 테넌트 에이전트) · 소속 조직 · 신뢰 도메인 · 카드 서명 검증 결과 · 허용 업무 · 방향(IN/OUT/BOTH) · 소유자(사람)</td><td>P4 · P7 · P9</td></tr>
+<tr><td>V-10</td><td><b>A2A 관문 기록</b></td><td>7.4 의 「지정된 관문」을 표로 — 외부 에이전트와의 교신마다 방향 · 상대 · 과업 · 신뢰 판정 · 반출 판정 · 합의성 판정(7.4.6) · 사람 승인. 외부 조직 에이전트의 요청(견적 · 납기 문의)은 PA 과업이 아니라 요청 카드로 들어와 담당자가 받는다</td><td>P4 · P9</td></tr>
+<tr><td>V-11</td><td><b>테넌트 간 연합</b></td><td>같은 MyBee 를 쓰는 두 회사(고객사 ↔ 공급사)는 서로 <b>외부</b>다 — RLS 격리를 풀지 않고 양쪽 관문끼리 A2A 로 교신하고, 공유 스레드는 한쪽 테넌트에 두고 상대를 게스트 · 외부 에이전트로 초대한다(H.6 기본 격리 유지)</td><td>P9</td></tr>
+<tr><td>V-12</td><td><b>외부끼리 한 자리(3자 협업)</b></td><td>외부 사람끼리 같은 스레드는 기본 금지, 허용 정책(V-01)의 「승인 필요」로만 — PM 승인 · 양측 비밀유지 · 상대 회사 자료가 서로에게 보이지 않게 게시 단위 열람 범위 · 양방향 반출 관문</td><td>P5 · P7</td></tr>
+<tr><td>V-13</td><td><b>외부 에이전트끼리 직접 교신 금지 명시</b></td><td>외부 에이전트끼리의 전달은 PA · TA 가 중개하고 데이터로 넘긴다(작업자 수정 루프와 같음). 외부 사람이 데려온 AI 는 그 사람의 게스트 권한 안에서 PARTICIPANT 로만</td><td>P7 · P10</td></tr>
+</tbody></table>
+<h2 id="s6m">6-1. 메일로 협업하기 — 외부 사람은 계정 없이도</h2>
+<p><b>요구.</b> 「외부 사람과는 메일을 통해서도 협업할 수 있도록 해야 된다.」 고객 · 공급사 담당자 대부분은 MyBee 계정을 만들지 않는다. 그들에게 스레드는 <b>메일 대화</b>로 보여야 하고, 그들이 메일로 답하면 그 답이 <b>같은 스레드에 게시로 쌓여</b> 임직원 · 에이전트가 이어서 일할 수 있어야 한다. 메일은 위조 · 전달 · 참조(CC) 추가가 쉬우므로 통제도 메일에 맞게 다시 건다.</p>
+<table>
+<colgroup><col style="width:46%"><col style="width:28%"><col style="width:26%"></colgroup>
+<thead><tr><th>현행에 있는 것</th><th>어디</th><th>쓰임</th></tr></thead><tbody>
+<tr><td>수신 메일 원장 — 발신 · 수신 · 참조 주소 · 제목 · 첨부 유무 · 스팸 점수 · <b>주입 검사</b> · 연관 프로젝트 · 증빙 연결</td><td>mbcomm.inbound_email</td><td>메일 → 스레드 게시의 원본</td></tr>
+<tr><td>발신 원장 — 대리 발신 대상 · <b>발신 전 사람 승인(대외 발신 기본 true)</b> · 전달 상태</td><td>mbcomm.outbound_message</td><td>스레드 → 메일 발신의 원장</td></tr>
+<tr><td>메일 발송 커넥터(TA 전용 · 중복 실행 방지 키 필수)</td><td>CN-08</td><td>발신 통로 — 반출 관문을 여기에 건다</td></tr>
+<tr><td>외부 유입 내용 표시 · 오염 과업</td><td>지시문 8.5.1</td><td>메일로 온 글 · 첨부는 언제나 UNTRUSTED</td></tr>
+<tr><td>AI 고지 문구</td><td>18.4.5 · mbcomm.channel.ai_disclosure_text</td><td>에이전트가 쓴 메일에 붙인다</td></tr>
+<tr><td>전자문서 · 전자계약 · 전자서명 커넥터</td><td>CN-07</td><td>메일 회신으로 확정할 수 없는 확인의 통로</td></tr>
+</tbody></table>
+<figure><svg viewBox="0 0 980 300" width="100%" role="img" aria-label="메일 협업 흐름">
+<defs><marker id="am" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#33475f"/></marker></defs>
+<g font-size="12" fill="#16181d">
+<rect x="20" y="40" width="280" height="100" rx="8" fill="#fff" stroke="#8aa3c4"/>
+<text x="160" y="62" text-anchor="middle" font-weight="700">외부 사람(계정 없음)</text>
+<text x="32" y="84">평소 쓰는 메일 프로그램으로</text>
+<text x="32" y="104">읽고 · 답하고 · 파일을 보낸다</text>
+<text x="32" y="124">회신 주소 = 스레드 전용 주소</text>
+<rect x="20" y="170" width="280" height="110" rx="8" fill="#fde8e4" stroke="#9c2b20"/>
+<text x="160" y="192" text-anchor="middle" font-weight="700">메일만으로는 안 되는 것</text>
+<text x="32" y="214">사양 · 가격 · 납기 · 계약 · 검수 확정</text>
+<text x="32" y="234">→ 확인 링크(일회용 · 본인 확인)</text>
+<text x="32" y="254">   또는 전자서명(CN-07)</text>
+<text x="32" y="274">공동 편집 → 게스트 포털(선택)</text>
+<rect x="340" y="40" width="300" height="100" rx="8" fill="#eef2f7" stroke="#33475f"/>
+<text x="490" y="62" text-anchor="middle" font-weight="700">발신 — 스레드 → 메일(CN-08)</text>
+<text x="352" y="84">① 게스트가 볼 수 있는 게시만</text>
+<text x="352" y="104">② 반출 관문 · 첨부는 만료 링크</text>
+<text x="352" y="124">③ 에이전트 글은 승인 · AI 고지</text>
+<rect x="340" y="170" width="300" height="110" rx="8" fill="#fff3d6" stroke="#8a5a12"/>
+<text x="490" y="192" text-anchor="middle" font-weight="700">수신 — 메일 → 스레드</text>
+<text x="352" y="214">① 회신 주소 토큰 · 헤더로 스레드 찾기</text>
+<text x="352" y="234">② 발신자 인증(SPF · DKIM · DMARC) · 초대 주소?</text>
+<text x="352" y="254">③ 인용 이력 잘라 새 글만 · 주입 · 첨부 검사</text>
+<text x="352" y="274">④ 못 맞추면 게시하지 않고 담당자 보류함</text>
+<rect x="680" y="20" width="280" height="260" rx="10" fill="#fff" stroke="#2e7d5b" stroke-width="1.6"/>
+<text x="820" y="44" text-anchor="middle" font-weight="700">프로젝트 스레드(게스트 포함)</text>
+<text x="692" y="70">PM: 「사양 3.2 변경안 첨부합니다」</text>
+<text x="692" y="92" fill="#553a86">PA: 변경 영향 요약 게시</text>
+<text x="692" y="114" fill="#8a5a12">고객(메일 회신): 「B안으로 가능」</text>
+<text x="692" y="136" fill="#5a6b80">→ 담당 IA 대리 해석 · 요청 카드</text>
+<text x="692" y="158">담당자: 요청 카드 확인</text>
+<text x="692" y="180" fill="#8a5a12">▣ 확정 확인 링크(고객에게)</text>
+<text x="692" y="202">고객: 본인 확인 후 확정</text>
+<text x="692" y="224" fill="#5a6b80">원본 메일 · 첨부 · 판정 모두 보관</text>
+<text x="692" y="262" fill="#1f6b47">임직원 · 에이전트는 여기서 이어 간다</text>
+</g>
+<g stroke="#33475f" stroke-width="1.6" fill="none" marker-end="url(#am)">
+<path d="M678,90 L642,90"/><path d="M338,90 L302,90"/><path d="M300,120 L320,120 L320,225 L338,225"/><path d="M640,225 L678,225"/></g>
+</svg><figcaption>그림 1. 스레드의 글은 발신 통로를 지나 메일로 나가고, 외부 사람의 회신은 수신 통로를 지나 같은 스레드로 돌아온다. 나가는 메일은 반출 관문을, 들어오는 메일은 스레드 대조 · 발신자 인증 · 주입 검사를 지난다. 되돌릴 수 없는 확정은 메일 회신이 아니라 확인 링크 · 전자서명으로 받는다.</figcaption></figure>
+<h3>6-1.1 메일 협업 기능</h3>
+<table>
+<colgroup><col style="width:6%"><col style="width:20%"><col style="width:74%"></colgroup>
+<thead><tr><th>#</th><th>기능</th><th>설계 요지</th></tr></thead><tbody>
+<tr><td>M-1</td><td><b>메일 게스트</b></td><td>외부 게스트(V-05)의 참여 방식을 <b>메일만 · 포털만 · 둘 다</b>로 둔다. 메일 게스트는 계정 없이 초대된 주소로 참여한다 — 초대 승인 · 기한 · 비밀유지 동의(첫 메일의 동의 링크) · 최대 등급은 V-05 와 같다</td></tr>
+<tr><td>M-2</td><td><b>스레드 전용 회신 주소</b></td><td>게스트마다 · 스레드마다 추측할 수 없는 토큰이 든 회신 주소(예: 토큰@협업 전용 도메인)를 준다. 기한 · 폐기 가능. 메일 헤더(Message-ID · In-Reply-To · References)와 제목 표지 [프로젝트 · 스레드 번호]를 함께 달아 회신을 스레드에 맞춘다</td></tr>
+<tr><td>M-3</td><td><b>수신 대조 순서</b></td><td>① 회신 주소 토큰 ② In-Reply-To · References ③ 제목 표지 + 발신 주소. 셋 다 실패하면 <b>추정해서 게시하지 않고</b> 받는 임직원의 보류함으로 — IA 가 「어느 스레드에 붙일까요 · 새 스레드로 할까요」를 제안하고 사람이 고른다</td></tr>
+<tr><td>M-4</td><td><b>발신자 확인</b></td><td>SPF · DKIM · DMARC 결과를 남기고, 발신 주소가 그 스레드에 초대된 게스트 주소인지 대조한다. 인증 실패 · 초대되지 않은 주소(전달 · 대리 발송 · 새 사람)는 게시하지 않고 담당자 확인 — 확인되면 게스트 추가 승인 절차로</td></tr>
+<tr><td>M-5</td><td><b>새 글만 게시 · 원본 보관</b></td><td>인용된 이전 대화 · 서명란을 잘라 새 본문만 게시하고, 원본 메일(.eml)과 해시는 그대로 보관(증빙 — inbound_email.evidence_id). 게시는 author_kind=GUEST · trust_level=UNTRUSTED</td></tr>
+<tr><td>M-6</td><td><b>외부 메일 글의 처리</b></td><td>담당 임직원 IA 가 대리 해석(V-06) — 과업이 아니라 요청 카드. 「B안으로 가능」 같은 답은 「고객 의견」으로 스레드 맥락 버전에 남고, 확정은 M-9 로</td></tr>
+<tr><td>M-7</td><td><b>첨부 받기</b></td><td>악성코드 검사 · 형식 확인 · 크기 제한 뒤 파일 파트로 게시. 외부 유입 자료로 표시하고 등급은 받는 쪽이 매긴다(고객 제공 자료 표지 — 반출 허용표의 특수 표지). 첨부 속 문구도 주입 검사</td></tr>
+<tr><td>M-8</td><td><b>메일로 보내기</b></td><td>게스트 열람 범위에 든 게시만 메일로 나간다. 모든 발신은 CN-08 한 통로 · 반출 관문(V-08). 사람이 쓴 글은 본인 이름으로, 에이전트가 쓴 글은 「누구를 대리 · AI 작성」 고지와 대외 발신 승인(outbound_message.requires_approval). 파일은 기본 <b>만료 링크</b>(열람 기록 · 회수 · 워터마크) — 낮은 등급 · 작은 파일만 직접 첨부</td></tr>
+<tr><td>M-9</td><td><b>메일로 확정하지 않는 것</b></td><td>사양 · 가격 · 납기 · 계약 조건 · 검수 합격 · 대금처럼 되돌리기 어렵거나 책임이 생기는 확인은 메일 회신으로 확정하지 않는다 — 스레드에서 <b>확인 링크</b>(일회용 · 기한 · 메일 OTP 본인 확인 · 확인 내용 스냅숏)를 보내 받거나, 계약성이면 전자서명(CN-07). 일정 확인 · 수령 확인 같은 가벼운 것은 회신으로 충분(정책 데이터)</td></tr>
+<tr><td>M-10</td><td><b>참조(CC) · 전달</b></td><td>회신에 초대되지 않은 외부 주소가 참조로 들어오면 우리 쪽 다음 메일은 그 주소를 빼고 보내고 담당자에게 알린다. 다른 회사 사람이 같이 참조되면 3자 협업(V-12 — 승인 필요). 우리 메일이 전달되어 제3자가 회신하면 M-4 로 보류</td></tr>
+<tr><td>M-11</td><td><b>기존 업무 메일도 잇기</b></td><td>스레드 없이 들어온 업무 메일(inbound_email)은 IA 가 요약할 때 연관 스레드를 제안한다. 임직원이 자기 회사 메일로 외부와 주고받은 대화도 협업 수집 주소를 참조로 넣거나 메일 서버 연동으로 스레드에 잇는다 — 메일함에 흩어진 협업을 줄인다</td></tr>
+<tr><td>M-12</td><td><b>맥락 · 기록 · 알림</b></td><td>메일로 오간 것도 같은 스레드 · 같은 맥락 버전(F-13)에 쌓인다. 반송 · 미전달은 outbound_message.delivery_status 로 스레드에 표시. 게스트가 메일로 받는 빈도(즉시 · 하루 묶음)는 게스트가 고른다</td></tr>
+</tbody></table>
+<h3>6-1.2 메일 협업의 능력 검증</h3>
+<table>
+<colgroup><col style="width:18%"><col style="width:14%"><col style="width:68%"></colgroup>
+<thead><tr><th>능력</th><th>메일로</th><th>조건</th></tr></thead><tbody>
+<tr><td>C1 신원 · 인증</td><td><b style="color:#1f6b47">충족</b></td><td>초대 주소 대조 + SPF · DKIM · DMARC. 확정은 확인 링크의 메일 OTP · 전자서명으로 강도를 높인다</td></tr>
+<tr><td>C2 허락</td><td><b style="color:#1f6b47">충족</b></td><td>게스트 초대 승인 · 기한 · 최대 등급 · 협업 허용 정책(V-01)</td></tr>
+<tr><td>C3 1:1 대화</td><td><b style="color:#1f6b47">충족</b></td><td>게스트 1명 스레드</td></tr>
+<tr><td>C4 여럿이 한 자리</td><td><b style="color:#1f6b47">충족</b></td><td>한 스레드의 게스트 여럿 · 임직원 · 에이전트. 다른 회사끼리는 V-12 승인</td></tr>
+<tr><td>C5 요청</td><td><b style="color:#1f6b47">충족</b></td><td>외부 메일 → 요청 카드(과업 직행 금지)</td></tr>
+<tr><td>C6 검토 · 승인</td><td><b style="color:#8a5a12">부분</b> → <b style="color:#1f6b47">충족</b></td><td>의견 · 가벼운 확인은 회신, 확정은 확인 링크 · 전자서명(M-9)</td></tr>
+<tr><td>C7 자료</td><td><b style="color:#1f6b47">충족</b></td><td>받는 첨부는 검사 · 표지, 보내는 파일은 만료 링크. <b>공동 편집은 메일로 불가</b> — 필요하면 게스트 포털</td></tr>
+<tr><td>C8 맥락</td><td><b style="color:#1f6b47">충족</b></td><td>원본 보관 + 새 글만 게시 + 맥락 버전</td></tr>
+<tr><td>C9 보안 경계</td><td><b style="color:#1f6b47">충족</b></td><td>위조 · 전달 · 참조 추가 · 주입 · 첨부 악성코드 · 반출 — M-3 · 4 · 7 · 8 · 10</td></tr>
+<tr><td>C10 기록 · AI 고지</td><td><b style="color:#1f6b47">충족</b></td><td>원본 메일 해시 · 수발신 원장 · 에이전트 메일 AI 고지</td></tr>
+</tbody></table>
+<h2 id="s7">7. 보완 후 판정</h2>
+<table>
+<colgroup><col style="width:6%"><col style="width:26%"><col style="width:12%"><col style="width:12%"><col style="width:44%"></colgroup>
+<thead><tr><th>#</th><th>조합</th><th>v1.2</th><th>보완 후</th><th>무엇으로</th></tr></thead><tbody>
+<tr><td>P1</td><td>내부 사람 ↔ 내부 사람</td><td><span style="display:inline-block;min-width:64px;padding:1px 8px;border-radius:10px;background:#fff3d6;font-weight:700">부분</span></td><td><span style="display:inline-block;min-width:64px;padding:1px 8px;border-radius:10px;background:#e3f1ea;font-weight:700">충족</span></td><td>V-01 · 02 · 03 · 04</td></tr>
+<tr><td>P2</td><td>내부 사람 ↔ 외부 사람</td><td><span style="display:inline-block;min-width:64px;padding:1px 8px;border-radius:10px;background:#fde8e4;font-weight:700">없음</span></td><td><span style="display:inline-block;min-width:64px;padding:1px 8px;border-radius:10px;background:#e3f1ea;font-weight:700">충족</span></td><td>V-01 · 05 · 06 · 07(메일 협업 6-1) · 08</td></tr>
+<tr><td>P3</td><td>내부 사람 ↔ 내부 에이전트</td><td><span style="display:inline-block;min-width:64px;padding:1px 8px;border-radius:10px;background:#e3f1ea;font-weight:700">충족</span></td><td><span style="display:inline-block;min-width:64px;padding:1px 8px;border-radius:10px;background:#e3f1ea;font-weight:700">충족</span></td><td>(v1.2) · V-01</td></tr>
+<tr><td>P4</td><td>내부 사람 ↔ 외부 에이전트</td><td><span style="display:inline-block;min-width:64px;padding:1px 8px;border-radius:10px;background:#fff3d6;font-weight:700">부분</span></td><td><span style="display:inline-block;min-width:64px;padding:1px 8px;border-radius:10px;background:#e3f1ea;font-weight:700">충족</span></td><td>V-09 · 10</td></tr>
+<tr><td>P5</td><td>외부 사람 ↔ 외부 사람</td><td><span style="display:inline-block;min-width:64px;padding:1px 8px;border-radius:10px;background:#fde8e4;font-weight:700">없음</span></td><td><span style="display:inline-block;min-width:64px;padding:1px 8px;border-radius:10px;background:#e3f1ea;font-weight:700">충족</span></td><td>V-05 · 08 · 12</td></tr>
+<tr><td>P6</td><td>외부 사람 ↔ 내부 에이전트</td><td><span style="display:inline-block;min-width:64px;padding:1px 8px;border-radius:10px;background:#fde8e4;font-weight:700">없음</span></td><td><span style="display:inline-block;min-width:64px;padding:1px 8px;border-radius:10px;background:#e3f1ea;font-weight:700">충족</span></td><td>V-05 · 06 · 07(메일) · 08</td></tr>
+<tr><td>P7</td><td>외부 사람 ↔ 외부 에이전트</td><td><span style="display:inline-block;min-width:64px;padding:1px 8px;border-radius:10px;background:#fde8e4;font-weight:700">없음</span></td><td><span style="display:inline-block;min-width:64px;padding:1px 8px;border-radius:10px;background:#e3f1ea;font-weight:700">충족</span></td><td>V-05 · 08 · 09 · 12 · 13</td></tr>
+<tr><td>P8</td><td>내부 에이전트 ↔ 내부 에이전트</td><td><span style="display:inline-block;min-width:64px;padding:1px 8px;border-radius:10px;background:#fff3d6;font-weight:700">부분</span></td><td><span style="display:inline-block;min-width:64px;padding:1px 8px;border-radius:10px;background:#e3f1ea;font-weight:700">충족</span></td><td>V-02 · 04</td></tr>
+<tr><td>P9</td><td>내부 에이전트 ↔ 외부 에이전트</td><td><span style="display:inline-block;min-width:64px;padding:1px 8px;border-radius:10px;background:#fff3d6;font-weight:700">부분</span></td><td><span style="display:inline-block;min-width:64px;padding:1px 8px;border-radius:10px;background:#e3f1ea;font-weight:700">충족</span></td><td>V-08 · 09 · 10 · 11</td></tr>
+<tr><td>P10</td><td>외부 에이전트 ↔ 외부 에이전트</td><td><span style="display:inline-block;min-width:64px;padding:1px 8px;border-radius:10px;background:#eef2f7;font-weight:700">금지 · 중개</span></td><td><span style="display:inline-block;min-width:64px;padding:1px 8px;border-radius:10px;background:#eef2f7;font-weight:700">금지 · 중개</span></td><td>V-13(금지 명시 · 중개)</td></tr>
+</tbody></table>
+<div class="ok"><b>보완 후에도 막는 것.</b> 허락은 「무엇이든 누구와든」이 아니다 — 외부 에이전트끼리 직접 교신(P10), 외부 사람 발화의 과업 직행, 외부 사람의 원장 접근, 외부 AI 로의 금지 등급 반출, 반응 · 댓글 승인, 게스트의 스레드 밖 열람은 계속 막는다. 보완의 목적은 <b>허락된 조합이 MyBee 안에서 기록 · 통제되며 일어나게</b> 하는 것이다 — 허락된 협업을 MyBee 밖(개인 메일 · 메신저 · 개인 AI 계정)으로 밀어내면 통제도 기록도 없어진다.</div>
+<h2 id="s8">8. DB · 규칙 보완 초안(분석서 v1.2 에 더할 것)</h2>
+<table>
+<colgroup><col style="width:24%"><col style="width:12%"><col style="width:48%"><col style="width:16%"></colgroup>
+<thead><tr><th>DB Table</th><th>한글명</th><th>핵심 컬럼</th><th>보완</th></tr></thead><tbody>
+<tr><td><span class="mono">mbauth.collab_permission_rule</span></td><td>협업 허용 정책</td><td>actor_kind · actor_scope · counterpart_kind · counterpart_scope · action(CONVERSE/REQUEST/REVIEW/SHARE/CO_EDIT/INVITE) · max_data_class · decision(ALLOW/APPROVAL/DENY) · approver_role · rule_version_id</td><td>V-01</td></tr>
+<tr><td><span class="mono">mbcollab.guest_member</span></td><td>외부 게스트</td><td>thread_id · external_party_code 또는 party_contact_id · access_mode(EMAIL/PORTAL/BOTH) · email · digest_mode · user_account_id(포털일 때) · invited_by · approved_by · nda_agreement_id · identity_check · auth_level_min · max_data_class · valid_to · revoked_at</td><td>V-05</td></tr>
+<tr><td><span class="mono">mbcore.party_contact</span></td><td>거래처 담당자</td><td>party_code · name · email · phone · role · verified_at · user_account_id</td><td>V-05 — 거래처 담당자를 사람으로 등록</td></tr>
+<tr><td><span class="mono">mbcollab.relay_request</span></td><td>IA 간 전달</td><td>from_employee_id · to_employee_id · from_ia_id · to_ia_id · kind(REQUEST/SCHEDULE/INFO/INSTRUCT) · post_id · state(SENT/ACCEPTED/DECLINED/CONDITIONAL/FORWARDED) · resulting_work_item_id</td><td>V-04</td></tr>
+<tr><td><span class="mono">mbcollab.channel_bridge</span></td><td>채널 연결</td><td>thread_id · channel_code · external_thread_ref(메신저 대화 ID 등) · direction · last_synced_at</td><td>V-07(메일 외 채널)</td></tr>
+<tr><td><span class="mono">mbcollab.thread_mail_address</span></td><td>스레드 회신 주소</td><td>thread_id · guest_member_id · address_token_hash · subject_tag · issued_at · expires_at · revoked_at</td><td>M-2</td></tr>
+<tr><td><span class="mono">mbcollab.mail_link</span></td><td>메일 ↔ 게시 연결</td><td>post_id · direction(IN/OUT) · inbound_email_id · outbound_message_id · message_id · in_reply_to · match_method(TOKEN/HEADER/SUBJECT/MANUAL) · spf · dkim · dmarc · sender_is_invited · verdict(POSTED/HELD/REJECTED) · eml_hash · quoted_trimmed</td><td>M-3 ~ 5 · 8</td></tr>
+<tr><td><span class="mono">mbcollab.shared_link</span></td><td>만료 링크</td><td>post_part_id · attachment_id · guest_member_id · expires_at · watermark · view_count · last_viewed_at · revoked_at</td><td>M-8</td></tr>
+<tr><td><span class="mono">mbcollab.confirmation_request</span></td><td>확인 요청</td><td>thread_id · guest_member_id · kind(SPEC/PRICE/DELIVERY/CONTRACT/ACCEPTANCE/LIGHT) · target_schema · target_table · target_id · snapshot_hash · otp_verified_at · result(CONFIRMED/DECLINED/EXPIRED) · esign_ref(CN-07)</td><td>M-9</td></tr>
+<tr><td><span class="mono">mbagent.external_agent</span></td><td>외부 에이전트(통합)</td><td>kind(WORKER/PARTICIPANT/ORG_AGENT/TENANT_AGENT) · org_party_code · owner_ref · trust_domain · card_verified_at · card_issuer · allowed_work · direction · (WORKER 는 v1.2 칸 그대로)</td><td>V-09 — v1.2 external_ai_worker 대체</td></tr>
+<tr><td><span class="mono">mbagent.a2a_gateway_log</span></td><td>A2A 관문 기록</td><td>external_agent_id · direction · task_id · trust_verdict · egress_record_id · commitment_flag · human_approval_id · decided_at</td><td>V-10</td></tr>
+</tbody></table>
+<p class="small">함께 넓히는 칸 — thread.thread_kind 에 COOP · DIRECT · GUEST, post.author_kind 에 GUEST, mbagent.egress_record.destination_kind(AI/HUMAN/ORG_AGENT/TENANT). 표 수는 v1.2 의 20 에서 external_ai_worker 를 external_agent 로 바꾸고 6개 · 메일 협업 4개를 더해 <b>30 DB Table</b> 이 된다.</p>
+<table>
+<colgroup><col style="width:26%"><col style="width:74%"></colgroup>
+<thead><tr><th>규칙</th><th>내용</th></tr></thead><tbody>
+<tr><td>R39-27 허락은 한 함수로</td><td>초대 · 게시 · 요청 · 전달 · 외부 교신은 collab_permission_rule 판정을 지나야 하며 판정 없이 생긴 행은 없다</td></tr>
+<tr><td>R39-28 게스트는 지정 스레드만</td><td>guest_member 는 초대된 스레드 밖 게시 · 파일 · 검색 결과를 볼 수 없다. 기한 · 비밀유지 · 신원 확인 없이는 초대가 성립하지 않는다</td></tr>
+<tr><td>R39-29 외부 발화는 요청으로</td><td>게스트 · 외부 에이전트의 글에서 과업이 바로 생기지 않는다. 담당 임직원 IA 의 요청 카드 → 담당자 확인</td></tr>
+<tr><td>R39-30 외부로 가는 모든 것은 관문</td><td>외부 사람 · 외부 조직 에이전트 · 다른 테넌트 · 외부 AI 로 가는 게시 · 파일 · 메일은 반출 관문(R39-22 ~ 25)을 지난다</td></tr>
+<tr><td>R39-31 합의성 발화는 사람 승인</td><td>우리 에이전트가 외부 상대에게 가격 · 납기 · 계약 조건 · 책임을 확약하는 글은 사람 승인 뒤에만(7.4.6 을 사람 상대까지)</td></tr>
+<tr><td>R39-32 IA 간 부탁은 상대 권한 · 상대 수락</td><td>relay_request 는 수신자 IA 가 수신자 권한으로 해석하고, 수락 전에는 과업이 아니다(보고 계통상 지시는 확인)</td></tr>
+<tr><td>R39-34 메일은 대조로만 스레드에</td><td>받은 메일은 회신 주소 토큰 · 헤더 · 제목 표지로만 스레드에 붙는다. 모두 실패하면 게시하지 않고 보류함 — 내용으로 추정해 붙이지 않는다</td></tr>
+<tr><td>R39-35 인증 실패 · 미초대 발신은 보류</td><td>SPF · DKIM · DMARC 실패이거나 발신 주소가 그 스레드의 초대 게스트가 아니면 게시하지 않고 담당자 확인</td></tr>
+<tr><td>R39-36 메일 회신은 확정이 아니다</td><td>confirmation_request.kind 가 LIGHT 가 아닌 확인은 확인 링크(OTP) · 전자서명으로만 CONFIRMED. 메일 본문의 「확인합니다」로 원장 상태가 바뀌지 않는다</td></tr>
+<tr><td>R39-37 보내는 메일은 게스트 범위 · 관문</td><td>메일로 나가는 게시는 게스트 열람 범위 안이어야 하고 CN-08 · 반출 관문을 지난다. 에이전트 글은 대외 발신 승인 · AI 고지</td></tr>
+<tr><td>R39-38 파일은 만료 링크가 기본</td><td>직접 첨부는 등급 · 크기 조건을 만족할 때만. 링크는 기한 · 회수 · 열람 기록</td></tr>
+<tr><td>R39-39 원본 메일 보관</td><td>받은 메일은 원본 · 해시를 보관하고 게시에는 인용을 뺀 새 글만. 원본과 게시는 mail_link 로 잇는다</td></tr>
+<tr><td>R39-40 초대 안 된 참조에게 보내지 않는다</td><td>우리 쪽 메일 수신자는 스레드 게스트뿐. 회신에 더해진 미초대 주소는 자동으로 빼고 담당자에게 알린다</td></tr>
+<tr><td>R39-33 외부끼리 직접 교신 금지</td><td>외부 에이전트끼리 · 외부 사람과 다른 회사의 외부 에이전트 사이의 전달은 PA · TA 중개와 기록으로만. 3자 스레드는 승인 필요(V-12)</td></tr>
+</tbody></table>
+<h2 id="s9">9. 남은 결정</h2>
+<table>
+<colgroup><col style="width:8%"><col style="width:38%"><col style="width:54%"></colgroup>
+<thead><tr><th>#</th><th>결정할 것</th><th>권장</th></tr></thead><tbody>
+<tr><td>D-10</td><td>외부 사람을 MyBee 대화에 들일지(게스트)</td><td>들인다 — <b>계정 없이 메일만으로도</b>(6-1). 들이지 않으면 외부 협업은 개인 메일로 새고 통제 · 기록이 없다. 지정 스레드 · 기한 · 비밀유지 · 반출 관문 조건</td></tr>
+<tr><td>D-11</td><td>외부 사람의 말을 누가 해석하나</td><td>담당 임직원의 IA(대리 해석). 외부 사람 전용 에이전트 종류는 만들지 않는다(6.1.1 의 6종 유지)</td></tr>
+<tr><td>D-12</td><td>1:1 · 소그룹(DIRECT) 대화를 MyBee 에 둘지</td><td>둔다 — 단 과업을 만들지 않고 프로젝트로 옮기게 한다. v1.2 D-1a(「넣지 않는다」)를 바꾼다</td></tr>
+<tr><td>D-13</td><td>다른 테넌트와의 연합을 언제 열지</td><td>외부 조직 에이전트(V-09 · 10)를 먼저 운영한 뒤. 테넌트 격리는 풀지 않는다</td></tr>
+<tr><td>D-14</td><td>외부끼리의 3자 스레드</td><td>기본 금지 · 승인 필요. 공동 개발 · 3자 조율 프로젝트에서만</td></tr>
+<tr><td>D-15</td><td>메일 회신만으로 인정할 확인의 범위</td><td>권장: 일정 · 수령 · 단순 의견만(LIGHT). 사양 · 가격 · 납기 · 계약 · 검수는 확인 링크(메일 OTP) 또는 전자서명 — 분쟁 때 「메일로 확인했다」가 근거가 되지 않게</td></tr>
+</tbody></table>
+<div class="note">이 문서는 검증과 보완안까지다. 설계지시문 · DB 테이블설계서에는 아직 반영하지 않았다. 분석서 v1.2 의 결정(D-1 ~ D-9)과 이 문서의 D-10 ~ D-14 를 정하면 분석서를 v1.3 으로 합치고 설계 문서를 새 버전으로 반영한다. DBMS 실행 검증은 하지 않았다.</div>
+<h2 id="s10">10. 근거</h2>
+<table>
+<colgroup><col style="width:34%"><col style="width:66%"></colgroup>
+<thead><tr><th>문서</th><th>본 곳</th></tr></thead><tbody>
+<tr><td>MyBee_설계지시문_v5.16.html</td><td>5.1 · 5.5 · 5.6(프로젝트 · 직책 · 교체) · 6.1 · 6.2 · 6.3(IA) · 6.4 · 6.5(PA · EA) · 6.11(착수 순서) · 7.1 ~ 7.4(A2A · 큐 · 협조 · 외부 에이전트) · 8.5 · 8.6(주입 · 권한) · 9장(승인) · 18.4.5(AI 고지) · 부속서 H.6(테넌트 간 공유)</td></tr>
+<tr><td>MyBee_DB테이블설계서_v3.22 · csv_v322 한글명매핑</td><td>mbcore.employee · user_account(party_kind) · party · external_party · mbproj.project_member · project_work_assignment · external_intake_policy · proposal_agreement · mbrun.work_item · role_activation · mbagent.agent · agent_card · mba2a.* · mbmq.* · mbcoop.* · mbcomm.* · mbiaud.external_auditor</td></tr>
+<tr><td>MyBee_IA_협업공간_확장분석서_v1.2.html</td><td>대화 층(F-1 ~ F-13) · IA 협업 지휘(6장) · 외부 유출 통제(6.4) · mbcollab 스키마 초안 · R39-01 ~ 26 · 결정 D-1 ~ D-9</td></tr>
+</tbody></table>
+<footer>MyBee IA 멀티 협업 기능 검증서 v1.1 · 생성 src_v34/know/collab_verify11.py · 2026-09-30</footer></div></body></html>

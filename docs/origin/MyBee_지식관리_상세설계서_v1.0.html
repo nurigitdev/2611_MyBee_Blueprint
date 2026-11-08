@@ -1,0 +1,385 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MyBee 지식관리 상세설계서 v1.0</title>
+<style>
+:root{--bg:#fbfcfe;--fg:#16181d;--mut:#5a6b80;--line:#c6d2e2;--head:#12315c;--acc:#2d6cb5;
+ --soft:#e8eef7;--zebra:#f7f9fc;--warn:#fff8e6;--warnl:#d9a441;--bad:#fdeceb;--badl:#c0392b;
+ --ok:#ecf7ee;--okl:#2e8b57;}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Malgun Gothic","맑은 고딕",sans-serif;font-size:15px;line-height:1.75;
+ color:var(--fg);background:var(--bg)}
+header.top{position:sticky;top:0;z-index:50;background:var(--head);color:#fff;padding:10px 20px;
+ display:flex;flex-wrap:wrap;gap:12px;align-items:center;box-shadow:0 2px 8px rgba(0,0,0,.18)}
+header.top b{font-size:16px;letter-spacing:.5px}
+header.top .sp{flex:1}
+header.top a{color:#cfe0f5;text-decoration:none;font-size:13px;padding:3px 8px;border-radius:4px}
+header.top a:hover{background:rgba(255,255,255,.14);color:#fff}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px 80px}
+.hero{background:linear-gradient(160deg,#12315c,#2d6cb5 70%,#4a8fd4);color:#fff;padding:56px 20px;margin-bottom:8px}
+.hero .in{max-width:1180px;margin:0 auto}
+.hero h1{margin:0 0 6px;font-size:34px;letter-spacing:-.5px}
+.hero p{margin:4px 0;opacity:.92;font-size:15px}
+.hero .meta{margin-top:22px;font-size:13px;opacity:.85;line-height:2}
+h2{font-size:25px;color:var(--head);margin:46px 0 10px;padding-bottom:8px;border-bottom:3px solid var(--head)}
+h3{font-size:19px;color:#1b3a6b;margin:30px 0 8px;padding-left:11px;border-left:5px solid var(--acc)}
+h4{font-size:16px;color:#24406b;margin:20px 0 6px}
+p{margin:9px 0}
+ul,ol{margin:9px 0 9px 20px;padding-left:8px}
+li{margin:4px 0}
+table{width:100%;border-collapse:collapse;margin:14px 0 20px;font-size:13px}
+th{background:var(--soft);border:1px solid #9fb4d0;padding:7px 8px;text-align:left;color:var(--head);font-weight:600;
+ position:sticky;top:44px;z-index:5}
+td{border:1px solid var(--line);padding:6px 8px;vertical-align:top}
+tbody tr:nth-child(even){background:var(--zebra)}
+tbody tr:hover{background:#eef3fa}
+code,.mono{font-family:Consolas,"D2Coding",monospace;font-size:13px;background:#f0f3f8;padding:1px 5px;border-radius:3px}
+pre{font-family:Consolas,"D2Coding",monospace;font-size:13px;background:#f4f6fa;border:1px solid #d6deea;
+ border-left:4px solid var(--acc);padding:12px 14px;overflow-x:auto;white-space:pre;border-radius:4px}
+.note{background:var(--warn);border:1px solid #e8d59a;border-left:5px solid var(--warnl);padding:12px 15px;margin:14px 0;border-radius:4px}
+.warn{background:var(--bad);border:1px solid #eab4ae;border-left:5px solid var(--badl);padding:12px 15px;margin:14px 0;border-radius:4px}
+.ok{background:var(--ok);border:1px solid #a9d4b2;border-left:5px solid var(--okl);padding:12px 15px;margin:14px 0;border-radius:4px}
+.kv{display:flex;flex-wrap:wrap;gap:10px;margin:18px 0}
+.kv > div{flex:1 1 130px;border:1px solid var(--line);border-top:4px solid var(--acc);padding:11px 13px;background:#fff;border-radius:4px}
+.kv .k{font-size:12px;color:var(--mut)}
+.kv .v{font-size:24px;font-weight:700;color:var(--head);line-height:1.3}
+.tools{position:sticky;top:44px;z-index:20;background:var(--bg);padding:12px 0;border-bottom:1px solid var(--line);
+ display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.tools input{flex:1 1 260px;padding:9px 12px;border:1px solid var(--line);border-radius:5px;font-size:14px;font-family:inherit}
+.tools select{padding:9px 10px;border:1px solid var(--line);border-radius:5px;font-size:14px;font-family:inherit}
+.tools .cnt{font-size:13px;color:var(--mut);white-space:nowrap}
+.badge{display:inline-block;padding:1px 7px;border-radius:10px;font-size:11px;font-weight:600;white-space:nowrap}
+.b-A{background:#e3f0e7;color:#226b44}.b-H{background:#fde8e6;color:#a5352a}.b-Y{background:#fdf2dc;color:#8a6415}
+.r-L{background:#eef2f7;color:#5a6b80}.r-M{background:#e6eefb;color:#24508f}
+.r-H{background:#fdf0dc;color:#96621a}.r-C{background:#fce0dd;color:#9c2b20}
+.u-M{background:#f1f1f1;color:#666}.u-A{background:#eaf0f9;color:#3a5d91}
+.u-S{background:#e4eefb;color:#1f4f96}.u-F{background:#e0f0e6;color:#1d6b42}
+.domhead{background:#fff;border:1px solid var(--line);border-radius:6px;padding:16px 18px;margin:16px 0}
+.domhead .t{font-size:12px;color:var(--mut);text-transform:uppercase;letter-spacing:1px}
+.domhead .n{font-size:21px;font-weight:700;color:var(--head);margin:2px 0 6px}
+.domhead .d{font-size:14px}
+.domhead .l{font-size:13px;color:var(--mut);margin-top:8px}
+.toc{columns:2;column-gap:34px;margin:14px 0}
+.toc a{color:var(--fg);text-decoration:none;display:block;padding:3px 0;font-size:14px}
+.toc a:hover{color:var(--acc)}
+.small{font-size:13px;color:var(--mut)}
+.nw{white-space:nowrap}
+footer{margin-top:60px;padding:24px 0;border-top:1px solid var(--line);font-size:13px;color:var(--mut)}
+.m{display:inline-block;padding:1px 6px;border-radius:3px;font-size:11px;font-weight:600;color:#fff;white-space:nowrap}
+.m-T1{background:#5a6b80}.m-T2{background:#8a5a2b}.m-T3{background:#7d4a9e}.m-T4{background:#c0392b}
+.m-T5{background:#c0602b}.m-T6{background:#2e7d5b}.m-T7{background:#2d6cb5}.m-T8{background:#4f8a76}
+.m.ref{opacity:.55}.m.ref:after{content:" 참고"}
+.hid{display:inline-block;padding:1px 6px;border-radius:3px;font-size:11px;background:#fff0c2;color:#7a5a12;border:1px solid #e8d59a;white-space:nowrap}
+figure{margin:18px 0;text-align:center}figure svg{width:100%;height:auto;background:#fff;border:1px solid var(--line);border-radius:6px}
+figcaption{font-size:13px;color:var(--mut);margin-top:6px}
+.chg{background:#fff;border:1px solid var(--line);border-left:5px solid #2e7d5b;padding:12px 16px;border-radius:4px;margin:14px 0}
+.qual{display:inline-block;padding:0 6px;margin-left:4px;border-radius:3px;font-size:11px;font-weight:600;background:#fde8d8;color:#8a3b12;border:1px solid #f0b894;white-space:nowrap}
+.trv{display:inline-block;padding:0 6px;margin-left:4px;border-radius:3px;font-size:11px;background:#eee6f7;color:#5a3d8a;border:1px solid #cbb8e6;white-space:nowrap}
+.irs{display:inline-block;padding:0 6px;margin-left:4px;border-radius:3px;font-size:11px;font-weight:600;background:#e3f1ea;color:#1f6b47;border:1px solid #9fcfb4;white-space:nowrap}
+.aud{display:inline-block;padding:0 6px;margin-left:4px;border-radius:3px;font-size:11px;font-weight:600;background:#ece6f6;color:#553a86;border:1px solid #c2b2e0;white-space:nowrap}
+.ret{background:#f7f7f7;color:#777}
+@media print{header.top,.tools{position:static}h2{page-break-before:always}tr{page-break-inside:avoid}}
+
+.gloss{border:1px solid #c6d2e2;border-radius:8px;background:#fbfcfe;padding:14px 16px;margin:18px 0}
+.gloss h3{margin:0 0 8px;font-size:15px;color:#12315c}
+.gloss table{width:100%;border-collapse:collapse;font-size:12.5px}
+.gloss td{border-top:1px solid #e6ecf4;padding:6px 8px;vertical-align:top}
+.gloss td:first-child{width:22%;font-weight:700;color:#12315c;white-space:nowrap}
+.gloss td:last-child{width:34%;color:#5a6b80}
+@media(max-width:760px){.gloss td:first-child{white-space:normal}}
+
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:16px 0}
+@media(max-width:820px){.grid2{grid-template-columns:1fr}}
+.card{background:#fff;border:1px solid var(--line);border-top:4px solid var(--acc);border-radius:5px;padding:14px 16px}
+.card .h{font-weight:700;color:var(--head);margin-bottom:6px}
+.gap{background:#fff;border:1px solid var(--line);border-left:5px solid var(--badl);border-radius:4px;padding:12px 16px;margin:12px 0}
+.gap .id{display:inline-block;background:var(--badl);color:#fff;border-radius:3px;padding:0 7px;font-size:12px;font-weight:700;margin-right:7px}
+.sol{background:#fff;border:1px solid var(--line);border-left:5px solid var(--okl);border-radius:4px;padding:12px 16px;margin:12px 0}
+.sol .id{display:inline-block;background:var(--okl);color:#fff;border-radius:3px;padding:0 7px;font-size:12px;font-weight:700;margin-right:7px}
+.cite{font-size:12px;color:var(--mut)}
+.new{display:inline-block;padding:0 6px;border-radius:3px;font-size:11px;font-weight:600;background:#e4eefb;color:#1f4f96;border:1px solid #9fc0e8}
+.mod{display:inline-block;padding:0 6px;border-radius:3px;font-size:11px;font-weight:600;background:#fdf2dc;color:#8a6415;border:1px solid #e8d59a}
+.keep{display:inline-block;padding:0 6px;border-radius:3px;font-size:11px;font-weight:600;background:#eef2f7;color:#5a6b80;border:1px solid #c6d2e2}
+td.c,th.c{text-align:center}
+table.dd{font-size:12.5px}
+table.dd td:first-child{font-family:Consolas,"D2Coding",monospace;white-space:nowrap}
+
+.gloss{border:1px solid #c6d2e2;border-radius:8px;background:#fbfcfe;padding:14px 16px;margin:18px 0}
+.gloss h3{margin:0 0 8px;font-size:15px;color:#12315c}
+.gloss table{width:100%;border-collapse:collapse;font-size:12.5px}
+.gloss td{border-top:1px solid #e6ecf4;padding:6px 8px;vertical-align:top}
+.gloss td:first-child{width:22%;font-weight:700;color:#12315c;white-space:nowrap}
+.gloss td:last-child{width:34%;color:#5a6b80}
+@media(max-width:760px){.gloss td:first-child{white-space:normal}}
+
+table.tight{font-size:12.5px}table.tight td,table.tight th{padding:4px 6px}
+.g{display:inline-block;padding:0 7px;border-radius:10px;font-size:11px;font-weight:700;background:#e4eefb;color:#1f4f96}
+.gT1{background:#fde8e4;color:#9c2b20}.gT6{background:#e3f1ea;color:#1f6b47}.gT7{background:#efeaf7;color:#553a86}.gT8{background:#eef2f7;color:#33475f}
+.gT2,.gT3,.gT4,.gT5{background:#fff3d6;color:#8a5a12}
+pre.code{background:#0f1f33;color:#e6edf7;padding:12px 14px;border-radius:8px;overflow-x:auto;font-size:12px;line-height:1.5;white-space:pre}
+figure{margin:14px 0}figcaption{font-size:12.5px;color:#5a6b80;margin-top:6px}
+svg text{font-family:Malgun Gothic, 맑은 고딕, sans-serif}
+@media(max-width:760px){.wrap table{display:block;overflow-x:auto;max-width:100%}.wrap svg{max-width:100%;height:auto}}
+</style></head><body>
+<div class="hero"><div class="in"><p style="opacity:.8;letter-spacing:6px;font-size:13px">MYBEE PLATFORM</p><h1>지식관리 상세설계서 — 원장 · 온톨로지 · 검색</h1><p>지식을 원장으로 다루고, 그 위에 사람이 확인한 개념 관계를 얹고, 권한 · 시점을 지키며 찾는다 — 한 PostgreSQL 안에서</p><div class="meta">문서번호 MB-KNW-2026-001 &nbsp;·&nbsp; 버전 <b>v1.0</b> &nbsp;·&nbsp; 작성일 2026-09-29<br>지식 원장 신설 DB Table 27 · 온톨로지 첫 스키마(개념 유형 16 · 관계 유형 18) · 강제 규칙 R37 × 15<br>근거 <b>MyBee 설계지시문 v5.16</b>(12.11 · 13장 · 8.6) &nbsp;·&nbsp; 코드체계 설계서 v3.18 · DB 테이블설계서 v3.22 · DB 설계방향서 v2.7 · Wiki RAG 통합구현 보고서 v3 · Legal Expert Agent 통합설계서 v1.0</div></div></div>
+<header class="top"><b>지식관리 상세설계서</b><a href="#s0">용어</a><a href="#s1">결론</a><a href="#s2">빈 곳</a><a href="#s3">분류 · 소관</a><a href="#s4">원장</a><a href="#s5">사규</a><a href="#s6">법령</a><a href="#s7">온톨로지</a><a href="#s8">그래프 · 검색</a><a href="#s9">권한</a><a href="#s10">품질</a><a href="#s11">이행</a><a href="#s12">결정</a></header>
+<div class="wrap">
+<h2 id="s0">용어 정의</h2>
+<div class="gloss"><h3>용어 정의 — 이 문서에서 쓰는 말</h3><p style="font-size:12.5px;margin:0 0 8px;color:#5a6b80">「버전」은 <b>버전</b>, 데이터베이스의 표는 <b>DB Table</b>, 「중복 실행 방지」은 <b>중복 실행 방지</b>로 부른다(설계지시문 19.1.4).</p><table><tbody><tr><td>버전 (version)</td><td>문서 · 기준 · 정의가 고쳐질 때마다 매기는 번호. v1.0 → v1.1 처럼 올라간다. 예전 문서에서 「버전」이라고 부르던 것을 이 문서부터 <b>버전</b>으로 부른다.</td><td>옛 버전은 고치지 않고 그대로 두고 새 버전을 따로 낸다. 그래야 그때 무엇을 보고 결정했는지 나중에 되살릴 수 있다.</td></tr><tr><td>DB Table</td><td>데이터베이스에 실제로 만들어지는 표. 예) <span class="mono">mbproj.project_request</span>. 예전 문서에서 그냥 「표」라고 부르던 것을 <b>DB Table</b> 로 부른다.</td><td>문서 안에서 읽으라고 그린 표(비교표 · 목록표)는 그대로 「표」라고 부른다. 둘을 섞지 않는다.</td></tr><tr><td>중복 실행 방지 (idempotency)</td><td>같은 요청이 두 번, 세 번 들어와도 <b>결과가 한 번 처리한 것과 똑같게</b> 만드는 성질. 예를 들어 신청서 제출 버튼을 두 번 눌러도 신청은 하나만 생기고, 통신이 끊겨 시스템이 같은 요청을 다시 보내도 돈이 두 번 나가지 않는다.</td><td>왜 필요한가 — 네트워크는 끊기고, 시스템은 답이 없으면 다시 보내고, 사람은 버튼을 두 번 누른다. 이 세 가지는 막을 수 없으므로 <b>두 번 와도 안전하게</b> 만든다.</td></tr><tr><td>중복 실행 방지 키 (중복 실행 방지 키)</td><td>같은 요청인지 가리는 열쇠. 이 열쇠가 같으면 새로 처리하지 않고 <b>먼저 처리한 결과를 그대로 돌려준다</b>. 예) 프로젝트 신청의 열쇠는 「회사 + 신청번호 + 개정차수」다 — 같은 신청서를 두 번 보내도 신청은 하나다.</td><td>열쇠는 <b>업무적으로 뜻이 있는 값</b>으로 만든다. 시각 · 난수 · 재시도 횟수 · 서버 이름처럼 매번 달라지는 값은 넣지 않는다. 넣으면 두 번째 요청이 「다른 요청」이 되어 중복이 생긴다.</td></tr><tr><td>되돌릴 수 없는 일 (non-idempotent)</td><td>이체 · 발송 · 신고처럼 한 번 나가면 되돌리기 어려운 일. 이런 단계는 중복 실행 방지 키를 반드시 두고, 답이 없으면 다시 보내지 않고 <b>조회해서 결과를 확인</b>한다.</td><td>답이 없는 상태를 「모름」으로 두고 사람이 확인하게 한다. 다시 보내는 것이 가장 위험하다.</td></tr><tr><td>업무코드</td><td>회사의 일을 더 쪼갤 수 없는 단위로 나눠 붙인 코드. 예) <span class="mono">FL0012001</span> 프로젝트 신청. 사람이 하든 에이전트가 하든 같은 코드로 부른다.</td><td>모든 일은 업무코드로 수행되고, 보상 · 원가 · 기록이 모두 이 코드에 붙는다.</td></tr><tr><td>업무영역</td><td>업무코드를 묶는 큰 분류. D01 HW개발 … D18 감사 · D19 프로젝트기획·생성 · <b>D20 지식관리</b>(2026-09-29 신설) — 모두 20개.</td><td>코드 안의 두 자리(FL00<b>19</b>001)가 업무영역이다.</td></tr><tr><td>스킬 · 도구 · 규칙</td><td>업무코드를 수행하는 세 가지 수단. <b>스킬</b>은 AI 가 문장을 읽고 쓰는 일, <b>도구</b>는 계산 · 서식 · 외부 연결처럼 정해진 대로 도는 프로그램, <b>규칙</b>은 조건과 결론을 표로 적어 둔 판정.</td><td>수치와 판정은 도구와 규칙이 한다. AI 는 수치를 만들지 않는다.</td></tr><tr><td>PA · IA · EA · TA · VA</td><td>PA 는 프로젝트를 맡는 에이전트(프로젝트 1개에 1개), IA 는 사람의 말을 알아듣고 업무로 잇는 에이전트, EA 는 법무 · 회계 같은 전문가 의견을 내는 에이전트, TA 는 외부 시스템을 부르는 에이전트, VA 는 결과를 검증하는 에이전트.</td><td>외부로 나가는 일은 TA 만 한다.</td></tr><tr><td>자율 수준 L1 · L2 · L3</td><td>에이전트가 사람 없이 어디까지 갈 수 있는지. <b>L1</b> 은 사람이 결정, <b>L2</b> 는 에이전트가 하되 사람이 승인, <b>L3</b> 는 에이전트가 하고 사람은 나중에 본다.</td><td>위험이 큰 업무일수록 낮은 수준을 쓴다.</td></tr><tr><td>NVT 토큰</td><td>업무를 수행하면 쌓이는 회사 안의 점수. 연말에 단가를 곱해 인센티브 · 연봉에 반영된다.</td><td>직책이 아니라 <b>수행한 업무</b>에 붙는다.</td></tr><tr><td>채택 보상금</td><td>제안이 채택되었을 때 제안자에게 한 번 주는 보상. 직원은 토큰으로, 외부 제안자는 현금으로 받는다. 상한 500만 원.</td><td>가결(직원) 또는 용역 계약 체결(외부) 때 지급한다.</td></tr><tr><td>사업화 성과 보상</td><td>제품 · 서비스가 실제로 팔린 뒤 해마다 나누는 보상. 연간 순매출의 0 ~ 3% 안에서 위원회가 정한다.</td><td>제안 20% · 원 기여 30% · 진행 기여 50% 로 나눈다. 진행 기여는 해마다 다시 계산한다.</td></tr><tr><td>판정 기준 버전</td><td>문턱 값 · 요율 · 가중치처럼 나중에 바뀔 수 있는 숫자를 화면이나 규칙 본문에 박지 않고 따로 모아 둔 것. 예) PRJ-ECON(경제성) · PRJ-RESEARCH(조사) · PRJ-REWARD(보상).</td><td>값이 바뀌면 새 버전을 게시하고, 지난 판정은 그때 버전으로 다시 볼 수 있다.</td></tr><tr><td>개정차수</td><td>한 신청서를 고쳐 다시 낼 때 올라가는 번호. 제출한 개정차수는 고치지 않고 새 개정차수를 만든다.</td><td>중복 실행 방지 키의 한 조각이기도 하다.</td></tr><tr><td>관리 최소집합</td><td>모든 프로젝트에 반드시 담기는 D12 업무코드 5건(개설 · 업무 구성 확정 · PM 지정 · 진행 보고 집계 · 종결).</td><td>빼거나 바꿀 수 없다.</td></tr><tr><td>게이트</td><td>다음 단계로 넘어가려면 통과해야 하는 관문. 이 문서에서는 G-1 등재 · G0 아이디어 · G1 기획 · G2 신청 · G3 심의 · G4 착수.</td><td>게이트마다 무엇을 확인하는지 정해 둔다.</td></tr><tr><td>사전 조사</td><td>신청 전에 에이전트가 하는 조사. <b>시장 조사</b>(시장 규모 · 경쟁 동향)와 <b>소요 비용 조사</b>(개발 기간 · 단계별 비용) 두 가지다.</td><td>조사는 에이전트가 하고, 채택은 사람이 승인한다.</td></tr><tr><td>TAM · SAM · SOM</td><td>시장 크기를 세 겹으로 본 것. <b>TAM</b> 은 품목 전체 시장, <b>SAM</b> 은 우리가 닿을 수 있는 시장, <b>SOM</b> 은 실제로 가져올 수 있는 몫(하단 · 상단).</td><td>편익의 판매 수량은 SOM 하단을 기본으로 쓴다.</td></tr><tr><td>위험 조정 편익 현재가치</td><td>앞으로 생길 편익을 <b>확신도</b>로 깎고(H 100% · M 70% · L 40%), 먼 미래의 돈을 <b>할인율</b>로 줄여 오늘 값으로 바꾼 금액.</td><td>이 값이 프로젝트의 「기대 가치」가 된다.</td></tr><tr><td>NPV · 편익/비용 · 회수 기간 · 민감도</td><td><b>NPV</b> 는 편익 현재가치에서 비용 현재가치를 뺀 값, <b>편익/비용</b> 은 그 둘의 비율, <b>회수 기간</b> 은 들인 돈을 되찾는 데 걸리는 햇수, <b>민감도</b> 는 편익이 20% 줄고 비용이 20% 늘어도 견디는지 본 것.</td><td>네 숫자를 함께 보아야 한 쪽으로 치우치지 않는다.</td></tr><tr><td>배경 IP</td><td>제안자가 <b>이 제안 이전부터 가지고 있던</b> 기술 · 저작물. 채택되어도 회사가 가져가지 않고 쓸 권리(통상실시권)만 받는다.</td><td>이것을 빼지 않으면 좋은 외부 제안자가 참여하지 않는다.</td></tr><tr><td>순매출</td><td>매출액에서 반품 · 에누리 · 할인을 뺀 금액. 사업화 성과 보상의 기준이 된다.</td><td>회계 원장에서 자동으로 뽑는다.</td></tr></tbody></table></div>
+<h2 id="s1">1. 결론</h2>
+<div class="ok"><b>한 줄.</b> 지식은 <b>원장</b>으로 다룬다 — 누가 소관하고, 어느 버전이 언제부터 언제까지 적용되며, 누구에게 열리는지가 행으로 남는다.
+그 위에 <b>온톨로지(개념 · 관계)</b>를 사람이 확인해 얹고, 검색은 형태소 · 벡터 · 관계 확장을 <b>한 PostgreSQL 안에서</b> 권한 칸과 같은 행으로 건다.
+판정은 식별자 조회만 한다.</div>
+<table>
+<colgroup><col style="width:6%"><col style="width:44%"><col style="width:50%"></colgroup>
+<thead><tr><th>#</th><th>결정</th><th>이유</th></tr></thead><tbody>
+<tr><td>K-1</td><td><b>D20 지식관리업무 신설</b>(35건) — 지식 원장의 단독 소유 영역</td><td>원장 소유를 먼저 정한다(지시문 3.3.1). 지식 원장은 v3.21 까지 소유 업무가 없었다</td></tr>
+<tr><td>K-2</td><td>내용은 소관 영역, 등재 · 게시 · 색인 · 폐기는 D20 — <b>지식 등재 요청함</b></td><td>전표 제안함과 같은 구조. 쓰는 곳이 하나라야 버전 · 권한 · 파생물이 어긋나지 않는다</td></tr>
+<tr><td>K-3</td><td>사규 <b>다섯 계층</b>(정관 · 규정 · 규칙 · 세칙 · 지침)을 한 절차로</td><td>품질관리지침서 · 설계 표준도 사규의 한 계층이다. 계층마다 절차를 따로 두면 상하 충돌을 못 본다</td></tr>
+<tr><td>K-4</td><td><b>이용 허락</b>을 적재보다 먼저</td><td>기준서 · 표준 · 판례 DB 는 권리 관계가 다르다. 허락 밖 적재는 되돌리기 어렵다</td></tr>
+<tr><td>K-5</td><td><b>이중 시간</b> — 적용 기간과 기록 시각을 따로</td><td>공포와 시행이 다르고 부칙으로 조문마다 시행일이 다르다. 과거 판정 재현에 둘 다 필요하다</td></tr>
+<tr><td>K-6</td><td>온톨로지 · 지식 그래프는 <b>PostgreSQL 안에</b> — Neo4j 를 들이지 않는다</td><td>DB 설계방향서 v2.4 · v2.7 Q-6. 정본 하나 · 권한 한 행 · 판정 비사용. 재검토 조건은 8.5</td></tr>
+<tr><td>K-7</td><td>조문 구조 관계는 <b>파서(결정론)</b>, AI 추출은 <b>후보</b>로만</td><td>법령 문언의 정의 · 단서 · 준용 · 위임 · 인용은 규칙으로 뽑힌다. AI 관계는 사람이 확인하기 전까지 검색에 쓰지 않는다</td></tr>
+<tr><td>K-8</td><td>검색 = 형태소 + 벡터 <b>RRF</b> → <b>관계 폐쇄</b>로 확장 → 재순위</td><td>예외 · 정의 조문을 빠뜨리는 벡터 단독의 약점을 관계 확장이 메운다</td></tr>
+<tr><td>K-9</td><td>색인은 <b>세대</b>로 — 평가 통과 뒤 포인터 전환</td><td>지시문 13.2.1 ⑤ 「되돌릴 수 있어야 한다」의 구현. 권한 음성 시험 하나라도 실패하면 전환하지 않는다</td></tr>
+<tr><td>K-10</td><td>판정 입력은 <b>식별자 조회</b>만(13.3)</td><td>검색 · 확장으로 찾은 조문도 판정에는 식별자로 원문을 다시 읽어 쓴다</td></tr>
+</tbody></table>
+<h2 id="s2">2. 무엇이 비어 있었나</h2>
+<table>
+<colgroup><col style="width:16%"><col style="width:52%"><col style="width:32%"></colgroup>
+<thead><tr><th>빈 곳</th><th>v3.21 까지의 상태</th><th>이 설계에서</th></tr></thead><tbody>
+<tr><td>소유 업무</td><td>말뭉치 · 조문 · 사내 규정을 FL0013024 준법 점검 · FL0013017 정보보안 정책 관리가 「만든다」로 매핑 — 적재 · 개정 반영 절차 없음</td><td>D20 35건 · 옛 대응 13쌍은 읽기로</td></tr>
+<tr><td>지시문 13.1.1</td><td>「모든 법률과 규정은 이미 벡터 DB 화 되어 있다」 — DB 설계방향서 v2.0 에서 걷어내고 PostgreSQL 안에 새로 짓기로 한 전제</td><td>13.1.1 을 정정(지시문 v5.16)</td></tr>
+<tr><td>지시문 13.2.1</td><td>「지식 PA 는 D13 운영 프로젝트의 PA」, 전용 업무코드 없음(부속서 T.4)</td><td>D20 운영 프로젝트의 PA · 단계마다 업무코드</td></tr>
+<tr><td>사규</td><td>internal_regulation 한 표(조문 · 개정안 · 승인 · 신고 · 규칙 연결 없음)</td><td>개정안 · 신구 대조 · 동의 · 규칙 연결 4 DB Table</td></tr>
+<tr><td>사내 지식</td><td>설계서 · 제안서 · 교훈이 각 영역 원장에 흩어져 있고 재사용 경로 없음 · 영업 제안서 원장 없음</td><td>지식 자산 · 버전 · 절 + 등재 요청 · 심사 + 제안서 원장</td></tr>
+<tr><td>조문 임베딩</td><td>clause_embedding — 권한 칸이 없어 사전 필터를 같은 행에서 못 건다 · vector(1536) 이 Q-5 1차 후보(1,024차원)와 불일치</td><td>knowledge_chunk 로 통합하고 폐지</td></tr>
+<tr><td>선례</td><td>13.4.2 · 13.4.3 요구는 있으나 표 없음</td><td>precedent</td></tr>
+<tr><td>온톨로지</td><td>없음(용어사전 term_glossary 는 컬럼 해설용)</td><td>개념 유형 · 관계 유형 · 개념 · 이름 · 관계 주장 · 개념 출현 · 관계 폐쇄</td></tr>
+</tbody></table>
+<h2 id="s3">3. 지식 분류와 소관</h2>
+<p>지식 종류 11종은 분류체계의 뿌리(KIND)다. 주제(TOPIC)는 회사가 FL0020001 로 더한다. 아래는 <b>첫 값</b>이며 분류체계 확정 업무가 버전으로 굳힌다.</p>
+<table class="tight">
+<colgroup><col style="width:11%"><col style="width:10%"><col style="width:33%"><col style="width:22%"><col style="width:12%"><col style="width:12%"></colgroup>
+<thead><tr><th>KIND</th><th>이름</th><th>예</th><th>소관(내용)</th><th>기본 기밀</th><th>검토 주기(첫 값)</th></tr></thead><tbody>
+<tr><td><span class="mono">LAW</span></td><td>법령</td><td>상법 · 세법 · 근로기준법 · 중대재해처벌법 · 개인정보 보호법 등</td><td>D20(적재) · 해석은 각 EA</td><td>PUBLIC</td><td>근거 변경 때</td></tr>
+<tr><td><span class="mono">STANDARD</span></td><td>기준서 · 표준</td><td>K-IFRS 기준서 · KS · ISO · IEC · 인증 규격</td><td>D04 · D09 · D10(내용) / D20(적재)</td><td>INTERNAL(허락 따라)</td><td>근거 변경 때</td></tr>
+<tr><td><span class="mono">RULING</span></td><td>해석 · 판례</td><td>유권해석 · 예규 · 질의회신 · 판례</td><td>법무(D13) 검토 · D20 등재</td><td>PUBLIC~INTERNAL</td><td>24개월</td></tr>
+<tr><td><span class="mono">REGULATION</span></td><td>사규</td><td>정관 · 규정 · 규칙 · 세칙 · 지침(품질관리지침서 · 설계 표준 포함)</td><td>소관 영역(예 취업규칙 D07 · 회계규정 D04 · 품질 D10)</td><td>INTERNAL</td><td>12개월</td></tr>
+<tr><td><span class="mono">DESIGN</span></td><td>설계</td><td>시스템 · HW · FW 설계서 · 아키텍처 · 인터페이스</td><td>D01 · D02 · D03</td><td>CONFIDENTIAL</td><td>기준선 변경 때</td></tr>
+<tr><td><span class="mono">PROPOSAL</span></td><td>제안</td><td>영업 · 입찰 제안서와 결과</td><td>D14</td><td>CONFIDENTIAL</td><td>24개월</td></tr>
+<tr><td><span class="mono">LESSON</span></td><td>교훈</td><td>종결 · 부적합 · 클레임 · 감사 발견의 교훈 카드</td><td>발생 영역</td><td>INTERNAL</td><td>24개월</td></tr>
+<tr><td><span class="mono">PRECEDENT</span></td><td>판정 선례</td><td>확정 판정의 일반화</td><td>판정 영역</td><td>INTERNAL</td><td>12개월</td></tr>
+<tr><td><span class="mono">TEMPLATE</span></td><td>양식</td><td>보고서 · 제안서 · 신고서 양식</td><td>양식 소관 영역</td><td>INTERNAL</td><td>12개월</td></tr>
+<tr><td><span class="mono">KNOWHOW</span></td><td>업무 노하우</td><td>절차 설명 · 검토표 · 체크리스트(사규가 아닌 것)</td><td>소관 영역</td><td>INTERNAL</td><td>12개월</td></tr>
+<tr><td><span class="mono">OTHER</span></td><td>기타</td><td>위에 들지 않는 것 — 분류 개정 후보</td><td>D20</td><td>INTERNAL</td><td>6개월</td></tr>
+</tbody></table>
+<p class="small">소관(내용)과 D20(등재 · 게시)은 다르다. 소관은 <span class="mono">knowledge_steward</span> 에 역할로 적고, 작성 역할과 검토 역할은 같은 사람이 맡을 수 없다(R37-02).</p>
+<h2 id="s4">4. 지식 원장 — 신설 DB Table 27</h2>
+<p>평면 — 구조·저작 8 · 값 15 · 구조·투영 3 · 의미 1. 모든 표는 공통 컬럼 15칸(테넌트 · 생성 · 수정 · 삭제 · 버전 · 추적)을 더 갖고 RLS 로 테넌트가 갈린다. 법령 · 공용 기준서 같은 공용 지식은 플랫폼 공통 자산으로 두고 테넌트는 읽기만 한다(재배포 허락이 있을 때만).</p>
+<table class="tight">
+<colgroup><col style="width:24%"><col style="width:14%"><col style="width:9%"><col style="width:5%"><col style="width:48%"></colgroup>
+<thead><tr><th>DB Table</th><th>이름</th><th>평면</th><th>칸</th><th>한 행</th></tr></thead><tbody>
+<tr><td><span class="mono">mbknow.knowledge_class</span></td><td>지식 분류</td><td>구조·저작</td><td>12</td><td>지식의 종류와 주제를 나눈 분류 한 칸. 종류(KIND) 11종 아래 주제(TOPIC)가 자기참조로 달린다</td></tr>
+<tr><td><span class="mono">mbknow.knowledge_steward</span></td><td>지식 소관</td><td>구조·저작</td><td>9</td><td>분류마다 내용을 누가 쓰고(작성 책임) 누가 확인 · 승인하는지. 직책이 아니라 업무영역과 역할로 적는다(4.8.1). 소관이 없는 분류는 게시할 수 없다</td></tr>
+<tr><td><span class="mono">mbknow.knowledge_source</span></td><td>지식 자료원</td><td>값</td><td>9</td><td>지식을 들여오는 출처 하나 — 법령 정보 · 기준서 제공처 · 판례 · 해석 DB · 사내 저장소. 시장 조사 자료원(mbagent.research_source)과 쓰임이 달라 따로 둔다</td></tr>
+<tr><td><span class="mono">mbknow.usage_license</span></td><td>지식 이용 허락</td><td>값</td><td>14</td><td>자료원 하나에 대해 무엇까지 해도 되는지 — 검색 · 인용 · 요약 · 모델 학습 · 재배포를 따로 판정한다</td></tr>
+<tr><td><span class="mono">mbknow.knowledge_asset</span></td><td>지식 자산</td><td>값</td><td>18</td><td>지식 한 건의 정체성 — 법령 · 기준서 · 사규 · 설계서 · 제안서 · 교훈 · 선례 · 양식이 모두 여기 한 행을 갖는다</td></tr>
+<tr><td><span class="mono">mbknow.knowledge_version</span></td><td>지식 자산 버전</td><td>값</td><td>16</td><td>지식 자산의 내용 한 벌. 적용 기간(valid)과 기록 시각(recorded)을 따로 가진다 — 공포는 오늘, 시행은 다음 달인 개정에서 「최근 기록된 버전」과 「오늘 적용되는 버전」이 다르기 때문이다</td></tr>
+<tr><td><span class="mono">mbknow.knowledge_section</span></td><td>지식 절</td><td>구조·투영</td><td>13</td><td>사규 조문 · 지침 절 · 설계서 장절 · 제안서 절처럼 법령이 아닌 지식의 구조 단위 하나. 법령 조문은 mbknow.clause 에 있다</td></tr>
+<tr><td><span class="mono">mbknow.regulation_draft</span></td><td>사규 제정 · 개정안</td><td>값</td><td>18</td><td>사규 한 건의 제정 · 개정 · 폐지 안. 정관 · 규정 · 규칙 · 세칙 · 지침 다섯 계층을 한 표로 다룬다(품질관리지침서 · 설계 표준은 지침 계층). 승인과 신고까지 이 안 번호로 잇는다</td></tr>
+<tr><td><span class="mono">mbknow.regulation_draft_article</span></td><td>사규 신구 대조 줄</td><td>값</td><td>12</td><td>개정안의 조문 한 줄 — 현행 조문 · 개정 조문 · 사유 · 상위 법령 적합성. 신구 대조표는 이 줄을 모아 서식 도구가 만든다</td></tr>
+<tr><td><span class="mono">mbknow.regulation_consent</span></td><td>취업규칙 의견 청취 · 동의</td><td>값</td><td>10</td><td>취업규칙을 만들거나 바꿀 때 근로자 과반수(과반수 노동조합)의 의견을 듣고, 불리하게 바꿀 때는 동의를 받은 기록(근로기준법 제94조). 신고(제93조)에 이 기록을 붙인다</td></tr>
+<tr><td><span class="mono">mbknow.regulation_rule_link</span></td><td>사규 조문 · 실행 규칙 연결</td><td>구조·저작</td><td>8</td><td>사규 조문 하나가 어떤 실행 규칙(사내 회계규정 조건식 · K-IFRS 판정 규칙 · VA 규칙 · 규칙 세트 · 판정 기준 · 직무분리)의 근거인지. 사규가 바뀌면 이 연결로 고칠 규칙을 찾고, 규칙이 근거 없이 바뀌면 대사가 잡는다</td></tr>
+<tr><td><span class="mono">mbknow.knowledge_intake</span></td><td>지식 등재 요청</td><td>값</td><td>13</td><td>다른 영역이 지식 원장에 올려 달라고 낸 요청 한 건(지식 등재 요청함). 원장은 D20 만 쓰므로 각 영역은 요청만 한다 — 전표 제안함과 같은 구조다</td></tr>
+<tr><td><span class="mono">mbknow.intake_screening</span></td><td>지식 등재 심사 판정</td><td>값</td><td>9</td><td>등재 요청 하나를 기준별로 판정한 한 줄 — 기밀 · 개인정보 · 저작권 · 중복 · 품질 · 분류. 기준 하나라도 반려면 게시하지 않는다</td></tr>
+<tr><td><span class="mono">mbknow.lesson</span></td><td>교훈 카드</td><td>값</td><td>12</td><td>과제 · 프로젝트 종결, 부적합 · 클레임, 감사 발견사항에서 나온 교훈 한 장. 적용 조건과 「적용하지 않는 경우」를 반드시 함께 적는다 — 조건 없는 교훈은 잘못 옮겨 쓰인다</td></tr>
+<tr><td><span class="mono">mbknow.precedent</span></td><td>판정 선례</td><td>값</td><td>12</td><td>확정된 판정 하나를 일반화한 선례(13.4.2). 고객 · 개인 식별 정보를 빼고 「이 유형은 이렇게 판정한다」로 적는다</td></tr>
+<tr><td><span class="mono">mbknow.onto_concept_type</span></td><td>개념 유형</td><td>구조·저작</td><td>7</td><td>온톨로지 스키마의 개념 유형(예: 법령 · 조문 · 의무 · 금지 · 기한 · 주체 · 문서 · 요건 · 계정 · 품목군). 자기참조로 상하 유형을 둔다</td></tr>
+<tr><td><span class="mono">mbknow.onto_relation_type</span></td><td>관계 유형</td><td>구조·저작</td><td>13</td><td>온톨로지 스키마의 관계 유형 하나 — 방향 · 허용 양 끝 · 기수 · 출처 의무 · 검색 확장 규칙 · 최대 단계. 법령 구조 관계(정의 · 단서 · 준용 · 위임 · 인용 · 특별법)와 업무 관계(근거 · 적용 · 대체 · 소관)를 여기서 정한다</td></tr>
+<tr><td><span class="mono">mbknow.onto_concept</span></td><td>개념</td><td>구조·저작</td><td>13</td><td>온톨로지의 개념 하나(예: 「상시 근로자」 「자산 인식 기준 금액」 「검수 완료」). 정의 조항 · 절을 출처로 가진다</td></tr>
+<tr><td><span class="mono">mbknow.onto_label</span></td><td>개념 이름 · 동의어</td><td>구조·저작</td><td>6</td><td>개념의 이름 하나 — 대표 · 동의어 · 약어 · 법령 용어 · 사내 은어. 검색 질의를 개념으로 바꾸는 사전이다</td></tr>
+<tr><td><span class="mono">mbknow.onto_assertion</span></td><td>관계 주장(지식 그래프 간선)</td><td>구조·저작</td><td>18</td><td>「A 는 B 에 대하여 R 이다」 한 줄 — 지식 그래프의 간선이다</td></tr>
+<tr><td><span class="mono">mbknow.knowledge_mention</span></td><td>개념 출현</td><td>구조·투영</td><td>7</td><td>어느 청크에 어느 개념이 나오는지. 검색 결과 청크에서 개념으로, 개념에서 관계를 따라 함께 읽을 조문으로 건너가는 다리다</td></tr>
+<tr><td><span class="mono">mbknow.knowledge_chunk</span></td><td>지식 청크</td><td>의미</td><td>17</td><td>검색의 단위 조각 — 법령 조문 · 사규 절 · 문서 절을 나눈 것. 형태소 색인과 임베딩을 권한 칸과 &lt;같은 행&gt;에 둔다 — 권한 사전 필터를 벡터 검색과 한 질의(RLS + WHERE)에서 걸기 위해서다(8.6.5). v3.22 에서 mbknow.clause_embedding 을 이 표로 통합했다</td></tr>
+<tr><td><span class="mono">mbknow.index_generation</span></td><td>색인 세대</td><td>값</td><td>13</td><td>청크 · 형태소 색인 · 임베딩 · 개념 출현 · 관계 폐쇄 요약을 한 벌로 만든 세대. 검색 품질 판정을 통과해야 활성이 되고, 활성 세대는 테넌트마다 하나다</td></tr>
+<tr><td><span class="mono">mbknow.relation_closure</span></td><td>관계 폐쇄 요약</td><td>구조·투영</td><td>9</td><td>APPROVED 관계를 관계 유형의 최대 단계까지 재귀 SQL(CYCLE 포함)로 펼친 결과를 세대별로 굳힌 파생 요약. 검색 확장이 매번 재귀를 돌지 않게 한다</td></tr>
+<tr><td><span class="mono">mbknow.knowledge_review</span></td><td>지식 유효성 검토</td><td>값</td><td>10</td><td>자산 버전 하나의 정기 · 수시 유효성 검토 결과. 근거 법령이 바뀐 자산은 주기와 무관하게 앞당겨 만든다</td></tr>
+<tr><td><span class="mono">mbknow.knowledge_usage_daily</span></td><td>지식 이용 일 집계</td><td>값</td><td>9</td><td>자산 버전별 하루치 검색 · 인용 · 재사용 · 검색 실패 집계. 검색 로그에서 만들고 로그와 대사한다</td></tr>
+<tr><td><span class="mono">mbknow.knowledge_gap</span></td><td>지식 공백</td><td>값</td><td>11</td><td>같은 질문이 반복해서 근거 없이 끝난 묶음 — 지식이 없거나 낡은 자리. 소관 영역에 작성을 요청하고 채워지면 닫는다</td></tr>
+</tbody></table>
+<h3>4.1 상태 기계</h3>
+<table>
+<colgroup><col style="width:14%"><col style="width:56%"><col style="width:30%"></colgroup>
+<thead><tr><th>객체</th><th>상태</th><th>전이 업무</th></tr></thead><tbody>
+<tr><td>지식 자산</td><td>DRAFT → ACTIVE ⇄ UNDER_REVIEW → SUPERSEDED · RETIRED</td><td>021 게시 · 030 검토 · 031 폐기 · 032 범위 변경</td></tr>
+<tr><td>지식 버전</td><td>DRAFT → PUBLISHED(본문 · 해시 · 적용 기간 불변, R37-03) → WITHDRAWN</td><td>021 · 010 · 015</td></tr>
+<tr><td>사규안</td><td>DRAFTING → REVIEWING → APPROVAL_PENDING → APPROVED → PROMULGATED → FILED(취업규칙) · REJECTED · WITHDRAWN</td><td>012 → 013 → 014 → 015 → 018</td></tr>
+<tr><td>등재 요청</td><td>RECEIVED → SCREENING → ACCEPTED · NEEDS_FIX · REJECTED → PUBLISHED</td><td>019 → 020 → 021</td></tr>
+<tr><td>관계 주장</td><td>CANDIDATE → APPROVED · REJECTED → RETIRED(스키마 개정 · 근거 폐지)</td><td>027 · 002</td></tr>
+<tr><td>색인 세대</td><td>BUILDING → EVALUATING → ACTIVE(테넌트당 하나) → RETIRED · FAILED</td><td>028 → 029 → 028</td></tr>
+</tbody></table>
+<h2 id="s5">5. 사규 — 다섯 계층 한 절차</h2>
+<table>
+<colgroup><col style="width:16%"><col style="width:32%"><col style="width:30%"><col style="width:22%"></colgroup>
+<thead><tr><th>계층</th><th>예</th><th>승인 기관(첫 값 — 위임전결이 정한다)</th><th>비고</th></tr></thead><tbody>
+<tr><td>정관(ARTICLES)</td><td>회사 정관</td><td>주주총회 특별결의(상법 제433조 · 제434조) — D13 FL0013023</td><td>D20 은 개정안 · 적합성 · 공포 · 버전을 맡는다</td></tr>
+<tr><td>규정(REGULATION)</td><td>취업규칙 · 인사 · 회계 · 위임전결 · 보안 · 품질 규정</td><td>이사회 또는 대표이사</td><td>취업규칙은 의견 청취 · 불리 변경 동의 · 신고</td></tr>
+<tr><td>규칙(RULE)</td><td>출장 · 경비 · 자산 규칙</td><td>대표이사 또는 위임 승인권자</td><td>규정을 넘지 못한다</td></tr>
+<tr><td>세칙(BYLAW)</td><td>규칙의 시행 세부</td><td>소관 책임자</td><td>규칙을 넘지 못한다</td></tr>
+<tr><td>지침(GUIDELINE)</td><td>품질관리지침서 · 설계 표준 · 코딩 표준 · 작업 표준</td><td>소관 책임자</td><td>표준 문서도 사규 절차로 제정 · 개정한다</td></tr>
+</tbody></table>
+<p><b>사규와 실행 규칙을 잇는다.</b> 사규 조문 하나가 어느 실행 규칙(사내 회계규정 조건식 · K-IFRS 판정 규칙 · VA 규칙 · 규칙 세트 · 판정 기준 · 직무분리)의 근거인지를 <span class="mono">regulation_rule_link</span> 에 적는다. 사규가 바뀌면 공포(015)가 연결 규칙 소관 업무에 개정을 요청하고, 정기 대사(017)가 「사규만 바뀜 · 규칙만 바뀜 · 근거 없음」을 잡는다. 규칙은 규칙 소관 업무가 고친다 — 사규 개정이 규칙을 직접 바꾸지 않는다(판정 기준 보호 8.7).</p>
+<h2 id="s6">6. 법령 · 기준서 · 해석 — 수명주기와 이중 시간</h2>
+<p><b>적재.</b> 자료원 등록(004) → 이용 허락 판정(005) → 원문 조회(CN-31 법령 정보 · CN-40 기준서 제공처) → 문서 구조 파서(TL-48)가 조 · 항 · 호 · 목 · 단서 · 부칙 · 별표를 나눠 조문 식별자(말뭉치 + 버전 + 조항호)를 부여 → 원문 해시 · 조문 수 · 시행일 대조(규칙) → 기록. 「현행」 하나만 들여오지 않는다 — 과거 사건을 보려면 연혁과 부칙이 필요하다.</p>
+<p><b>이중 시간.</b> 모든 버전 · 조문 · 절은 <b>적용 기간</b>(valid_from · valid_to)과 <b>기록 시각</b>(recorded_at)을 따로 갖는다. 시점 조회는 「사건일 T 에 적용되던 조문을, 판정일 R 에 우리가 알던 대로」 두 축으로 한다. 적용 기간을 모르면 NULL 이 아니라 <span class="mono">valid_unknown</span> 을 켠다 — NULL 을 「항상 적용」으로 읽는 사고를 막는다. 날짜만으로 적용을 확정하지 않는다 — 경과조치 · 소급 · 행위 유형은 EA 의견과 사람 확인으로 본다.</p>
+<pre class="code">-- 사건일 :t 에 적용되던 조문을, 판정일 :r 에 기록되어 있던 대로(판정 재현)
+SELECT c.clause_ref, c.body_text, c.effective_from, c.effective_to
+  FROM mbknow.clause c
+ WHERE c.corpus_code = :corpus AND c.article_no = :art
+   AND c.effective_from &lt;= :t AND (c.effective_to IS NULL OR c.effective_to &gt; :t)
+   AND c.recorded_at &lt;= :r
+ ORDER BY c.recorded_at DESC LIMIT 1;</pre>
+<h2 id="s7">7. 온톨로지 — 첫 스키마</h2>
+<p>아래 개념 유형 · 관계 유형은 <b>첫 값</b>이다. 온톨로지 스키마 확정(FL0020002)이 버전으로 굳히고, 운영하면서 거절된 후보가 몰리는 곳을 보고 고친다. 관계 유형은 적을수록 좋다 — 새 유형은 기존 유형으로 표현이 안 될 때만 더한다.</p>
+<table class="tight">
+<colgroup><col style="width:20%"><col style="width:20%"><col style="width:60%"></colgroup>
+<thead><tr><th>유형 코드</th><th>이름</th><th>무엇</th></tr></thead><tbody>
+<tr><td><span class="mono">LAW_DOC</span></td><td>법령 · 기준서</td><td>말뭉치 한 권</td></tr>
+<tr><td><span class="mono">PROVISION</span></td><td>조문</td><td>조 · 항 · 호 · 목 · 단서 · 부칙</td></tr>
+<tr><td><span class="mono">INTERNAL_DOC</span></td><td>사내 문서</td><td>사규 · 설계서 · 제안서 · 지침</td></tr>
+<tr><td><span class="mono">SECTION</span></td><td>절</td><td>사내 문서의 구조 단위</td></tr>
+<tr><td><span class="mono">TERM</span></td><td>정의 용어</td><td>법령 · 사규가 정의한 말(상시 근로자 · 특수관계인)</td></tr>
+<tr><td><span class="mono">OBLIGATION</span></td><td>의무</td><td>「~하여야 한다」</td></tr>
+<tr><td><span class="mono">PROHIBITION</span></td><td>금지</td><td>「~하여서는 아니 된다」</td></tr>
+<tr><td><span class="mono">PERMISSION</span></td><td>허용 · 예외</td><td>「다만 ~한 경우에는」</td></tr>
+<tr><td><span class="mono">DEADLINE</span></td><td>기한</td><td>신고 · 납부 · 보존 기한</td></tr>
+<tr><td><span class="mono">THRESHOLD</span></td><td>기준값</td><td>금액 · 인원 · 비율 기준(상시 10명 · 자산화 기준 금액)</td></tr>
+<tr><td><span class="mono">ACTOR</span></td><td>주체</td><td>사용자 · 근로자 · 이사회 · 감사위원회</td></tr>
+<tr><td><span class="mono">DOCUMENT_KIND</span></td><td>서식 · 문서 종류</td><td>신고서 · 동의서 · 의사록</td></tr>
+<tr><td><span class="mono">ACCOUNT</span></td><td>계정</td><td>계정과목(mbacct.account 참조)</td></tr>
+<tr><td><span class="mono">WORK</span></td><td>업무</td><td>업무코드(mbcode.work_code 참조)</td></tr>
+<tr><td><span class="mono">RULE</span></td><td>실행 규칙</td><td>규칙 세트 · 판정 기준 · VA 규칙</td></tr>
+<tr><td><span class="mono">ITEM_CLASS</span></td><td>품목군</td><td>인증 대상 품목군</td></tr>
+</tbody></table>
+<table class="tight">
+<colgroup><col style="width:22%"><col style="width:10%"><col style="width:24%"><col style="width:9%"><col style="width:7%"><col style="width:28%"></colgroup>
+<thead><tr><th>관계 코드</th><th>이름</th><th>양 끝</th><th>확장</th><th>최대 단계</th><th>쓰임</th></tr></thead><tbody>
+<tr><td><span class="mono">DEFINES_TERM_FOR</span></td><td>정의한다</td><td>PROVISION → TERM</td><td>ALWAYS</td><td>1</td><td>정의 조항은 그 용어가 쓰인 조문을 가져오면 반드시 함께</td></tr>
+<tr><td><span class="mono">EXCEPTION_TO</span></td><td>예외이다</td><td>PROVISION → PROVISION</td><td>ALWAYS</td><td>1</td><td>단서 · 적용 제외 — 원칙 조문만 읽는 사고를 막는다</td></tr>
+<tr><td><span class="mono">APPLIES_MUTATIS_MUTANDIS</span></td><td>준용한다</td><td>PROVISION → PROVISION</td><td>ON_DEMAND</td><td>2</td><td>「제○조를 준용한다」</td></tr>
+<tr><td><span class="mono">DELEGATES_TO</span></td><td>위임한다</td><td>PROVISION → PROVISION</td><td>ON_DEMAND</td><td>2</td><td>「대통령령으로 정한다」 → 시행령 조문(추이)</td></tr>
+<tr><td><span class="mono">CITES</span></td><td>인용한다</td><td>PROVISION → PROVISION</td><td>ON_DEMAND</td><td>1</td><td>조문 안의 다른 조문 언급</td></tr>
+<tr><td><span class="mono">SPECIAL_LAW_OF</span></td><td>특별법이다</td><td>LAW_DOC → LAW_DOC</td><td>ON_DEMAND</td><td>1</td><td>일반법 조문을 볼 때 특별법 조문 존재를 먼저 확인</td></tr>
+<tr><td><span class="mono">SUPPLEMENTS</span></td><td>보충 적용</td><td>LAW_DOC → LAW_DOC</td><td>NEVER</td><td>0</td><td>특별법에 없는 사항 — 확장하지 않고 표시만</td></tr>
+<tr><td><span class="mono">SUPERSEDES</span></td><td>대체한다</td><td>PROVISION → PROVISION</td><td>NEVER</td><td>0</td><td>개정 전후 — 시점 조회가 쓴다(확장 아님)</td></tr>
+<tr><td><span class="mono">BASIS_OF</span></td><td>근거이다</td><td>PROVISION · SECTION → RULE</td><td>ON_DEMAND</td><td>1</td><td>법령 · 사규 조문이 실행 규칙의 근거(regulation_rule_link 와 같은 뜻)</td></tr>
+<tr><td><span class="mono">SUPERIOR_TO</span></td><td>상위 규범이다</td><td>PROVISION → SECTION</td><td>ON_DEMAND</td><td>2</td><td>법령 → 규정 → 규칙 → 세칙 → 지침(추이)</td></tr>
+<tr><td><span class="mono">IMPOSES</span></td><td>부과한다</td><td>PROVISION · SECTION → OBLIGATION · PROHIBITION</td><td>ON_DEMAND</td><td>1</td><td>조문이 의무 · 금지를 정한다</td></tr>
+<tr><td><span class="mono">HAS_DEADLINE</span></td><td>기한을 갖는다</td><td>OBLIGATION → DEADLINE</td><td>ALWAYS</td><td>1</td><td>의무를 가져오면 기한도</td></tr>
+<tr><td><span class="mono">HAS_THRESHOLD</span></td><td>기준값을 갖는다</td><td>OBLIGATION · PERMISSION → THRESHOLD</td><td>ALWAYS</td><td>1</td><td>기준값은 판정 규칙의 파라미터로 이어진다</td></tr>
+<tr><td><span class="mono">APPLIES_TO</span></td><td>적용 대상</td><td>PROVISION · SECTION → ACTOR · ITEM_CLASS · ACCOUNT</td><td>ON_DEMAND</td><td>1</td><td>누구 · 무엇에 적용되나</td></tr>
+<tr><td><span class="mono">PERFORMED_BY</span></td><td>수행 업무</td><td>OBLIGATION → WORK</td><td>ON_DEMAND</td><td>1</td><td>의무를 이행하는 업무코드</td></tr>
+<tr><td><span class="mono">REQUIRES_DOC</span></td><td>서식을 요구</td><td>OBLIGATION → DOCUMENT_KIND</td><td>ON_DEMAND</td><td>1</td><td>신고서 · 동의서</td></tr>
+<tr><td><span class="mono">SAME_AS</span></td><td>같은 뜻</td><td>TERM → TERM</td><td>ALWAYS</td><td>1</td><td>영역 간 같은 개념 — 이름이 달라도</td></tr>
+<tr><td><span class="mono">BROADER_THAN</span></td><td>더 넓다</td><td>TERM → TERM</td><td>ON_DEMAND</td><td>2</td><td>상하 개념</td></tr>
+</tbody></table>
+<p class="small">법령 관계는 모두 출처 의무(requires_source)가 있다. 파서가 뽑는 것 — DEFINES_TERM_FOR · EXCEPTION_TO · APPLIES_MUTATIS_MUTANDIS · DELEGATES_TO · CITES · SUPERSEDES(문언 규칙). AI 가 후보로 내는 것 — IMPOSES · APPLIES_TO · PERFORMED_BY · SAME_AS · BROADER_THAN 등 해석이 필요한 관계. 후보는 확신도 순으로 사람이 확인한다(FL0020027).</p>
+<h2 id="s8">8. 지식 그래프와 검색 — PostgreSQL 안의 GraphRAG</h2>
+<figure><svg viewBox="0 0 960 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="검색 경로">
+<defs><marker id="kx" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto"><path d="M0,0 L10,3.5 L0,7 z" fill="#33475f"/></marker></defs>
+<g font-size="12.5">
+<rect x="10" y="40" width="130" height="64" rx="8" fill="#12315c"/><text x="75" y="68" fill="#fff" text-anchor="middle" font-weight="700">IA 의도 해석</text><text x="75" y="88" fill="#cfe0f5" text-anchor="middle" font-size="11">질문 · 기준일</text>
+<rect x="175" y="40" width="150" height="64" rx="8" fill="#7a3b69"/><text x="250" y="68" fill="#fff" text-anchor="middle" font-weight="700">권한 사전 필터</text><text x="250" y="88" fill="#f3e3ee" text-anchor="middle" font-size="11">RLS · 기밀 · 범위 · 시점</text>
+<rect x="360" y="12" width="150" height="54" rx="8" fill="#2d6cb5"/><text x="435" y="38" fill="#fff" text-anchor="middle" font-weight="700">형태소 30</text><text x="435" y="56" fill="#e3eefb" text-anchor="middle" font-size="11">tsvector(mecab)</text>
+<rect x="360" y="80" width="150" height="54" rx="8" fill="#2d6cb5"/><text x="435" y="106" fill="#fff" text-anchor="middle" font-weight="700">벡터 30</text><text x="435" y="124" fill="#e3eefb" text-anchor="middle" font-size="11">pgvector HNSW</text>
+<rect x="545" y="40" width="120" height="64" rx="8" fill="#1f6b47"/><text x="605" y="68" fill="#fff" text-anchor="middle" font-weight="700">RRF(k=60)</text><text x="605" y="88" fill="#dff0e6" text-anchor="middle" font-size="11">상위 12</text>
+<rect x="700" y="40" width="120" height="64" rx="8" fill="#b7791f"/><text x="760" y="68" fill="#fff" text-anchor="middle" font-weight="700">관계 확장</text><text x="760" y="88" fill="#fbf0dc" text-anchor="middle" font-size="11">폐쇄 요약</text>
+<rect x="840" y="40" width="110" height="64" rx="8" fill="#33475f"/><text x="895" y="68" fill="#fff" text-anchor="middle" font-weight="700">재순위</text><text x="895" y="88" fill="#e6edf7" text-anchor="middle" font-size="11">교차 인코더</text>
+<path d="M140,72 L175,72" stroke="#33475f" stroke-width="1.8" marker-end="url(#kx)"/>
+<path d="M325,64 L360,40" stroke="#33475f" stroke-width="1.8" marker-end="url(#kx)"/><path d="M325,80 L360,106" stroke="#33475f" stroke-width="1.8" marker-end="url(#kx)"/>
+<path d="M510,40 L545,64" stroke="#33475f" stroke-width="1.8" marker-end="url(#kx)"/><path d="M510,106 L545,80" stroke="#33475f" stroke-width="1.8" marker-end="url(#kx)"/>
+<path d="M665,72 L700,72" stroke="#33475f" stroke-width="1.8" marker-end="url(#kx)"/><path d="M820,72 L840,72" stroke="#33475f" stroke-width="1.8" marker-end="url(#kx)"/>
+<rect x="545" y="170" width="405" height="100" rx="8" fill="#f4f7fc" stroke="#c6d2e2"/>
+<text x="560" y="194" fill="#12315c" font-weight="700">근거 묶음 → 생성 → 인용 대조</text>
+<text x="560" y="216" fill="#33475f" font-size="11.5">자산 · 버전 · 해시를 굳혀 생성하고 문장마다 원문 구절과 대조한다</text>
+<text x="560" y="236" fill="#33475f" font-size="11.5">검색 로그: 세대 · 확장 경로 · 기준일 · 판정 사용 = false</text>
+<text x="560" y="256" fill="#9c2b20" font-size="11.5" font-weight="700">판정은 조문 · 절 식별자 조회만(13.3) — 이 경로를 쓰지 않는다</text>
+<path d="M895,104 L895,170" stroke="#33475f" stroke-width="1.8" marker-end="url(#kx)"/>
+<rect x="10" y="170" width="500" height="100" rx="8" fill="#fff" stroke="#c6d2e2"/>
+<text x="25" y="194" fill="#12315c" font-weight="700">지식 그래프 = 관계 주장 + 관계 폐쇄(세대별)</text>
+<text x="25" y="216" fill="#33475f" font-size="11.5">onto_assertion — 출처 구절 · 확인자 · 성립 기간이 붙은 간선</text>
+<text x="25" y="236" fill="#33475f" font-size="11.5">relation_closure — 재귀 SQL(CYCLE)로 max_hops 까지 펼친 파생 요약</text>
+<text x="25" y="256" fill="#33475f" font-size="11.5">APPROVED 만 · 권한은 확장한 조문에도 다시 건다</text>
+<path d="M510,220 L760,104" stroke="#b7791f" stroke-width="1.6" stroke-dasharray="6 4" marker-end="url(#kx)"/>
+</g></svg><figcaption>그림 1. 질문 하나가 지나가는 길 — 모든 단계가 PostgreSQL 한 인스턴스(RLS)에서 끝난다</figcaption></figure>
+<h3>8.1 왜 Neo4j 가 아닌가 — 대안 비교</h3>
+<table>
+<colgroup><col style="width:24%"><col style="width:22%"><col style="width:40%"><col style="width:14%"></colgroup>
+<thead><tr><th>대안</th><th>얻는 것</th><th>잃는 것</th><th>판단</th></tr></thead><tbody>
+<tr><td>A. 벡터만</td><td>구현이 간단하다</td><td>예외 · 정의 조문 누락, 시점 개념 없음</td><td>기각(한 축으로만)</td></tr>
+<tr><td>B. LLM 추출 GraphRAG(커뮤니티 요약)</td><td>넓은 질문에 요약 답</td><td>관계가 모델 출력이라 재현 · 출처가 약하다(P5). 개정마다 요약이 낡는다. 오류 관계가 검색을 오염</td><td>후보 추출에만</td></tr>
+<tr><td>C. Neo4j + 벡터</td><td>깊은 경로 · 그래프 알고리즘</td><td>정본 둘(P2) · 권한 필터 세 번 구현(8.6.5) · Enterprise 필요 · 동기화 지연 · 운영 인력</td><td>보류(8.5 조건)</td></tr>
+<tr><td>D. PostgreSQL 온톨로지 + 하이브리드 + 폐쇄 확장</td><td>정본 하나 · 권한 한 행 · 시점 · 재현 · 같은 트랜잭션</td><td>4단계 이상 경로 · 전역 알고리즘은 느릴 수 있다</td><td><b>채택</b></td></tr>
+</tbody></table>
+<p><b>규모 감각.</b> 법령 조회는 대부분 1 ~ 3단계에서 끝난다 — 정의 · 단서는 1단계, 준용 · 위임은 2단계 안이다. 폐쇄 요약은 이 깊이까지만 미리 펼치므로 검색 때 재귀를 돌지 않는다. 폐쇄 요약의 행 수 · 재생성 시간 · 검색 p95 는 <b>설계 수치가 아니라 측정 대상</b>이다(10장 골든셋).</p>
+<h3>8.2 넓은 질문 — 요약을 저장해 두지 않는다</h3>
+<p>「사규 전체에서 보안 의무는?」 같은 질문은 분류(knowledge_class) · 개념 유형(OBLIGATION) · 관계(IMPOSES)로 절을 <b>SQL 로 모아</b> 답한다. 문장 요약이 필요하면 그때 원본 식별자를 달아 만들고, 세대가 바뀌면 다시 만든다 — 모델이 만든 커뮤니티 요약을 원장처럼 쓰지 않는다.</p>
+<h3>8.3 검색 · 확장 SQL</h3>
+<p>관계 폐쇄 생성과 검색 질의의 설계 예시는 DB 테이블설계서 v3.22 제0AC.5 에 있다(실행 검증 전).</p>
+<h3>8.4 재순위 · 생성 · 인용 대조</h3>
+<p>재순위(교차 인코더)는 상위 12 안에서만 순서를 바꾼다 — 권한 · 시점 필터를 통과하지 않은 것을 들이지 않는다. 생성은 허용된 근거 ID 만 인용하고, 문장마다 원문 구절과 대조해 근거 없는 문장을 표시한다(FL0020026 5단계 · RL-20026-5). 인용 허락이 없는 청크는 원문 대신 식별자만 준다(R37-05).</p>
+<h3>8.5 Neo4j 를 다시 볼 조건(DB 설계방향서 v2.7 Q-6)</h3>
+<table>
+<colgroup><col style="width:62%"><col style="width:38%"></colgroup>
+<thead><tr><th>조건</th><th>측정</th></tr></thead><tbody>
+<tr><td>ⓐ 폐쇄 요약을 두고도 4단계 이상 경로 질의가 검색 p95 목표를 넘고, 그 질의가 골든셋의 10% 이상</td><td>FL0020029 검색 품질 판정의 질의 유형별 지연</td></tr>
+<tr><td>ⓑ 중심성 · 커뮤니티 같은 전역 그래프 알고리즘이 업무 요구로 확정</td><td>업무코드 신설 심의(FL0012027)</td></tr>
+<tr><td>ⓒ 폐쇄 요약 행이 세대당 1억 행을 넘어 재생성이 색인 전환 목표 시간을 넘음</td><td>index_generation.closure_count · 전환 시간</td></tr>
+</tbody></table>
+<p>조건이 확인되면 Neo4j 는 <b>읽기 전용 투영</b>으로만 붙는다 — 도메인 이벤트 outbox 로 APPROVED 관계만 싣고, 정본 · 판정 · 권한 판단은 PostgreSQL 에 그대로 둔다.</p>
+<h2 id="s9">9. 권한 — 원본보다 넓게 열리지 않는다</h2>
+<table>
+<colgroup><col style="width:42%"><col style="width:58%"></colgroup>
+<thead><tr><th>규칙</th><th>구현</th></tr></thead><tbody>
+<tr><td>파생물 권한 = 원본 중 가장 좁은 것(8.6.4)</td><td>청크 · 요약 · 캐시가 자산의 기밀 등급 · 열람 범위를 복사해 같은 행에 든다(R37-11)</td></tr>
+<tr><td>사전 필터는 검색과 같은 질의에서(8.6.5)</td><td>RLS + WHERE(기밀 · 범위 · 시점 · acl_stale) — 벡터 · 형태소 · 확장 모두</td></tr>
+<tr><td>대리한 사람의 권한을 넘지 않는다(8.6.6)</td><td>retrieval_log.on_behalf_of · prefilter_scope</td></tr>
+<tr><td>좁힐 때는 먼저 막는다(8.6.8)</td><td>FL0020032 3단계가 재색인 전에 acl_stale 을 켠다</td></tr>
+<tr><td>캐시 키에 권한 범위 해시(8.6.9)</td><td>semantic_cache_entry(기존)</td></tr>
+<tr><td>테넌트 지식으로 공용 모델을 학습하지 않는다(8.6.10)</td><td>usage_license.allow_training 기본 false · 학습 데이터 추출에서 제외</td></tr>
+</tbody></table>
+<h2 id="s10">10. 품질 — 골든셋과 세대 전환</h2>
+<table>
+<colgroup><col style="width:16%"><col style="width:50%"><col style="width:34%"></colgroup>
+<thead><tr><th>지표</th><th>뜻</th><th>전환 조건(첫 값 — 수행자 제안 · 발주자 승인)</th></tr></thead><tbody>
+<tr><td>재현율@12</td><td>골든셋 정답 조문이 상위 12 안에 드는 비율</td><td>앞 세대보다 낮지 않다</td></tr>
+<tr><td>필수 동반율</td><td>예외 · 정의 조문이 원칙 조문과 함께 나오는 비율(확장 규칙 ALWAYS)</td><td>100%</td></tr>
+<tr><td>시점 정확도</td><td>사건일 기준으로 그때 적용되던 버전을 찾는 비율</td><td>앞 세대보다 낮지 않다</td></tr>
+<tr><td>인용 정확도</td><td>생성 문장의 인용이 원문 구절과 맞는 비율</td><td>기준치 이상(15.1)</td></tr>
+<tr><td>권한 음성 시험</td><td>남의 테넌트 · 기밀 · 범위 밖 지식이 보이는 건수</td><td>0건 — 하나라도 있으면 전환하지 않는다</td></tr>
+<tr><td>지연 p95</td><td>검색 한 번의 응답 시간(질의 유형별)</td><td>목표치 이하(14장)</td></tr>
+</tbody></table>
+<p>골든셋은 DB 설계방향서 Q-5 의 결정을 따른다 — 공개 법령 · 판례 말뭉치 기반 질의 300건 + 사내 질의 표본(개인 식별 정보를 가린 것). 사람이 먼저 확정하고 분기마다 갱신한다.</p>
+<h2 id="s11">11. 이행 — 기존 mbknow 13표에서</h2>
+<table>
+<colgroup><col style="width:36%"><col style="width:64%"></colgroup>
+<thead><tr><th>기존</th><th>이행</th></tr></thead><tbody>
+<tr><td>corpus · corpus_version · clause</td><td>유지 + 칸 추가(자산 연결 · 자료원 · 허락 · 조문 계층 · 기록 시각). 각 말뭉치에 지식 자산(LAW · STANDARD) 한 행을 만든다</td></tr>
+<tr><td>clause_embedding</td><td><b>폐지</b> — 청크(CLAUSE)로 옮기고 1,024차원으로 새 세대를 만든다(옮기지 않고 다시 만든다)</td></tr>
+<tr><td>internal_regulation</td><td>유지 + 칸 추가(자산 · 계층 · 소관 · 취업규칙). 조문은 knowledge_section 으로 적재</td></tr>
+<tr><td>change_watch · update_run · impact_analysis</td><td>유지 — 쓰는 업무를 D20(008 · 010 · 009)으로</td></tr>
+<tr><td>retrieval_log</td><td>유지 + 칸 추가(세대 · 확장 경로 · 기준일)</td></tr>
+<tr><td>retrieval_item · derivation_lineage · acl_change_event · semantic_cache_entry</td><td>유지 — 파생물 권한 규약(8.6)은 그대로</td></tr>
+</tbody></table>
+<p><b>차수.</b> 체계 · 자료원 · 허락 · 법령 적재 · 사규 · 색인 · 품질(001 ~ 018 · 027 ~ 029)은 다른 영역의 판정 근거이므로 <b>0차 기반</b>에, 사내 지식 자산 · 재사용 · 지표(019 ~ 026 · 030 ~ 035)는 원본 영역이 여는 차수에 맞춘다(차수별 오픈방안 v1.14).</p>
+<h2 id="s12">12. 남은 결정</h2>
+<table>
+<colgroup><col style="width:8%"><col style="width:38%"><col style="width:38%"><col style="width:16%"></colgroup>
+<thead><tr><th>#</th><th>결정할 것</th><th>권장</th><th>언제</th></tr></thead><tbody>
+<tr><td>QK-1</td><td>공용 지식(법령 · 공개 해석)을 플랫폼 공통 자산으로 둘지, 테넌트마다 적재할지</td><td>공통 자산 — 재배포 허락이 있는 것만. 기준서는 테넌트별 계약에 따라</td><td>첫 고객 계약 전(H.6)</td></tr>
+<tr><td>QK-2</td><td>형태소 분석기와 사전</td><td>mecab 계열 + 사내 용어(onto_label) 사용자 사전</td><td>1차 오픈 전 골든셋 실측</td></tr>
+<tr><td>QK-3</td><td>임베딩 모델</td><td>Q-5 1차 후보 KURE-v1(1,024) + 대조군 2종 실측</td><td>1차 오픈 전</td></tr>
+<tr><td>QK-4</td><td>관계 폐쇄 max_hops 첫 값</td><td>정의 · 예외 1 · 준용 · 위임 · 상위 규범 2 · 그 밖 1</td><td>스키마 확정(FL0020002) 때</td></tr>
+<tr><td>QK-5</td><td>기준서 원문 적재 범위</td><td>허락 범위 안 본문, 아니면 문단 식별자 + 요지</td><td>제공처 계약 때</td></tr>
+</tbody></table>
+<footer>MyBee 지식관리 상세설계서 v1.0 · 생성 src_v34/know · 2026-09-29</footer></div></body></html>

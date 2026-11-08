@@ -1,0 +1,1265 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MyBee 에이전트 중심 실행 구조 DB 설계 제안 v1.6</title>
+<style>
+:root{--bg:#fbfcfe;--fg:#16181d;--mut:#5a6b80;--line:#c6d2e2;--head:#12315c;--acc:#2d6cb5;
+ --soft:#e8eef7;--zebra:#f7f9fc;--warn:#fff8e6;--warnl:#d9a441;--bad:#fdeceb;--badl:#c0392b;
+ --ok:#ecf7ee;--okl:#2e8b57;}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Malgun Gothic","맑은 고딕",sans-serif;font-size:15px;line-height:1.75;
+ color:var(--fg);background:var(--bg)}
+header.top{position:sticky;top:0;z-index:50;background:var(--head);color:#fff;padding:10px 20px;
+ display:flex;flex-wrap:wrap;gap:12px;align-items:center;box-shadow:0 2px 8px rgba(0,0,0,.18)}
+header.top b{font-size:16px;letter-spacing:.5px}
+header.top .sp{flex:1}
+header.top a{color:#cfe0f5;text-decoration:none;font-size:13px;padding:3px 8px;border-radius:4px}
+header.top a:hover{background:rgba(255,255,255,.14);color:#fff}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px 80px}
+.hero{background:linear-gradient(160deg,#12315c,#2d6cb5 70%,#4a8fd4);color:#fff;padding:56px 20px;margin-bottom:8px}
+.hero .in{max-width:1180px;margin:0 auto}
+.hero h1{margin:0 0 6px;font-size:34px;letter-spacing:-.5px}
+.hero p{margin:4px 0;opacity:.92;font-size:15px}
+.hero .meta{margin-top:22px;font-size:13px;opacity:.85;line-height:2}
+h2{font-size:25px;color:var(--head);margin:46px 0 10px;padding-bottom:8px;border-bottom:3px solid var(--head)}
+h3{font-size:19px;color:#1b3a6b;margin:30px 0 8px;padding-left:11px;border-left:5px solid var(--acc)}
+h4{font-size:16px;color:#24406b;margin:20px 0 6px}
+p{margin:9px 0}
+ul,ol{margin:9px 0 9px 20px;padding-left:8px}
+li{margin:4px 0}
+table{width:100%;border-collapse:collapse;margin:14px 0 20px;font-size:13px}
+th{background:var(--soft);border:1px solid #9fb4d0;padding:7px 8px;text-align:left;color:var(--head);font-weight:600;
+ position:sticky;top:44px;z-index:5}
+td{border:1px solid var(--line);padding:6px 8px;vertical-align:top}
+tbody tr:nth-child(even){background:var(--zebra)}
+tbody tr:hover{background:#eef3fa}
+code,.mono{font-family:Consolas,"D2Coding",monospace;font-size:13px;background:#f0f3f8;padding:1px 5px;border-radius:3px}
+pre{font-family:Consolas,"D2Coding",monospace;font-size:13px;background:#f4f6fa;border:1px solid #d6deea;
+ border-left:4px solid var(--acc);padding:12px 14px;overflow-x:auto;white-space:pre;border-radius:4px}
+.note{background:var(--warn);border:1px solid #e8d59a;border-left:5px solid var(--warnl);padding:12px 15px;margin:14px 0;border-radius:4px}
+.warn{background:var(--bad);border:1px solid #eab4ae;border-left:5px solid var(--badl);padding:12px 15px;margin:14px 0;border-radius:4px}
+.ok{background:var(--ok);border:1px solid #a9d4b2;border-left:5px solid var(--okl);padding:12px 15px;margin:14px 0;border-radius:4px}
+.kv{display:flex;flex-wrap:wrap;gap:10px;margin:18px 0}
+.kv > div{flex:1 1 130px;border:1px solid var(--line);border-top:4px solid var(--acc);padding:11px 13px;background:#fff;border-radius:4px}
+.kv .k{font-size:12px;color:var(--mut)}
+.kv .v{font-size:24px;font-weight:700;color:var(--head);line-height:1.3}
+.tools{position:sticky;top:44px;z-index:20;background:var(--bg);padding:12px 0;border-bottom:1px solid var(--line);
+ display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.tools input{flex:1 1 260px;padding:9px 12px;border:1px solid var(--line);border-radius:5px;font-size:14px;font-family:inherit}
+.tools select{padding:9px 10px;border:1px solid var(--line);border-radius:5px;font-size:14px;font-family:inherit}
+.tools .cnt{font-size:13px;color:var(--mut);white-space:nowrap}
+.badge{display:inline-block;padding:1px 7px;border-radius:10px;font-size:11px;font-weight:600;white-space:nowrap}
+.b-A{background:#e3f0e7;color:#226b44}.b-H{background:#fde8e6;color:#a5352a}.b-Y{background:#fdf2dc;color:#8a6415}
+.r-L{background:#eef2f7;color:#5a6b80}.r-M{background:#e6eefb;color:#24508f}
+.r-H{background:#fdf0dc;color:#96621a}.r-C{background:#fce0dd;color:#9c2b20}
+.u-M{background:#f1f1f1;color:#666}.u-A{background:#eaf0f9;color:#3a5d91}
+.u-S{background:#e4eefb;color:#1f4f96}.u-F{background:#e0f0e6;color:#1d6b42}
+.domhead{background:#fff;border:1px solid var(--line);border-radius:6px;padding:16px 18px;margin:16px 0}
+.domhead .t{font-size:12px;color:var(--mut);text-transform:uppercase;letter-spacing:1px}
+.domhead .n{font-size:21px;font-weight:700;color:var(--head);margin:2px 0 6px}
+.domhead .d{font-size:14px}
+.domhead .l{font-size:13px;color:var(--mut);margin-top:8px}
+.toc{columns:2;column-gap:34px;margin:14px 0}
+.toc a{color:var(--fg);text-decoration:none;display:block;padding:3px 0;font-size:14px}
+.toc a:hover{color:var(--acc)}
+.small{font-size:13px;color:var(--mut)}
+.nw{white-space:nowrap}
+footer{margin-top:60px;padding:24px 0;border-top:1px solid var(--line);font-size:13px;color:var(--mut)}
+.m{display:inline-block;padding:1px 6px;border-radius:3px;font-size:11px;font-weight:600;color:#fff;white-space:nowrap}
+.m-T1{background:#5a6b80}.m-T2{background:#8a5a2b}.m-T3{background:#7d4a9e}.m-T4{background:#c0392b}
+.m-T5{background:#c0602b}.m-T6{background:#2e7d5b}.m-T7{background:#2d6cb5}.m-T8{background:#4f8a76}
+.m.ref{opacity:.55}.m.ref:after{content:" 참고"}
+.hid{display:inline-block;padding:1px 6px;border-radius:3px;font-size:11px;background:#fff0c2;color:#7a5a12;border:1px solid #e8d59a;white-space:nowrap}
+figure{margin:18px 0;text-align:center}figure svg{width:100%;height:auto;background:#fff;border:1px solid var(--line);border-radius:6px}
+figcaption{font-size:13px;color:var(--mut);margin-top:6px}
+.chg{background:#fff;border:1px solid var(--line);border-left:5px solid #2e7d5b;padding:12px 16px;border-radius:4px;margin:14px 0}
+.qual{display:inline-block;padding:0 6px;margin-left:4px;border-radius:3px;font-size:11px;font-weight:600;background:#fde8d8;color:#8a3b12;border:1px solid #f0b894;white-space:nowrap}
+.trv{display:inline-block;padding:0 6px;margin-left:4px;border-radius:3px;font-size:11px;background:#eee6f7;color:#5a3d8a;border:1px solid #cbb8e6;white-space:nowrap}
+.irs{display:inline-block;padding:0 6px;margin-left:4px;border-radius:3px;font-size:11px;font-weight:600;background:#e3f1ea;color:#1f6b47;border:1px solid #9fcfb4;white-space:nowrap}
+.aud{display:inline-block;padding:0 6px;margin-left:4px;border-radius:3px;font-size:11px;font-weight:600;background:#ece6f6;color:#553a86;border:1px solid #c2b2e0;white-space:nowrap}
+.ret{background:#f7f7f7;color:#777}
+@media print{header.top,.tools{position:static}h2{page-break-before:always}tr{page-break-inside:avoid}}
+
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:16px 0}
+@media(max-width:820px){.grid2{grid-template-columns:1fr}}
+.card{background:#fff;border:1px solid var(--line);border-top:4px solid var(--acc);border-radius:5px;padding:14px 16px}
+.card .h{font-weight:700;color:var(--head);margin-bottom:6px}
+.gap{background:#fff;border:1px solid var(--line);border-left:5px solid var(--badl);border-radius:4px;padding:12px 16px;margin:12px 0}
+.gap .id{display:inline-block;background:var(--badl);color:#fff;border-radius:3px;padding:0 7px;font-size:12px;font-weight:700;margin-right:7px}
+.sol{background:#fff;border:1px solid var(--line);border-left:5px solid var(--okl);border-radius:4px;padding:12px 16px;margin:12px 0}
+.sol .id{display:inline-block;background:var(--okl);color:#fff;border-radius:3px;padding:0 7px;font-size:12px;font-weight:700;margin-right:7px}
+.cite{font-size:12px;color:var(--mut)}
+.new{display:inline-block;padding:0 6px;border-radius:3px;font-size:11px;font-weight:600;background:#e4eefb;color:#1f4f96;border:1px solid #9fc0e8}
+.mod{display:inline-block;padding:0 6px;border-radius:3px;font-size:11px;font-weight:600;background:#fdf2dc;color:#8a6415;border:1px solid #e8d59a}
+.keep{display:inline-block;padding:0 6px;border-radius:3px;font-size:11px;font-weight:600;background:#eef2f7;color:#5a6b80;border:1px solid #c6d2e2}
+td.c,th.c{text-align:center}
+table.dd{font-size:12.5px}
+table.dd td:first-child{font-family:Consolas,"D2Coding",monospace;white-space:nowrap}
+
+.gloss{border:1px solid #c6d2e2;border-radius:8px;background:#fbfcfe;padding:14px 16px;margin:18px 0}
+.gloss h3{margin:0 0 8px;font-size:15px;color:#12315c}
+.gloss table{width:100%;border-collapse:collapse;font-size:12.5px}
+.gloss td{border-top:1px solid #e6ecf4;padding:6px 8px;vertical-align:top}
+.gloss td:first-child{width:22%;font-weight:700;color:#12315c;white-space:nowrap}
+.gloss td:last-child{width:34%;color:#5a6b80}
+@media(max-width:760px){.gloss td:first-child{white-space:normal}}
+</style></head><body>
+<div class="hero"><div class="in">
+<p style="opacity:.8;letter-spacing:6px;font-size:13px">MYBEE PLATFORM</p>
+<h1>에이전트 중심 실행 구조 DB 설계 제안</h1>
+<p>19개 업무영역 · 업무코드 574 · IA · PA · EA 스킬과 로직 · 도구를 하나의 실행 원장으로</p>
+<div class="meta">문서번호 MB-ADS-2026-001 &nbsp;·&nbsp; 버전 <b>v1.2</b> &nbsp;·&nbsp; 작성일 2026-09-18<br>
+신설 20 DB Table 271칸 · 개정 14건 · 새 스키마 2(mbdef · mbrun) &nbsp;·&nbsp; 제안 뒤 스키마 35 · 표 505<br>
+검토한 근거 116건 &nbsp;·&nbsp; 현행 모델 진단 51 DB Table · 확인된 빈틈 9 · <b>결정 6건 · 검증 정정 5건</b><br>
+근거 <b>MyBee 설계지시문 v5.14</b> &nbsp;·&nbsp; DB 테이블설계서 v3.20 · 코드체계 v3.16 ·
+업무코드_스킬·로직도구_실행순서 v2.8 · DB테이블_업무코드매핑 v3.3</div>
+</div></div>
+<header class="top"><b>실행 구조 제안</b><a href="#s1">한 장 요약</a><a href="#s2">현행 진단</a><a href="#s3">근거</a><a href="#s4">설계 원리</a><a href="#s5">표 설계</a><a href="#s6">우선순위 · 대기열</a><a href="#s7">꼬임 방지</a><a href="#s8">이행</a><a href="#s9">결정 6건</a><a href="#s10">검증이 바꾼 것</a><a href="#sa">부록 A 근거</a><a href="#sb">부록 B 표 목록</a></header>
+<div class="wrap">
+<div class="note" style="margin-top:24px"><b>이 문서의 성격.</b>
+설계 <b>제안</b>이다. 이 제안은 <b>채택되었다</b>. 정하지 못했던 6건을 모두 결정해 제9부에 권고안으로 적었고,
+설계지시문 <b>v5.1</b>(제12.8조 20개 조) · DB 테이블설계서 <b>v3.4</b> · 코드체계 설계서 <b>v3.5</b> 가 이 버전을 반영해 나왔다.
+가상 프로젝트로 검증한 기록은 MyBee_실행구조_가상프로젝트_검증_v1.0.html 에 있다. 현행 모델의 수치는 등록표와 표 명세에서 직접 센 것이고,
+근거는 논문 · 표준 · 실물 스키마 116건을 검토해 골랐다. 정하지 못한 것은 제9부에 그대로 남겼다.
+<b>PostgreSQL 실행 검증은 하지 않았다</b> — 이 문서의 주장은 모두 문서 · 자료 대조 수준이다.</div>
+<div class="ok" style="margin-top:20px"><b>v1.2 에서 바뀐 것 — 가상 프로젝트 검증 정정</b><p style="margin:7px 0 4px">실제 업무 60건 · 13영역에 대입해 확인한 결과 <b>정정 5건</b>이 나왔고, 그중 둘은 이 제안 자체의 설계 결함이었다. 제10부에 적었다.</p><p style="margin:0 0 4px">① <b>C-1</b> 마감 여유 기여분 칸을 없앴다 — 시간이 지나면 저절로 변하는 값이라 저장하면 파생 사본이 된다. <code>base_score</code> 는 시간 불변 네 항의 합이고 마감 · aging 항은 정렬할 때 계산한다.</p><p style="margin:0 0 4px">② <b>C-2</b> 마감의 출처(법정 · 계약 · 내부)를 구분하는 칸을 더했다.</p><p style="margin:0 0 4px">③ <b>C-3</b> 정의 층 선후에도 순환 금지를 건다 — 순환은 수행이 만들어지기 전에 생긴다.</p><p style="margin:0 0 4px">④ 신설 20 DB Table의 칸이 267 → <b>271</b> 로 바뀌었다(−1 · +5). 표 수(20)와 스키마 수(2)는 그대로다.</p><p style="margin:0">⑤ 근거 버전 — 설계지시문 <b>v5.1</b> · DB 테이블설계서 <b>v3.4</b> · 코드체계 <b>v3.5</b>.</p></div>
+<div class="ok" style="margin-top:20px"><b>v1.1 에서 바뀐 것</b><p style="margin:7px 0 4px">① <b>제9부를 「남은 판단」에서 「결정 6건」으로 바꾸었다</b> — 에이전트 신원은 delegation, 정책 변경은 조이는 방향만 즉시, 선후 조회는 recursive CTE, 표준 처리 시간은 실측 30건에서 교체, RLS 는 큐 경로만 함수로 잠그고 제외, 식별자에 시각을 담는다.</p><p style="margin:0 0 4px">② 결정이 더한 칸을 9.1 에 적었다. 신설 표 수(20)와 칸 수(267)는 바뀌지 않았다.</p><p style="margin:0 0 4px">③ <b>고전 용어를 영문으로</b> 적는다(설계지시문 19.1.4) — idempotency · version · snapshot · checkpoint · outbox · inbox · saga · lease · closure table · aging 등. 대조표는 9.2.</p><p style="margin:0">④ 근거 버전 — 설계지시문 <b>v5.0</b> · DB 테이블설계서 <b>v3.3</b> · 코드체계 <b>v3.4</b>. 가상 프로젝트 검증서(MB-ADV-2026-001)가 이 구조를 실제 업무 60건에 대입해 확인했다.</p></div>
+<h2 id="s1">제1부 · 한 장 요약</h2>
+<div class="kv"><div><div class="k">지금 표</div><div class="v">485</div></div><div><div class="k">이 제안이 다룬 표</div><div class="v">51</div></div><div><div class="k">신설</div><div class="v">20</div></div><div><div class="k">개정</div><div class="v">14</div></div><div><div class="k">제안 뒤 표</div><div class="v">505</div></div><div><div class="k">검토한 근거</div><div class="v">116</div></div></div>
+<p>물음은 「19개 업무영역과 업무코드 574건, IA · PA · EA 의 스킬과 로직 · 도구,
+그리고 이들의 연관 관계와 수행 우선순위를 어떤 표 구조에 담아야 에이전트 중심 시스템이 효율적으로 돌고
+전체 업무가 꼬이지 않는가」이다. 답은 표를 더 촘촘히 그리는 데 있지 않다. 지금 모델이 못 하는 일은
+<b>「지금 무엇을 실행할 수 있는가」를 한 표에 물을 수 없다</b>는 것 하나이고, 그것이 꼬임의 뿌리다.</p>
+<div class="ok"><b>결론.</b> 층을 다섯으로 나누고 각 층에 정본을 하나씩 둔다.
+<b>① 정의</b>는 버전(version)으로 굳혀 배포 묶음 하나로 가리키고,
+<b>② 선후</b>는 간선을 정본으로 두되 「업무코드 사이」가 아니라 「수행 사이」에 건다.
+<b>③ 수행</b>은 <code>mbrun.work_item</code> 한 행이 정본이고 배정 · 과업 · 실행 · 원장은 모두 이 행을 참조만 한다.
+<b>④ 대기열</b>은 준비된 수행만 담고 lease(소유자 + 만료)로 집어간다.
+<b>⑤ 게이트</b>는 여섯 축의 판단을 한 행에 적고, 그 행이 없으면 대기열에 들어갈 수 없다.
+신설 20 DB Table 271칸 · 개정 14건 · 새 스키마 2개(<code>mbdef</code> · <code>mbrun</code>)이며, 기존 485 DB Table 중 471표는 손대지 않는다.</div>
+<h3>제안의 뼈대 — 다섯 층과 정본</h3>
+<table>
+<colgroup><col style="width:8%"><col style="width:20%"><col style="width:36%"><col style="width:36%"></colgroup>
+<thead><tr><th>층</th><th>묻는 말</th><th>정본 표</th><th>이 층이 막는 꼬임</th></tr></thead><tbody>
+<tr><td>① 정의</td><td>무엇을 · 어떻게 하는가</td><td><code>mbdef.definition_bundle</code> + 버전 표 5종</td><td>실행 중에 정의가 바뀌어 같은 수행이 두 버전을 섞어 쓰는 일</td></tr>
+<tr><td>② 선후</td><td>무엇이 먼저인가</td><td><code>mbcode.work_code_dependency</code>(정의) → <code>mbrun.work_item_edge</code>(수행)</td><td>순환 · 순서 역전, 그리고 자료 흐름을 선후로 착각한 과직렬화</td></tr>
+<tr><td>③ 수행</td><td>한 번의 일이 지금 어디까지 왔나</td><td><code>mbrun.work_item</code></td><td>같은 수행의 상태가 표마다 달라지는 일</td></tr>
+<tr><td>④ 대기열</td><td>누가 지금 집어가는가</td><td><code>mbrun.ready_queue</code> + <code>mbrun.fairness_state</code></td><td>중복 집행 · 유실 · 기아 · 한 테넌트의 독식</td></tr>
+<tr><td>⑤ 게이트</td><td>나가도 되는가</td><td><code>mbrun.launch_gate_check</code></td><td>판단 축 하나를 빠뜨려 막아야 할 실행이 나가는 일</td></tr>
+</tbody></table>
+<p class="small">근거는 네 갈래 116건을 훑어 골랐다 — 프로세스 정의 · 의존 표현 · 스케줄링 이론 38건,
+지속 실행 엔진 실물 23건, 에이전트 · 권한 규약 23건, 관계형 스키마 패턴 32건. 판단을 못 내린 것 35건은
+제9부에 그대로 남겼다.</p>
+<h2 id="s2">제2부 · 지금 모델은 무엇을 못 하는가</h2>
+<p>485 DB Table 가운데 이 물음에 관계된 51표를 골라 여섯 갈래로 나누고,
+자료로 확인되는 빈틈만 적었다. 의견이 아니라 열 이름 · 외래키 · 건수로 확인한 것이다.</p>
+<h3>2.1 관계된 표 51개의 갈래</h3>
+<table>
+<colgroup><col style="width:16%"><col style="width:7%"><col style="width:77%"></colgroup>
+<thead><tr><th>갈래</th><th>표</th><th>표 이름</th></tr></thead><tbody>
+<tr><td><b>정의(무엇을 · 어떻게)</b></td><td>15</td><td><code>mbcode.work_domain</code> · <code>mbcode.work_category</code> · <code>mbcode.work_code</code> · <code>mbcode.work_code_history</code> · <code>mbcode.work_code_dependency</code> · <code>mbcode.skill</code> · <code>mbcode.skill_step</code> · <code>mbcode.skill_unit</code> · <code>mbcode.work_code_exec_step</code> · <code>mbcode.work_code_skill</code> · <code>mbcode.skill_design_decision</code> · <code>mbtool.tool</code> · <code>mbtool.tool_version</code> · <code>mbagent.ta_connector</code> · <code>mbagent.ea_profile</code></td></tr>
+<tr><td><b>주체(누가)</b></td><td>6</td><td><code>mbagent.agent</code> · <code>mbagent.agent_card</code> · <code>mbagent.agent_skill_binding</code> · <code>mbcode.employee_work_code</code> · <code>mbproj.project</code> · <code>mbproj.project_work_assignment</code></td></tr>
+<tr><td><b>인스턴스(한 번의 수행)</b></td><td>8</td><td><code>mba2a.task</code> · <code>mba2a.task_state_history</code> · <code>mbagent.agent_run</code> · <code>mbagent.agent_plan</code> · <code>mbagent.agent_plan_step</code> · <code>mbexec.run_checkpoint</code> · <code>mbexec.run_interruption</code> · <code>mbexec.run_resumption</code></td></tr>
+<tr><td><b>기록(사실 원장)</b></td><td>5</td><td><code>mbtxn.project_transaction</code> · <code>mbexec.external_effect</code> · <code>mbexec.effect_reconciliation</code> · <code>mbexec.idempotency_record</code> · <code>mbaudit.audit_log</code></td></tr>
+<tr><td><b>전달(메시지)</b></td><td>9</td><td><code>mbmq.topic</code> · <code>mbmq.subscription</code> · <code>mbmq.outbox</code> · <code>mbmq.inbox</code> · <code>mbmq.dead_letter</code> · <code>mbmq.saga</code> · <code>mbmq.saga_step</code> · <code>mbmq.routing_rule</code> · <code>mbmq.queue_metric</code></td></tr>
+<tr><td><b>판정 · 통제</b></td><td>8</td><td><code>mbtrust.access_request</code> · <code>mbauth.capability_token</code> · <code>mbauth.permission_decision_log</code> · <code>mbagent.va_rule</code> · <code>mbagent.va_verdict</code> · <code>mbsafe.autonomy_policy</code> · <code>mbsafe.autonomy_state</code> · <code>mbsafe.emergency_stop</code></td></tr>
+</tbody></table>
+<h3>2.2 자료로 확인한 현행 수치</h3>
+<table>
+<colgroup><col style="width:24%"><col style="width:12%"><col style="width:64%"></colgroup>
+<thead><tr><th>항목</th><th>값</th><th>읽는 법</th></tr></thead><tbody>
+<tr><td>업무영역 · 업무코드</td><td>19 · 574</td><td>영역당 평균 30건 (제안 검토 당시 18 · 546)</td></tr>
+<tr><td>스킬 단계</td><td>3,837</td><td>코드당 4~8칸, 평균 6.7 (검토 당시 3,683)</td></tr>
+<tr><td>스킬 단위 · 도구</td><td>756 · 744</td><td>판단 331 · 사람 협업 396 / 규칙 세트 619 · 업무 도구 47 · 커넥터 39 · 플랫폼 10</td></tr>
+<tr><td>non-idempotent 단계</td><td>117</td><td>다시 부르면 안 되는 단계. 이 117칸이 재시도 설계의 전부를 좌우한다</td></tr>
+<tr><td>checkpoint 단계</td><td>945</td><td>중단 후 재개 지점</td></tr>
+<tr><td>정의 선후 간선</td><td>423</td><td>선행이 없는 코드 126 · 가장 긴 사슬 14 · 순환 0</td></tr>
+<tr><td>선행이 둘 이상인 코드</td><td>1</td><td>지금 선후는 사실상 영역 안의 한 줄 사슬이다</td></tr>
+<tr><td>자료 흐름 코드 쌍</td><td>2,580</td><td>한 표에 쓰는 코드 → 그 표를 읽는 코드. 그중 영역을 건너는 쌍이 1,610</td></tr>
+<tr><td>읽기 선행이 가장 많은 코드</td><td>105</td><td>자료를 기준으로 보면 최대 105건이 앞선다</td></tr>
+</tbody></table>
+<div class="note"><b>이 수치가 말하는 것.</b> 선언된 선후는 423간선이고 전부 한 영역 안에 있다.
+그런데 표를 통해 실제로 자료가 오가는 코드 쌍은 2,580이고 그중 1,610이 영역을 건넌다.
+<b>영역을 건너는 순서는 지금 선후 정의가 아니라 표 읽기 · 쓰기로만 표현되어 있다.</b>
+그렇다고 이 2,580쌍을 전부 「선행 업무코드」로 올리면 최대 105건이 앞서는 코드가 생겨 일이 줄줄이 멈춘다.
+갈래를 나누는 것(제4부 원리 2)이 이 문서의 첫째 설계 판단이다.</div>
+<h3>2.3 빈틈 9가지</h3>
+<div class="gap"><span class="id">G-01</span><b>업무 1회 수행(인스턴스)을 가리키는 표가 넷으로 갈린다</b>
+<p style="margin:7px 0 4px"><b>확인한 것.</b> mbproj.project_work_assignment.state(배정 상태) · mba2a.task.state(과업 상태) · mbagent.agent_run.outcome(실행 결과) · mbtxn.project_transaction(행위 원장)이 각자 상태를 갖는다. 네 표를 잇는 외래키는 mbtxn 쪽 task_id · run_id 뿐이고, 배정 ↔ 과업을 잇는 키는 없다.</p>
+<p style="margin:0"><b>이것이 낳는 꼬임.</b> 같은 수행의 상태가 표마다 달라질 수 있다(꼬임의 첫째 원인). 「지금 무엇이 실행 가능한가」를 한 표에서 물을 수 없다.</p></div>
+<div class="gap"><span class="id">G-02</span><b>우선순위가 과업 한 곳에만 있고 규칙이 아니라 값이다</b>
+<p style="margin:7px 0 4px"><b>확인한 것.</b> 우선순위 · 기한 컬럼: mba2a.task.priority · due_at, mbmq.routing_rule.priority, mbproj.project_work_assignment.due_date 뿐. 위험 등급 · 표준시간 · 마감 · 대기 시간에서 우선순위를 도출하는 정의 표가 없다.</p>
+<p style="margin:0"><b>이것이 낳는 꼬임.</b> 우선순위를 누가 정했는지 재현할 수 없고, 급한 일이 뒤로 밀리거나(기아) 낮은 등급이 앞서는 역전을 막을 장치가 없다.</p></div>
+<div class="gap"><span class="id">G-03</span><b>실행 대기열이 데이터로 없다</b>
+<p style="margin:7px 0 4px"><b>확인한 것.</b> 큐 관련 컬럼은 mbmq.outbox.enqueued_at · mbexec.idempotency_record.lease_until 뿐. 준비 상태(선행 충족) · 점유(lease) · 재시도 예정 시각을 담은 작업 대기열 표가 없다.</p>
+<p style="margin:0"><b>이것이 낳는 꼬임.</b> 어느 에이전트가 무엇을 집어갔는지, 왜 아직 안 집었는지를 DB 에서 설명할 수 없다. 중복 집행 · 유실이 애플리케이션 구현에 달린다.</p></div>
+<div class="gap"><span class="id">G-04</span><b>선후 관계가 정의 수준에만 있고 인스턴스 수준이 없다</b>
+<p style="margin:7px 0 4px"><b>확인한 것.</b> mbcode.work_code_dependency 는 업무코드 ↔ 업무코드(정의) 간선이다. 같은 업무코드를 프로젝트에서 여러 번 수행할 때의 인스턴스 간 선후를 담는 표가 없다. 순환을 막는 제약도 없다(현재 정의 데이터에는 순환이 0건).</p>
+<p style="margin:0"><b>이것이 낳는 꼬임.</b> 한 프로젝트 안에서 2회차가 1회차보다 먼저 끝나는 식의 순서 위반을 데이터로 막지 못한다.</p></div>
+<div class="gap"><span class="id">G-05</span><b>정의의 버전을 가리키는 방식이 문자열이다</b>
+<p style="margin:7px 0 4px"><b>확인한 것.</b> mbcode.work_code_exec_step.skill_version(varchar) · mbcode.skill_unit.unit_version(varchar) · mbagent.agent_plan_step.target_ref(varchar 200). 배포된 정의 한 벌을 굳힌 불변 snapshot(해시) 표가 없다.</p>
+<p style="margin:0"><b>이것이 낳는 꼬임.</b> 실행 중 정의가 바뀌면 같은 인스턴스가 두 버전을 섞어 쓸 수 있다. 판정 재현이 문자열 일치에 의존한다.</p></div>
+<div class="gap"><span class="id">G-06</span><b>같은 사실의 파생 사본이 정의 표 안에 있다</b>
+<p style="margin:7px 0 4px"><b>확인한 것.</b> mbcode.work_code.exec_sequence(jsonb — work_code_exec_step 의 조회용 사본) · mbcode.work_code.mechanism_set(jsonb — 스킬 단계에서 도출). 두 칸 모두 「원본과 다르면 활성화를 막는다」는 규칙으로만 지켜진다.</p>
+<p style="margin:0"><b>이것이 낳는 꼬임.</b> 활성화 검사를 건너뛰면 조회 결과와 실행 결과가 갈린다. 읽기 성능을 위한 사본이라면 생성 시점 · 갱신 책임을 데이터로 못 박아야 한다.</p></div>
+<div class="gap"><span class="id">G-07</span><b>다형성 참조가 규칙 문장으로만 강제된다</b>
+<p style="margin:7px 0 4px"><b>확인한 것.</b> mbcode.work_code_exec_step 은 unit_kind 에 따라 skill_unit_code · tool_code · connector_code 중 하나만 채운다. 세 칸 모두 nullable 이다.</p>
+<p style="margin:0"><b>이것이 낳는 꼬임.</b> CHECK 제약이 없으면 두 칸이 동시에 차거나 모두 빈 행이 생긴다.</p></div>
+<div class="gap"><span class="id">G-08</span><b>자원 경합 · 공정성 모델이 없다</b>
+<p style="margin:7px 0 4px"><b>확인한 것.</b> mbmq.queue_metric 이 적체를 재지만, 테넌트 · 에이전트별 동시 실행 상한 · 몫(quota)을 정의하는 표가 없다. mbops 의 자원 통제는 비용 상한 중심이다.</p>
+<p style="margin:0"><b>이것이 낳는 꼬임.</b> 한 테넌트 · 한 영역의 대량 작업이 다른 테넌트의 급한 일을 굶길 수 있다(시끄러운 이웃).</p></div>
+<div class="gap"><span class="id">G-09</span><b>「지금 실행 가능한가」를 묻는 질의가 여러 표를 건너뛴다</b>
+<p style="margin:7px 0 4px"><b>확인한 것.</b> 선행 충족(work_code_dependency) · 승인 유효(approval_validity_hours) · 자율 상한(mbsafe.autonomy_state) · 정지 여부(mbsafe.emergency_stop) · 토큰 유효(mbauth.capability_token)가 서로 다른 스키마에 있다.</p>
+<p style="margin:0"><b>이것이 낳는 꼬임.</b> 실행 직전 판단이 애플리케이션 조인에 의존한다. 한 곳이라도 빠뜨리면 막아야 할 실행이 나간다.</p></div>
+<h2 id="s3">제3부 · 무엇을 근거로 이렇게 정했나</h2>
+<p>네 갈래 116건을 검토해 이 설계에 실제로 반영한 것만 15가지로 추렸다.
+「좋아 보여서」가 아니라 「이 논문 · 이 실물이 이렇게 하라고 하기 때문에」 그렇게 둔 것들이다.
+전체 근거 목록은 부록 A 에 있고, 판단을 못 내린 35건은 제9부에 남겼다.</p>
+<table>
+<colgroup><col style="width:20%"><col style="width:34%"><col style="width:46%"></colgroup>
+<thead><tr><th>다룬 문제 · 근거 번호</th><th>검토한 논문 · 실물</th><th>이 설계에 반영한 것</th></tr></thead><tbody>
+<tr><td><b>1. 정의와 인스턴스를 가르는 법</b><br><span class="cite">S-01 · P-04 · P-07 · A-18</span></td><td>Kimball 의 SCD Type 2(2013), BPMN 2.0 의 정의 ↔ 인스턴스 분리(OMG 2011 · ISO 19510), van der Aalst · Basten 「Inheritance of Workflows」(2002)의 동적 변경 버그, OpenFGA 의 불변 authorization model id(2024)</td><td>인스턴스는 <code>work_code</code> 가 아니라 <code>work_code_version_id</code> 를 가리킨다. 게시된 버전은 <code>REVOKE UPDATE</code> 로 굳힌다. 진행 중 수행을 새 버전으로 옮기는 것(migration)은 기본 금지이고, 사람 승인이 붙은 별도 원장으로만 허용한다.</td></tr>
+<tr><td><b>2. 정의 한 벌을 통째로 굳히는 법</b><br><span class="cite">A-18 · S-07 · E-04</span></td><td>OpenFGA 는 모델 전체를 한 id 로 굳히고 모든 요청이 그 id 를 지정한다. Temporal 은 워커를 코드 버전에 묶고(Worker Versioning), Conductor 는 정의를 불변 버전 레코드로 둔다.</td><td><code>mbdef.definition_bundle</code> — 업무코드 버전 · 단계 버전 · 스킬 단위 버전 · 도구 버전 · 판정 기준 버전을 한 묶음으로 굳히고 내용 해시를 매긴다. 수행은 묶음 하나만 가리킨다. 「그때 무엇으로 했나」가 값 하나로 재현된다.</td></tr>
+<tr><td><b>3. 선후를 표로 담는 법</b><br><span class="cite">P-12 · P-13 · P-14 · P-15 · P-16 · P-17</span></td><td>Celko 의 계층 표현 정리(2004), closure table(closure table) 패턴, PostgreSQL 14 의 <code>WITH RECURSIVE … CYCLE</code>(2021), Aho · Garey · Ullman 의 이행적 축약(1972), Kahn 의 위상정렬(1962)</td><td>인접 간선이 정본이고 closure table · 위상 순위 · 임계 경로는 전부 파생으로 격리한다(<code>mbrun.work_item_rank</code>). 순환은 삽입 시 <code>CYCLE</code> 절로 막고, 대량 적재 경로는 트리거를 끄고 끝에 한 번 검증하는 두 갈래를 둔다. <b>분해(트리)와 의존(DAG)을 같은 표에 넣지 않는다</b> — ltree · 중첩집합은 트리 전용이라 의존에 못 쓴다.</td></tr>
+<tr><td><b>4. 우선순위를 정하는 법</b><br><span class="cite">P-18 · P-19 · P-22 · P-23</span></td><td>CPM · PERT 의 임계 경로(1959), Topcuoglu 외 HEFT(2002), SAFe 의 WSJF = 지연 비용 ÷ 작업 크기(2011, Reinertsen 2009), 생산관리의 임계비(Critical Ratio) 규칙</td><td>점수를 단일 <code>int</code> 한 칸에 적지 않는다. 위험 · 승인 · 자율 · 마감 여유 · 잔여 깊이의 <b>기여분을 각각 칸으로 두고</b> 합계는 <code>GENERATED</code> 컬럼으로 만든다. 그래야 「왜 이게 먼저인가」를 감사할 수 있고, 정책이 바뀌어도 컬럼을 늘리지 않는다.</td></tr>
+<tr><td><b>5. 굶지 않게 하는 법</b><br><span class="cite">P-20 · P-21 · P-26</span></td><td>Liu · Layland 의 고정 우선순위 스케줄링(1973), Sha 외 우선순위 상속 규약(1990), Demers · Keshav · Shenker 의 공정 큐잉(1989)</td><td><code>mbrun.priority_rule.w_aging > 0</code> 을 <code>CHECK</code> 로 강제한다. aging 항이 0 인 규칙 버전은 게시할 수 없다. 대기 시간이 길어지면 점수가 단조 증가하므로 낮은 등급도 유한 시간 안에 앞선다.</td></tr>
+<tr><td><b>6. 테넌트끼리 굶기지 않게 하는 법</b><br><span class="cite">P-25 · P-26 · P-27 · E-06 · E-22 · E-23</span></td><td>Ghodsi 외 Dominant Resource Fairness(2011), 공정 큐잉(1989), Azure 의 시끄러운 이웃 안티패턴, Temporal Fairness(단일 큐 + 공정성 키 가중 라운드로빈), AWS 의 셔플 샤딩과 테넌트 인지 조절</td><td><b>정렬 키를 하나로 합치지 않는다.</b> 먼저 공정성 키(테넌트 · 프로젝트 · 영역)를 가중 라운드로빈으로 고르고, 그 안에서만 우선순위로 고른다. <code>mbrun.fairness_state.debt</code> 로 못 받은 몫을 다음 창에서 갚는다.</td></tr>
+<tr><td><b>7. 큐를 DB 로 쓰는 법</b><br><span class="cite">P-32 · S-26 · S-27 · E-12 · E-20 · E-21</span></td><td>PostgreSQL 9.5 이후의 <code>FOR UPDATE SKIP LOCKED</code>, 권고 잠금 문서, Camunda 7 의 <code>LOCK_OWNER_</code> · <code>LOCK_EXP_TIME_</code> 방식, brandur 의 「Postgres Job Queues &amp; Failure By MVCC」, PlanetScale 의 큐 건강 관리 글</td><td>집어가기는 <code>SKIP LOCKED</code> 로 하되 <b>행 잠금을 길게 쥐지 않고</b> lease(소유자 + 만료 + 하트비트)로 소유를 표시한다. 실행 큐를 원장 · 리포팅과 같은 인스턴스에 두지 않는다 — 긴 읽기 트랜잭션 하나가 MVCC 지평을 고정해 큐를 죽인 실측이 있다.</td></tr>
+<tr><td><b>8. 꼬임을 사전 증명하려 들지 않는 법</b><br><span class="cite">P-03 · P-28 · P-30 · P-29</span></td><td>van der Aalst 외 워크플로 넷의 건전성(2011), Coffman 외 「System Deadlocks」(1971), 자원 제약 워크플로 넷의 건전성 판정 결과(2005~2014), Kung · Robinson 의 낙관적 동시성 제어(1981)</td><td><b>공유 자원이 여럿이면 정의만 보고 교착 없음을 자동 증명하는 것은 판정 불가능하다.</b> 따라서 정적 검사에 기대지 않고 런타임 방어를 스키마에 넣는다 — lease 만료, <code>lock_timeout</code>, 대기 그래프 순환 탐지, 그리고 사람 승인이 끼는 장기 업무는 사가로 되돌린다.</td></tr>
+<tr><td><b>9. 부작용을 두 번 내지 않는 법</b><br><span class="cite">S-11 · S-14 · S-16 · A-10 · P-31</span></td><td>거래 outbox 패턴, idempotent consumer 패턴, Confluent 의 이중 쓰기 문제 정리, Stripe 의 중복 실행 방지 키 설계, Garcia-Molina · Salem 의 Sagas(1987)</td><td>outbox와 inbox를 한 쌍으로 둔다(<code>WHERE published_at IS NULL</code> 부분 인덱스, inbox PK = 소비자 + 메시지 식별자). non-idempotent 단계 117칸은 <code>mbexec.idempotency_record</code> 없이는 실행 상태로 못 간다. 회계 전표는 saga 보상이 아니라 역분개로 되돌린다.</td></tr>
+<tr><td><b>10. 판정을 재현 가능하게 남기는 법</b><br><span class="cite">A-14 · A-13 · A-12 · A-17 · A-15 · A-16</span></td><td>XACML 3.0(OASIS 2013) 의 네 값 판정과 의무(obligation), NIST SP 800-162 의 ABAC, ANSI RBAC(2004) 의 역할 활성화, Google Zanzibar(2019) 의 일관성 표식, Macaroons(2014) · Biscuit 의 능력 위임</td><td>판정은 <b>허용 · 거부 · 판단 불가 · 해당 없음 네 값</b>으로 남긴다(둘로 접으면 정책 누락을 못 찾는다). 판정에 쓴 속성값 원본 · 기준 버전 · 일관성 표식 · 판정기 버전을 같은 행에 적고, 허용에 붙은 의무는 <code>mbrun.obligation_fulfillment</code> 로 이행까지 확인한다. 보유 역할과 이번에 활성화한 역할을 나눠(<code>mbrun.role_activation</code>) 기안 · 승인 분리를 데이터가 막는다.</td></tr>
+<tr><td><b>11. 에이전트의 선언과 실행을 가르는 법</b><br><span class="cite">A-01 · A-02 · A-03 · A-05 · A-09</span></td><td>A2A 규약의 AgentCard · AgentSkill(정적) ↔ Task · Message · Artifact(동적), MCP 의 tools/list ↔ tools/call, LangGraph 의 checkpoint 부모 참조(parent_config), OpenTelemetry GenAI 의 대화 축</td><td>선언(레지스트리)과 실행(원장)의 표를 절대 합치지 않는다. 실행 단위 위에 <b>맥락 축</b>을 둔다(<code>work_item.context_id</code>). 단계 표에 부모 자기참조를 둬 재개 · 분기가 트리로 남는다. 도구가 스스로 밝힌 부작용 메타와 플랫폼이 확인한 것을 나눈다(<code>annotation_source</code>).</td></tr>
+<tr><td><b>12. 인스턴스 표를 뜨겁게 두지 않는 법</b><br><span class="cite">E-01 · E-02 · E-08 · E-09 · E-11 · E-16 · E-17</span></td><td>Temporal 의 이력 상한(51,200건 · 50MB)과 Continue-As-New, Step Functions 의 25,000건 상한, Camunda 7 의 활성(ACT_RU) ↔ 이력(ACT_HI) 분리, Conductor 4.0 의 진행 ↔ 종료 분리, Argo 의 대형 워크플로 오프로딩</td><td>단계를 인스턴스 1행의 통짜 JSON 으로 쌓지 않고 독립 행으로 둔다. 종료된 수행은 즉시 <code>mbrun.work_item_archive</code> 로 옮긴다. 단계 간 전달 자료에 상한을 두고 큰 것은 밖에 둔 뒤 참조만 남긴다. 이력이 상한을 넘으면 새 수행으로 승계한다(<code>continued_from_item_id</code>).</td></tr>
+<tr><td><b>13. 멀티테넌시를 스키마로 막는 법</b><br><span class="cite">S-20 · S-22 · S-21 · E-23</span></td><td>PostgreSQL 행 수준 보안 문서, Crunchy Data · Citus 의 멀티테넌트 설계 지침, 준비된 계획(generic plan) 함정 해설</td><td>모든 PK · UNIQUE · FK 에 <code>tenant_id</code> 를 포함해 교차 테넌트 참조를 스키마가 원천 차단한다. RLS 는 마지막 방어선이다. 테넌트 맥락은 <code>SET LOCAL</code> 로만 전달하고 커넥션 반납 시 <code>DISCARD ALL</code>, 세션형 권고 잠금은 금지하고 트랜잭션형만 쓴다.</td></tr>
+<tr><td><b>14. 대기 시간을 볼 수 있게 두는 법</b><br><span class="cite">P-35 · P-36 · P-37 · P-38</span></td><td>van der Aalst 의 프로세스 마이닝(2011 · 2016), BPI Challenge 실증 보고(Rabobank ITSM 2014 등), 적합성 검사 문헌 리뷰(2020)</td><td>실증에서 병목은 처리 시간이 아니라 대기 시간이었다. 그래서 <code>created_at · ready_at · offered_at · allocated_at · started_at · finished_at</code> 여섯 시각을 각각 둔다. 한 칸이라도 합치면 「어디서 기다렸나」를 영원히 못 본다.</td></tr>
+<tr><td><b>15. 파생값을 정의 표에 넣지 않는 법</b><br><span class="cite">S-31 · P-33 · S-17 · S-18 · S-19</span></td><td>Confluent 의 이중 쓰기 문제, Kent 의 정규형 해설(1983) · Codd(1970), Karwin 의 다형성 연관 안티패턴(2010), Fowler 의 클래스 테이블 상속(2002)</td><td><code>work_code.exec_sequence</code> · <code>mechanism_set</code> 같은 사본을 정의 표에서 뺀다. 다형성 참조는 <code>(parent_type, parent_id)</code> 를 쓰지 않고 <code>CHECK(num_nonnulls(…) = 1)</code> 의 배타적 아크로 막는다.</td></tr>
+</tbody></table>
+<h3>3.1 근거끼리 부딪히는 세 지점</h3>
+<div class="warn"><b>① 공정성과 우선순위는 한 정렬 키로 합칠 수 없다.</b>
+공정 큐잉 · Dominant Resource Fairness 는 테넌트 격리를 위해 처리량과 경제적 우선순위를 희생하고,
+WSJF · HEFT 는 정반대를 한다. 하나의 <code>ORDER BY</code> 로 합치면 둘 다 잃는다.
+→ <b>2단 선택</b>으로 나눈다. 먼저 공정성 키를 고르고, 그 안에서 우선순위로 고른다(제6부).</div>
+<div class="warn"><b>② 잠금 정렬은 사람 승인이 끼는 업무에 못 쓴다.</b>
+Coffman 의 자원 순서 정렬은 자원 집합을 미리 알아야 하는데, 승인 대기가 며칠 걸리는 업무는 그 전제가 깨진다.
+→ 짧은 자원 경합은 순서 정렬 + <code>lock_timeout</code>, 사람이 끼는 장기 업무는 사가로 되돌린다.
+다만 <b>회계 전표는 saga 보상이 아니라 역분개</b>다 — 되돌린 사실도 기록으로 남아야 하기 때문이다.</div>
+<div class="warn"><b>③ 스케줄링 이론의 공통 전제가 우리에게는 성립하지 않는다.</b>
+HEFT · WSJF · WFQ · DRF 는 모두 <b>작업 크기와 자원 소비를 미리 추정할 수 있다</b>고 본다.
+추론이 끼는 업무는 그렇지 않다. 표준 처리 시간 574건(0.3 ~ 60시간)은 사람 기준 추정치이지 에이전트 실측이 아니다.
+→ 표준시간을 그대로 쓰되 <b>실측 칸(<code>work_item_archive.run_seconds</code> · <code>wait_seconds</code>)을 처음부터 두고</b>,
+석 달치가 쌓이면 우선순위 규칙 버전을 실측으로 바꾼다. 규칙을 버전으로 둔 이유가 여기 있다.</div>
+<h2 id="s4">제4부 · 설계 원리 10가지</h2>
+<p>이후의 모든 표는 이 열 가지에서 따라 나온다. 각 원리는 제2부의 빈틈 하나 이상에 대응한다.</p>
+<div class="sol"><span class="id">원리 1</span><b>한 번의 수행에는 정본 행이 하나다</b>
+<p style="margin:7px 0 4px"><code>mbrun.work_item</code> 한 행. 배정 · 과업 · 에이전트 실행 · 트랜잭션 원장은 모두 이 행을 <b>참조만</b> 하고 자기 상태를 따로 갖지 않는다.</p>
+<p style="margin:0" class="small"><b>막는 것.</b> G-01 — 지금은 넷이 각자 상태를 갖고 배정과 과업을 잇는 키조차 없다.</p></div>
+<div class="sol"><span class="id">원리 2</span><b>선후는 갈래를 나눠 건다</b>
+<p style="margin:7px 0 4px"><code>HARD_SEQ</code>(정의 선후 · 차단) · <code>DATA_READY</code>(자료 준비 · 조건) · <code>APPROVAL</code> · <code>RESOURCE</code> 넷으로 나눈다. 자료 흐름 2,580쌍은 <b>선행 코드가 아니라 원장 사실에 대한 조건</b>으로 표현한다(<code>mbrun.precondition_check</code>).</p>
+<p style="margin:0" class="small"><b>막는 것.</b> 2,580쌍을 전부 차단형 선후로 올리면 최대 105건이 앞서는 코드가 생겨 전 영역이 줄줄이 멈춘다.</p></div>
+<div class="sol"><span class="id">원리 3</span><b>정의는 버전으로 굳히고, 수행은 묶음 하나만 가리킨다</b>
+<p style="margin:7px 0 4px">게시된 버전은 <code>REVOKE UPDATE</code>. 수행은 <code>bundle_id</code> 하나로 그때의 정의 한 벌을 재현한다. 진행 중 수행을 새 버전으로 옮기는 것은 기본 금지.</p>
+<p style="margin:0" class="small"><b>막는 것.</b> G-05 — 지금은 버전 참조가 varchar 문자열이라 실행 중 정의가 바뀌면 두 버전이 섞인다.</p></div>
+<div class="sol"><span class="id">원리 4</span><b>파생값은 정의 표 밖으로 뺀다</b>
+<p style="margin:7px 0 4px"><code>work_code.exec_sequence</code> · <code>mechanism_set</code> 을 뷰로 바꾸고, closure table · 위상 순위 · 임계 경로는 <code>mbrun.work_item_rank</code> 한 표에 모아 「전부 파생」이라고 못 박는다.</p>
+<p style="margin:0" class="small"><b>막는 것.</b> G-06 — 사본과 원본이 갈리면 조회 결과와 실행 결과가 달라진다.</p></div>
+<div class="sol"><span class="id">원리 5</span><b>여러 갈래 중 하나만 채우는 칸은 <code>CHECK</code> 로 막는다</b>
+<p style="margin:7px 0 4px"><code>CHECK(num_nonnulls(a, b, c, d) = 1)</code>. <code>(parent_type, parent_id)</code> 식의 다형성은 쓰지 않는다.</p>
+<p style="margin:0" class="small"><b>막는 것.</b> G-07 — 지금은 규칙 문장으로만 강제돼 두 칸이 동시에 차거나 모두 빈 행을 막지 못한다.</p></div>
+<div class="sol"><span class="id">원리 6</span><b>우선순위는 값이 아니라 규칙이고, 기여분을 칸으로 쪼갠다</b>
+<p style="margin:7px 0 4px">규칙은 버전으로 관리하고(<code>mbrun.priority_rule</code>), 점수는 기여분 다섯 칸의 <code>GENERATED</code> 합. aging 항을 0 으로 둔 규칙 버전은 게시 금지.</p>
+<p style="margin:0" class="small"><b>막는 것.</b> G-02 — 지금은 <code>task.priority</code> 값 한 칸이고 누가 왜 그렇게 정했는지 재현할 수 없다.</p></div>
+<div class="sol"><span class="id">원리 7</span><b>준비 · 점유 · 재시도를 표로 둔다</b>
+<p style="margin:7px 0 4px"><code>mbrun.ready_queue</code> — 준비된 것만 들어오고, 집어가기는 lease(소유자 + 만료 + 하트비트), 재시도는 <code>visible_at</code> 으로 미룬다.</p>
+<p style="margin:0" class="small"><b>막는 것.</b> G-03 — 지금은 「누가 무엇을 집어갔는지 · 왜 아직 안 집었는지」를 DB 가 설명하지 못한다.</p></div>
+<div class="sol"><span class="id">원리 8</span><b>착수 판단은 한 번의 호출, 한 행이다</b>
+<p style="margin:7px 0 4px">여섯 축(선행 · 승인 · 자율 · 정지 · 토큰 · 예산)을 한 행에 적고, <code>verdict='PERMIT'</code> 인 행이 없으면 대기열에 들어갈 수 없다.</p>
+<p style="margin:0" class="small"><b>막는 것.</b> G-09 — 지금은 다섯 스키마를 애플리케이션이 조인해야 하고 한 곳만 빠뜨려도 실행이 나간다.</p></div>
+<div class="sol"><span class="id">원리 9</span><b>공정성과 우선순위는 2단으로 나눈다</b>
+<p style="margin:7px 0 4px">① 공정성 키를 가중 라운드로빈으로 고른다 → ② 그 안에서 우선순위로 고른다. 동시 실행 상한과 몫은 <code>mbrun.concurrency_limit</code> 에 둔다.</p>
+<p style="margin:0" class="small"><b>막는 것.</b> G-08 — 지금은 테넌트 · 에이전트별 상한과 몫을 정의하는 표가 아예 없다.</p></div>
+<div class="sol"><span class="id">원리 10</span><b>뜨거운 표는 작게 유지한다</b>
+<p style="margin:7px 0 4px">종료 수행은 즉시 보관 표로 옮기고, 단계는 독립 행이며, 단계 간 자료에 크기 상한을 둔다. 실행 큐는 원장 · 리포팅과 물리적으로 분리한다.</p>
+<p style="margin:0" class="small"><b>막는 것.</b> 엔진 다섯 종이 모두 활성 ↔ 이력을 나눴고, 큐와 장기 읽기를 같은 인스턴스에 둔 실측 실패 사례가 있다.</p></div>
+<h3>4.11 설계지시문 v4.9 의 영향 그래프와 이 제안의 관계</h3>
+<p>지시문 v4.8 · v4.9 가 제4.9.13 ~ 4.9.17조로 <b>영향 그래프</b>를 이미 세웠다.
+이 제안은 그것을 대체하지 않는다. <b>두 그래프는 층이 다르다.</b></p>
+<table>
+<colgroup><col style="width:14%"><col style="width:43%"><col style="width:43%"></colgroup>
+<thead><tr><th>보는 축</th><th>영향 그래프 — 정의 층</th><th>실행 그래프 — 수행 층</th></tr></thead><tbody>
+<tr><td><b>무엇을 담는 그래프인가</b></td><td><b>영향 그래프(4.9.13)</b> — 정의 층. 「이 도구 버전을 바꾸면 어느 스킬 단계가 깨지나」</td><td><b>실행 그래프(이 제안)</b> — 수행 층. 「이 수행이 끝나야 어느 수행이 풀리나」</td></tr>
+<tr><td><b>노드</b></td><td>업무코드 · 스킬 단위 · 도구 · 규칙 세트 · 커넥터 (플랫폼 기능 T8 은 제외)</td><td><code>mbrun.work_item</code> — 업무 1회 수행</td></tr>
+<tr><td><b>간선</b></td><td>사용 · 데이터 경로 · 선행 셋으로 한정. 같은 실행 단위를 쓴다는 사실은 간선이 아니다</td><td><code>work_item_edge</code> 넷 — <code>HARD_SEQ · DATA_READY · APPROVAL · RESOURCE</code></td></tr>
+<tr><td><b>언제 쓰나</b></td><td>버전을 승인할 때. 역방향 순회로 회귀 대상을 뽑고 영향 기술서를 붙인다(4.9.8 · 4.9.16)</td><td>착수를 판정할 때. 필수 간선이 모두 풀렸는지 본다</td></tr>
+<tr><td><b>무엇으로 만드나</b></td><td>등록(4.9.12)과 표 ↔ 업무코드 대응에서 도출. 사람이 손으로 채우지 않는다</td><td>정의 선후 423간선을 수행 단위로 펼치고, 자료 조건은 원장 사실로 판정한다</td></tr>
+</tbody></table>
+<div class="ok"><b>맞물리는 지점이 셋 있다.</b>
+<b>①</b> 제4.9.17조는 「트랜잭션 원장의 실제 호출 · 읽기 · 쓰기 기록에서 <b>실행 그래프</b>를 도출해
+정의 그래프와 대조하라」고 이미 요구한다. 그 도출의 원천이 지금은 원장 뒤지기인데,
+<code>mbrun.work_item_step</code>(어느 단계가 어느 실행 단위를 불렀나) ·
+<code>work_item_edge</code>(무엇이 무엇을 풀었나) · <code>precondition_check</code>(어느 표를 조건으로 봤나)가
+그 대조를 <b>표 세 개의 조인</b>으로 바꾼다. 선언 누락 탐지가 싸진다.
+<b>②</b> 제4.9.13조는 「같은 실행 단위를 쓴다」를 업무코드 사이 간선으로 두는 것을 금지한다.
+같은 이유로 이 제안은 자료 흐름 2,580쌍을 차단형 선후로 올리지 않는다 —
+영향 그래프의 <b>데이터 경로</b> 간선과 실행 층의 <b>차단형 선후</b>는 다른 것이다.
+전자는 「고치면 영향이 간다」이고 후자는 「끝나야 시작한다」이다.
+<b>③</b> 제12.3.5조는 테이블 · 컬럼 층과 실행 단위 층을 한 표로 합치지 말라고 한다.
+<code>mbdef</code>(정의 층) · <code>mbrun</code>(수행 층)을 기존 <code>mbcode</code> · <code>mbmeta</code> 와
+따로 둔 것이 그 요구를 따른 것이다.</div>
+<div class="note"><b>한 가지 어긋남을 밝힌다.</b> 제4.9.15조는 변경 분류(계약 · 동작 · 값 · 내부)가
+전파 범위를 정하고 3홉 이상은 전파하지 않는다고 규정한다. 이 제안의 <b>정의 묶음</b>은 그보다 넓다 —
+수행 하나가 가리키는 묶음에는 그 수행이 쓰는 버전이 전부 들어간다.
+둘은 목적이 다르다. 전파 범위는 <b>무엇을 다시 시험할까</b>이고, 묶음은 <b>나중에 무엇으로 재현할까</b>이다.
+같은 값으로 쓰려 들면 둘 다 망가진다. 지시문에 이 구분을 명시하는 것을 제8부에 넣었다.</div>
+<h2 id="s5">제5부 · 표 설계</h2>
+<p>새 스키마 둘(<code>mbdef</code> · <code>mbrun</code>)에 표 20개를 신설하고
+기존 표 14건을 고친다. 신설 표의 컬럼은 모두 271칸이다.
+기존 485 DB Table 가운데 471표는 손대지 않는다. 제안 뒤 스키마 35 · 표 505이 된다.</p>
+<h3>5.1 신설 표 한눈에</h3>
+<table class="dd">
+<colgroup><col style="width:22%"><col style="width:16%"><col style="width:5%"><col style="width:57%"></colgroup>
+<thead><tr><th>표</th><th>한글 이름</th><th>칸</th><th>이 표를 두는 이유</th></tr></thead><tbody>
+<tr><td><code>mbdef.definition_bundle</code></td><td>정의 배포 묶음</td><td>13</td><td>업무코드 · 스킬 · 단계 · 도구 · 판정 기준의 버전을 한 벌로 묶어 굳힌다. 실행 인스턴스는 이 묶음 하나만 가리킨다.</td></tr>
+<tr><td><code>mbdef.bundle_member</code></td><td>묶음 구성원</td><td>10</td><td>묶음이 고정한 개별 버전. 종류가 넷이라 배타적 아크(넷 중 정확히 하나)로 막는다.</td></tr>
+<tr><td><code>mbdef.work_code_version</code></td><td>업무코드 버전</td><td>21</td><td>업무코드 574건의 속성이 바뀔 때마다 새 행. 실행 인스턴스는 코드가 아니라 이 버전을 가리킨다.</td></tr>
+<tr><td><code>mbdef.exec_step_version</code></td><td>실행 단계 버전</td><td>16</td><td>단계 3,837개의 버전. 「몇째 칸에서 무엇을 어떤 수단으로」가 판별로 굳는다.</td></tr>
+<tr><td><code>mbdef.skill_unit_version</code></td><td>스킬 단위 버전</td><td>11</td><td>스킬 단위 727개(판단 331 · 사람 협업 396)의 버전. 현행 varchar 버전 문자열을 대신한다.</td></tr>
+<tr><td><code>mbdef.judgment_basis_version</code></td><td>판정 기준 버전</td><td>9</td><td>판정 기준 원장(R26 보호 대상)의 버전. 착수 판정 · 검증 판정이 어느 버전으로 내려졌는지를 한 값으로 남긴다.</td></tr>
+<tr><td><code>mbrun.work_item</code></td><td>업무 수행(인스턴스) — 정본</td><td>33</td><td>업무 1회 수행을 가리키는 단 하나의 행. 배정 · 과업 · 실행 · 원장이 모두 이 행을 참조한다(G-01 해소).</td></tr>
+<tr><td><code>mbrun.work_item_edge</code></td><td>수행 간 선후</td><td>7</td><td>정의 수준 선후(현행 423 간선)를 실제 수행 사이의 간선으로 펼친다. 순환을 데이터가 막는다(G-04 해소).</td></tr>
+<tr><td><code>mbrun.work_item_step</code></td><td>수행 단계 진행</td><td>15</td><td>단계를 인스턴스 1행에 통짜 JSON 으로 쌓지 않고 독립 행으로 둔다. 재개 지점이 곧 행이다.</td></tr>
+<tr><td><code>mbrun.work_item_state_log</code></td><td>수행 상태 전이 원장</td><td>11</td><td>추가만 하는 원장. 현재 상태는 work_item 이 정본이고 이 표는 재현 · 감사 전용이다.</td></tr>
+<tr><td><code>mbrun.ready_queue</code></td><td>실행 대기열</td><td>13</td><td>준비된 수행만 들어온다. 집어가기는 lease(소유자 + 만료)로 하고 행 잠금을 길게 쥐지 않는다(G-03 해소).</td></tr>
+<tr><td><code>mbrun.precondition_check</code></td><td>준비 조건 판정</td><td>10</td><td>「왜 아직 못 하나」를 데이터로 답한다. 자료 흐름에서 오는 조건은 선행 코드가 아니라 원장 사실로 본다.</td></tr>
+<tr><td><code>mbrun.launch_gate_check</code></td><td>착수 판정(게이트) 한 행</td><td>21</td><td>선행 · 승인 · 자율 · 정지 · 토큰 · 예산 여섯 축의 판단을 한 번의 호출로 한 행에 적는다(G-09 해소).</td></tr>
+<tr><td><code>mbrun.obligation_fulfillment</code></td><td>판정 의무 이행</td><td>10</td><td>「허용하되 이것을 하라」를 붙였으면 했는지도 남겨야 한다. 안 남기면 허용만 남고 조건은 사라진다.</td></tr>
+<tr><td><code>mbrun.role_activation</code></td><td>역할 활성화 기록</td><td>10</td><td>보유한 역할과 이번 수행에서 실제로 쓴 역할은 다르다. 기안과 승인을 같은 주체가 못 하게 하려면 쓴 역할이 남아야 한다.</td></tr>
+<tr><td><code>mbrun.work_item_rank</code></td><td>선후 파생값(closure table · 위상 순위 · 임계 경로)</td><td>8</td><td>간선이 정본이고 이 표는 전부 파생이다. 조회를 위해 두되 「정본에서 다시 만들 수 있다」를 못 박는다.</td></tr>
+<tr><td><code>mbrun.priority_rule</code></td><td>우선순위 도출 규칙(버전)</td><td>19</td><td>우선순위를 값이 아니라 규칙으로 둔다. 이미 있는 속성(위험 · 승인 · 자율 · 표준시간 · 마감 · 대기 · 잔여 깊이)에서 계산한다(G-02 해소).</td></tr>
+<tr><td><code>mbrun.concurrency_limit</code></td><td>동시 실행 상한과 몫</td><td>10</td><td>테넌트 · 영역 · 에이전트 · 도구별 상한과 몫을 데이터로 둔다. 한 테넌트의 대량 작업이 남의 급한 일을 굶기지 못하게 한다(G-08 해소).</td></tr>
+<tr><td><code>mbrun.fairness_state</code></td><td>공정 배분 상태</td><td>8</td><td>가중 라운드로빈이 실제로 누구에게 얼마를 줬는지 기록한다. 몫을 못 받은 키가 다음 차례에 앞선다.</td></tr>
+<tr><td><code>mbrun.work_item_archive</code></td><td>종료 수행 보관</td><td>16</td><td>뜨거운 표는 크기가 곧 성능이다. 종료된 수행은 즉시 옮기고 활성 표에는 남기지 않는다.</td></tr>
+</tbody></table>
+<h3>5.2 <code>mbdef</code> — 정의의 버전과 배포 묶음</h3>
+<p>무엇을 · 어떻게 하는가를 버전으로 굳혀 두는 자리. 게시된 행은 고치지 않는다.</p>
+<h4><span class="new">신설</span> <code>mbdef.definition_bundle</code> · 정의 배포 묶음</h4>
+<p>업무코드 · 스킬 · 단계 · 도구 · 판정 기준의 버전을 한 벌로 묶어 굳힌다. 실행 인스턴스는 이 묶음 하나만 가리킨다.</p>
+<table class="dd">
+<colgroup><col style="width:22%"><col style="width:13%"><col style="width:4%"><col style="width:61%"></colgroup>
+<thead><tr><th>컬럼</th><th>형</th><th>널</th><th>설명</th></tr></thead><tbody>
+<tr><td><code>bundle_id</code></td><td>bigint</td><td>N</td><td>묶음 식별자(PK)</td></tr>
+<tr><td><code>tenant_id</code></td><td>uuid</td><td>N</td><td>테넌트(모든 PK · FK 에 포함)</td></tr>
+<tr><td><code>bundle_no</code></td><td>varchar(24)</td><td>N</td><td>묶음 번호 BD-YYYY-nnnn</td></tr>
+<tr><td><code>scope</code></td><td>varchar(12)</td><td>N</td><td>GLOBAL · DOMAIN · CODE — 묶음이 덮는 범위</td></tr>
+<tr><td><code>domain_code</code></td><td>varchar(4)</td><td>Y</td><td>scope=DOMAIN 일 때 D01~D18</td></tr>
+<tr><td><code>content_hash</code></td><td>char(64)</td><td>N</td><td>구성원 전체의 정규화 직렬화에 대한 SHA-256. 같은 해시면 같은 정의</td></tr>
+<tr><td><code>state</code></td><td>varchar(12)</td><td>N</td><td>DRAFT · PUBLISHED · RETIRED</td></tr>
+<tr><td><code>published_at</code></td><td>timestamptz</td><td>Y</td><td>게시 시각. 게시 후 구성원 변경 금지</td></tr>
+<tr><td><code>published_by</code></td><td>uuid</td><td>Y</td><td>게시자</td></tr>
+<tr><td><code>effective_from</code></td><td>timestamptz</td><td>Y</td><td>효력 시작</td></tr>
+<tr><td><code>effective_to</code></td><td>timestamptz</td><td>Y</td><td>효력 종료(NULL 이면 현행)</td></tr>
+<tr><td><code>superseded_by</code></td><td>bigint</td><td>Y</td><td>뒤이은 묶음(self FK)</td></tr>
+<tr><td><code>note</code></td><td>text</td><td>Y</td><td>게시 사유</td></tr>
+</tbody></table>
+<p class="small"><b>키 · 제약 · 규칙</b><br>· PK(tenant_id, bundle_id)<br>· UNIQUE(tenant_id, bundle_no)<br>· UNIQUE(tenant_id, content_hash)<br>· 부분 UNIQUE(tenant_id, scope, domain_code) WHERE state=&#x27;PUBLISHED&#x27; AND effective_to IS NULL<br>· CHECK(state&lt;&gt;&#x27;PUBLISHED&#x27; OR (published_at IS NOT NULL AND content_hash IS NOT NULL))<br>· 규칙 : state=&#x27;PUBLISHED&#x27; 행은 REVOKE UPDATE — 정정은 새 묶음</p>
+<h4><span class="new">신설</span> <code>mbdef.bundle_member</code> · 묶음 구성원</h4>
+<p>묶음이 고정한 개별 버전. 종류가 넷이라 배타적 아크(넷 중 정확히 하나)로 막는다.</p>
+<table class="dd">
+<colgroup><col style="width:22%"><col style="width:13%"><col style="width:4%"><col style="width:61%"></colgroup>
+<thead><tr><th>컬럼</th><th>형</th><th>널</th><th>설명</th></tr></thead><tbody>
+<tr><td><code>bundle_id</code></td><td>bigint</td><td>N</td><td>묶음(FK)</td></tr>
+<tr><td><code>tenant_id</code></td><td>uuid</td><td>N</td><td>테넌트</td></tr>
+<tr><td><code>member_seq</code></td><td>int</td><td>N</td><td>구성원 순번</td></tr>
+<tr><td><code>member_kind</code></td><td>varchar(16)</td><td>N</td><td>WORK_CODE · EXEC_STEP · SKILL_UNIT · TOOL · JUDGMENT</td></tr>
+<tr><td><code>work_code_version_id</code></td><td>bigint</td><td>Y</td><td>업무코드 버전(FK)</td></tr>
+<tr><td><code>exec_step_version_id</code></td><td>bigint</td><td>Y</td><td>실행 단계 버전(FK)</td></tr>
+<tr><td><code>skill_unit_version_id</code></td><td>bigint</td><td>Y</td><td>스킬 단위 버전(FK)</td></tr>
+<tr><td><code>tool_version_id</code></td><td>bigint</td><td>Y</td><td>도구 버전(FK · mbtool.tool_version)</td></tr>
+<tr><td><code>judgment_basis_version_id</code></td><td>bigint</td><td>Y</td><td>판정 기준 버전(FK)</td></tr>
+<tr><td><code>member_hash</code></td><td>char(64)</td><td>N</td><td>그 버전의 내용 해시</td></tr>
+</tbody></table>
+<p class="small"><b>키 · 제약 · 규칙</b><br>· PK(tenant_id, bundle_id, member_seq)<br>· CHECK(num_nonnulls(work_code_version_id, exec_step_version_id, skill_unit_version_id, tool_version_id, judgment_basis_version_id) = 1)<br>· CHECK(member_kind = CASE WHEN work_code_version_id IS NOT NULL THEN &#x27;WORK_CODE&#x27; … END)</p>
+<h4><span class="new">신설</span> <code>mbdef.work_code_version</code> · 업무코드 버전</h4>
+<p>업무코드 574건의 속성이 바뀔 때마다 새 행. 실행 인스턴스는 코드가 아니라 이 버전을 가리킨다.</p>
+<table class="dd">
+<colgroup><col style="width:22%"><col style="width:13%"><col style="width:4%"><col style="width:61%"></colgroup>
+<thead><tr><th>컬럼</th><th>형</th><th>널</th><th>설명</th></tr></thead><tbody>
+<tr><td><code>work_code_version_id</code></td><td>bigint</td><td>N</td><td>PK</td></tr>
+<tr><td><code>tenant_id</code></td><td>uuid</td><td>N</td><td>테넌트</td></tr>
+<tr><td><code>work_code</code></td><td>varchar(9)</td><td>N</td><td>업무코드 FL00nnnnn(FK · mbcode.work_code)</td></tr>
+<tr><td><code>version_no</code></td><td>int</td><td>N</td><td>version 번호(1부터)</td></tr>
+<tr><td><code>domain_code</code></td><td>varchar(4)</td><td>N</td><td>업무영역 D01~D18</td></tr>
+<tr><td><code>work_name</code></td><td>varchar(120)</td><td>N</td><td>업무 이름</td></tr>
+<tr><td><code>risk_grade</code></td><td>char(1)</td><td>N</td><td>위험 등급 C · H · M · L (현행 C 79 · H 231 · M 190 · L 46)</td></tr>
+<tr><td><code>approval_kind</code></td><td>char(1)</td><td>N</td><td>승인 유형 Y(사전) · H(단계) · A(사후) (현행 245 · 199 · 102)</td></tr>
+<tr><td><code>repeat_kind</code></td><td>char(1)</td><td>N</td><td>반복 유형 E · P · N (현행 257 · 229 · 60)</td></tr>
+<tr><td><code>std_hours</code></td><td>numeric(6,2)</td><td>N</td><td>표준 처리 시간(현행 0.3 ~ 60)</td></tr>
+<tr><td><code>token_budget</code></td><td>int</td><td>N</td><td>추론 예산(천 토큰)</td></tr>
+<tr><td><code>autonomy_level</code></td><td>char(2)</td><td>N</td><td>자율 수준 L1 · L2 · L3 (현행 51 · 270 · 225)</td></tr>
+<tr><td><code>resolution_type</code></td><td>varchar(8)</td><td>N</td><td>해결 유형 SKILL · LOGIC · HYBRID (현행 33 · 114 · 399)</td></tr>
+<tr><td><code>idem_key_expr</code></td><td>varchar(200)</td><td>N</td><td>중복 실행 방지 키 식(574건 전부 정의됨 — 예 「테넌트 · 급여 기간 · 급여 차수 · 사원번호」)</td></tr>
+<tr><td><code>binding_fields</code></td><td>jsonb</td><td>Y</td><td>구속 자료 항목(351건 정의)</td></tr>
+<tr><td><code>ea_domain</code></td><td>varchar(24)</td><td>Y</td><td>EA 의견 영역(200건) — KIFRS · 근로 · 상법 · 세법 · 감사 · 공시 …</td></tr>
+<tr><td><code>approval_validity_hours</code></td><td>int</td><td>Y</td><td>승인 유효 시간</td></tr>
+<tr><td><code>valid_from</code></td><td>timestamptz</td><td>N</td><td>유효 시작</td></tr>
+<tr><td><code>valid_to</code></td><td>timestamptz</td><td>Y</td><td>유효 종료</td></tr>
+<tr><td><code>is_current</code></td><td>boolean</td><td>N</td><td>현행 여부(파생 — 한 트랜잭션에서만 갱신)</td></tr>
+<tr><td><code>content_hash</code></td><td>char(64)</td><td>N</td><td>버전 내용 해시</td></tr>
+</tbody></table>
+<p class="small"><b>키 · 제약 · 규칙</b><br>· PK(tenant_id, work_code_version_id)<br>· UNIQUE(tenant_id, work_code, version_no)<br>· CREATE UNIQUE INDEX ON …(tenant_id, work_code) WHERE is_current<br>· CHECK(valid_to IS NULL OR valid_from &lt; valid_to)<br>· REVOKE UPDATE — 게시된 버전은 불변</p>
+<h4><span class="new">신설</span> <code>mbdef.exec_step_version</code> · 실행 단계 버전</h4>
+<p>단계 3,837개의 버전. 「몇째 칸에서 무엇을 어떤 수단으로」가 판별로 굳는다.</p>
+<table class="dd">
+<colgroup><col style="width:22%"><col style="width:13%"><col style="width:4%"><col style="width:61%"></colgroup>
+<thead><tr><th>컬럼</th><th>형</th><th>널</th><th>설명</th></tr></thead><tbody>
+<tr><td><code>exec_step_version_id</code></td><td>bigint</td><td>N</td><td>PK</td></tr>
+<tr><td><code>tenant_id</code></td><td>uuid</td><td>N</td><td>테넌트</td></tr>
+<tr><td><code>work_code_version_id</code></td><td>bigint</td><td>N</td><td>어느 업무코드 버전의 단계인가(FK)</td></tr>
+<tr><td><code>step_no</code></td><td>int</td><td>N</td><td>단계 번호(코드당 4~8, 평균 6.75)</td></tr>
+<tr><td><code>step_title</code></td><td>varchar(160)</td><td>N</td><td>단계 이름</td></tr>
+<tr><td><code>mechanism</code></td><td>char(2)</td><td>N</td><td>수단 유형 T1~T8 (현행 T8 1,339 · T6 619 · T4 518 · T1 396 · T7 331 …)</td></tr>
+<tr><td><code>unit_kind</code></td><td>varchar(12)</td><td>N</td><td>SKILL_UNIT · TOOL · PLATFORM · CONNECTOR</td></tr>
+<tr><td><code>skill_unit_version_id</code></td><td>bigint</td><td>Y</td><td>스킬 단위 버전(FK)</td></tr>
+<tr><td><code>tool_version_id</code></td><td>bigint</td><td>Y</td><td>도구 버전(FK)</td></tr>
+<tr><td><code>platform_func_code</code></td><td>varchar(12)</td><td>Y</td><td>플랫폼 기능 PF-nn</td></tr>
+<tr><td><code>connector_code</code></td><td>varchar(12)</td><td>Y</td><td>커넥터 CN-nn</td></tr>
+<tr><td><code>effect_class</code></td><td>varchar(16)</td><td>N</td><td>NONE 2,467 · IDEMPOTENT 1,099 · NON_IDEMPOTENT 117</td></tr>
+<tr><td><code>is_checkpoint</code></td><td>boolean</td><td>N</td><td>checkpoint 여부(현행 945단계)</td></tr>
+<tr><td><code>needs_approval</code></td><td>boolean</td><td>N</td><td>승인 확인 단계(548)</td></tr>
+<tr><td><code>is_numeric</code></td><td>boolean</td><td>N</td><td>수치 산출 단계(598)</td></tr>
+<tr><td><code>max_payload_kb</code></td><td>int</td><td>N</td><td>단계 간 전달 자료 상한(초과분은 밖에 두고 참조만)</td></tr>
+</tbody></table>
+<p class="small"><b>키 · 제약 · 규칙</b><br>· PK(tenant_id, exec_step_version_id)<br>· UNIQUE(tenant_id, work_code_version_id, step_no)<br>· CHECK(num_nonnulls(skill_unit_version_id, tool_version_id, platform_func_code, connector_code) = 1)<br>· CHECK(unit_kind = CASE WHEN skill_unit_version_id IS NOT NULL THEN &#x27;SKILL_UNIT&#x27; … END)</p>
+<h4><span class="new">신설</span> <code>mbdef.skill_unit_version</code> · 스킬 단위 버전</h4>
+<p>스킬 단위 727개(판단 331 · 사람 협업 396)의 버전. 현행 varchar 버전 문자열을 대신한다.</p>
+<table class="dd">
+<colgroup><col style="width:22%"><col style="width:13%"><col style="width:4%"><col style="width:61%"></colgroup>
+<thead><tr><th>컬럼</th><th>형</th><th>널</th><th>설명</th></tr></thead><tbody>
+<tr><td><code>skill_unit_version_id</code></td><td>bigint</td><td>N</td><td>PK</td></tr>
+<tr><td><code>tenant_id</code></td><td>uuid</td><td>N</td><td>테넌트</td></tr>
+<tr><td><code>skill_unit_code</code></td><td>varchar(16)</td><td>N</td><td>스킬 단위 코드(FK · mbcode.skill_unit)</td></tr>
+<tr><td><code>version_no</code></td><td>int</td><td>N</td><td>version 번호</td></tr>
+<tr><td><code>unit_class</code></td><td>varchar(12)</td><td>N</td><td>JUDGE(판단) · HUMAN(사람 협업)</td></tr>
+<tr><td><code>prompt_hash</code></td><td>char(64)</td><td>Y</td><td>판단형일 때 지시문 해시</td></tr>
+<tr><td><code>model_ref</code></td><td>varchar(60)</td><td>Y</td><td>추론 모델 지정</td></tr>
+<tr><td><code>input_schema</code></td><td>jsonb</td><td>N</td><td>입력 규격</td></tr>
+<tr><td><code>output_schema</code></td><td>jsonb</td><td>N</td><td>출력 규격</td></tr>
+<tr><td><code>published_at</code></td><td>timestamptz</td><td>N</td><td>게시 시각</td></tr>
+<tr><td><code>content_hash</code></td><td>char(64)</td><td>N</td><td>버전 내용 해시</td></tr>
+</tbody></table>
+<p class="small"><b>키 · 제약 · 규칙</b><br>· PK(tenant_id, skill_unit_version_id)<br>· UNIQUE(tenant_id, skill_unit_code, version_no)<br>· REVOKE UPDATE</p>
+<h4><span class="new">신설</span> <code>mbdef.judgment_basis_version</code> · 판정 기준 버전</h4>
+<p>판정 기준 원장(R26 보호 대상)의 버전. 착수 판정 · 검증 판정이 어느 버전으로 내려졌는지를 한 값으로 남긴다.</p>
+<table class="dd">
+<colgroup><col style="width:22%"><col style="width:13%"><col style="width:4%"><col style="width:61%"></colgroup>
+<thead><tr><th>컬럼</th><th>형</th><th>널</th><th>설명</th></tr></thead><tbody>
+<tr><td><code>judgment_basis_version_id</code></td><td>bigint</td><td>N</td><td>PK</td></tr>
+<tr><td><code>tenant_id</code></td><td>uuid</td><td>N</td><td>테넌트</td></tr>
+<tr><td><code>basis_kind</code></td><td>varchar(16)</td><td>N</td><td>TRUST · VA · AUTONOMY · POLICY</td></tr>
+<tr><td><code>basis_code</code></td><td>varchar(24)</td><td>N</td><td>기준 코드</td></tr>
+<tr><td><code>version_no</code></td><td>int</td><td>N</td><td>version 번호</td></tr>
+<tr><td><code>rule_body</code></td><td>jsonb</td><td>N</td><td>기준 본문</td></tr>
+<tr><td><code>published_at</code></td><td>timestamptz</td><td>N</td><td>게시 시각</td></tr>
+<tr><td><code>published_by</code></td><td>uuid</td><td>N</td><td>게시자(원장 보호 — 실행 주체와 분리)</td></tr>
+<tr><td><code>content_hash</code></td><td>char(64)</td><td>N</td><td>버전 내용 해시</td></tr>
+</tbody></table>
+<p class="small"><b>키 · 제약 · 규칙</b><br>· PK(tenant_id, judgment_basis_version_id)<br>· UNIQUE(tenant_id, basis_kind, basis_code, version_no)<br>· REVOKE UPDATE · REVOKE DELETE — 판정 기준 원장 보호</p>
+<h3>5.3 <code>mbrun</code> — 수행 · 대기열 · 게이트</h3>
+<p>한 번의 수행이 어디까지 왔는지, 지금 누가 집어갈 수 있는지를 담는 자리.</p>
+<h4><span class="new">신설</span> <code>mbrun.work_item</code> · 업무 수행(인스턴스) — 정본</h4>
+<p>업무 1회 수행을 가리키는 단 하나의 행. 배정 · 과업 · 실행 · 원장이 모두 이 행을 참조한다(G-01 해소).</p>
+<table class="dd">
+<colgroup><col style="width:22%"><col style="width:13%"><col style="width:4%"><col style="width:61%"></colgroup>
+<thead><tr><th>컬럼</th><th>형</th><th>널</th><th>설명</th></tr></thead><tbody>
+<tr><td><code>work_item_id</code></td><td>bigint</td><td>N</td><td>PK</td></tr>
+<tr><td><code>tenant_id</code></td><td>uuid</td><td>N</td><td>테넌트</td></tr>
+<tr><td><code>project_id</code></td><td>uuid</td><td>Y</td><td>프로젝트(FK · mbproj.project). 프로젝트 밖 업무는 NULL</td></tr>
+<tr><td><code>work_code</code></td><td>varchar(9)</td><td>N</td><td>업무코드</td></tr>
+<tr><td><code>work_code_version_id</code></td><td>bigint</td><td>N</td><td>착수 시점에 고정한 업무코드 버전(FK)</td></tr>
+<tr><td><code>bundle_id</code></td><td>bigint</td><td>N</td><td>착수 시점에 고정한 정의 묶음(FK) — 실행 중 정의가 바뀌어도 이 묶음으로 끝낸다</td></tr>
+<tr><td><code>idem_key</code></td><td>varchar(200)</td><td>N</td><td>업무코드 버전의 중복 실행 방지 키 식을 실제 값으로 채운 것</td></tr>
+<tr><td><code>state</code></td><td>varchar(16)</td><td>N</td><td>CREATED · BLOCKED · READY · LEASED · RUNNING · WAITING_HUMAN · DONE · FAILED · CANCELLED</td></tr>
+<tr><td><code>substate</code></td><td>varchar(24)</td><td>Y</td><td>대기 사유 등 보조 상태</td></tr>
+<tr><td><code>owner_kind</code></td><td>varchar(8)</td><td>N</td><td>HUMAN · IA · PA · EA · TA</td></tr>
+<tr><td><code>owner_id</code></td><td>uuid</td><td>Y</td><td>현재 수행 주체</td></tr>
+<tr><td><code>context_id</code></td><td>uuid</td><td>N</td><td>업무건 맥락 — 여러 수행 · 여러 에이전트가 한 건으로 묶이는 축(A2A contextId 대응)</td></tr>
+<tr><td><code>effective_autonomy_level</code></td><td>char(2)</td><td>N</td><td>착수 시점에 실제로 적용된 자율 수준(정책 마스터가 뒤에 바뀌어도 이 값이 증거)</td></tr>
+<tr><td><code>pf_risk</code></td><td>int</td><td>N</td><td>우선순위 구성분 — 위험 등급 기여분</td></tr>
+<tr><td><code>pf_approval</code></td><td>int</td><td>N</td><td>우선순위 구성분 — 승인 유형 기여분</td></tr>
+<tr><td><code>pf_autonomy</code></td><td>int</td><td>N</td><td>우선순위 구성분 — 자율 수준 기여분</td></tr>
+<tr><td><code>pf_critical</code></td><td>int</td><td>N</td><td>우선순위 구성분 — 임계 경로(잔여 깊이) 기여분</td></tr>
+<tr><td><code>base_score</code></td><td>int</td><td>N</td><td>GENERATED ALWAYS AS (pf_risk + pf_approval + pf_autonomy + pf_critical) STORED — &lt;b&gt;시간이 지나도 변하지 않는 네 항만&lt;/b&gt; 저장한다. 마감 여유와 대기 시간 항은 정렬할 때 계산한다</td></tr>
+<tr><td><code>priority_rule_version_id</code></td><td>bigint</td><td>N</td><td>구성분을 매긴 우선순위 규칙 버전(FK) — 점수의 출처</td></tr>
+<tr><td><code>priority_basis</code></td><td>jsonb</td><td>N</td><td>계산에 쓴 입력값 원본(위험 등급 · 마감 · 잔여 깊이 …) — 재현용</td></tr>
+<tr><td><code>due_at</code></td><td>timestamptz</td><td>Y</td><td>마감</td></tr>
+<tr><td><code>due_kind</code></td><td>varchar(12)</td><td>Y</td><td>마감의 출처 — STATUTORY(법으로 정해진 기한) · CONTRACT(계약) · INTERNAL(내부 목표). 놓쳤을 때의 무게가 다르므로 같은 가중치를 주지 않는다</td></tr>
+<tr><td><code>blocked_count</code></td><td>int</td><td>N</td><td>아직 못 푼 필수 선행 수(0 이면 준비)</td></tr>
+<tr><td><code>created_at</code></td><td>timestamptz</td><td>N</td><td>생성 시각</td></tr>
+<tr><td><code>ready_at</code></td><td>timestamptz</td><td>Y</td><td>선행이 모두 풀린 시각</td></tr>
+<tr><td><code>offered_at</code></td><td>timestamptz</td><td>Y</td><td>대기열에 실제로 내걸린 시각</td></tr>
+<tr><td><code>allocated_at</code></td><td>timestamptz</td><td>Y</td><td>일꾼이 집어간 시각</td></tr>
+<tr><td><code>started_at</code></td><td>timestamptz</td><td>Y</td><td>첫 단계를 시작한 시각</td></tr>
+<tr><td><code>finished_at</code></td><td>timestamptz</td><td>Y</td><td>종료 시각</td></tr>
+<tr><td><code>gate_check_id</code></td><td>bigint</td><td>Y</td><td>착수를 허가한 게이트 판정 행(FK)</td></tr>
+<tr><td><code>continued_from_item_id</code></td><td>bigint</td><td>Y</td><td>단계 · 이력이 상한을 넘어 승계한 앞 수행(FK · self)</td></tr>
+<tr><td><code>source_kind</code></td><td>varchar(16)</td><td>N</td><td>HUMAN_REQUEST · SCHEDULE · EVENT · DEPENDENCY</td></tr>
+<tr><td><code>source_ref</code></td><td>varchar(64)</td><td>Y</td><td>기동 근거(원천 이벤트 식별자 등)</td></tr>
+</tbody></table>
+<p class="small"><b>키 · 제약 · 규칙</b><br>· PK(tenant_id, work_item_id)<br>· UNIQUE(tenant_id, work_code, idem_key) — 같은 업무의 같은 대상은 두 번 만들어지지 않는다<br>· CHECK(state&lt;&gt;&#x27;READY&#x27; OR gate_check_id IS NOT NULL)<br>· CHECK(state IN (&#x27;DONE&#x27;,&#x27;FAILED&#x27;,&#x27;CANCELLED&#x27;)) = (finished_at IS NOT NULL)<br>· INDEX(tenant_id, state, base_score DESC, ready_at) — 대기열 조회 경로<br>· 정렬값 = base_score + w_deadline × w_due_kind[due_kind] × 마감긴박도 + w_aging × 대기시간. 뒤의 두 항은 시간이 지나면 저절로 변하므로 &lt;b&gt;저장하지 아니한다&lt;/b&gt;<br>· 대기 시각 다섯 칸(created · ready · offered · allocated · started)을 따로 둔다 — 병목이 처리가 아니라 대기에 있었다는 실증(P-37)을 볼 수 있게<br>· 활성 행만 둔다. 종료 즉시 mbrun.work_item_archive 로 이관</p>
+<h4><span class="new">신설</span> <code>mbrun.work_item_edge</code> · 수행 간 선후</h4>
+<p>정의 수준 선후(현행 423 간선)를 실제 수행 사이의 간선으로 펼친다. 순환을 데이터가 막는다(G-04 해소).</p>
+<table class="dd">
+<colgroup><col style="width:22%"><col style="width:13%"><col style="width:4%"><col style="width:61%"></colgroup>
+<thead><tr><th>컬럼</th><th>형</th><th>널</th><th>설명</th></tr></thead><tbody>
+<tr><td><code>tenant_id</code></td><td>uuid</td><td>N</td><td>테넌트</td></tr>
+<tr><td><code>pred_item_id</code></td><td>bigint</td><td>N</td><td>선행 수행(FK)</td></tr>
+<tr><td><code>succ_item_id</code></td><td>bigint</td><td>N</td><td>후행 수행(FK)</td></tr>
+<tr><td><code>edge_kind</code></td><td>varchar(16)</td><td>N</td><td>HARD_SEQ(정의 선후) · DATA_READY(자료 준비) · APPROVAL(승인 선행) · RESOURCE(자원 선점)</td></tr>
+<tr><td><code>origin</code></td><td>varchar(16)</td><td>N</td><td>DEFINITION(work_code_dependency 전개) · PRECONDITION(조건 판정) · MANUAL(사람 지정)</td></tr>
+<tr><td><code>satisfied_at</code></td><td>timestamptz</td><td>Y</td><td>이 간선이 풀린 시각</td></tr>
+<tr><td><code>pred_depth</code></td><td>int</td><td>N</td><td>선행의 깊이(순환 검사 보조 — 삽입 시 pred_depth &lt; succ_depth 강제)</td></tr>
+</tbody></table>
+<p class="small"><b>키 · 제약 · 규칙</b><br>· PK(tenant_id, pred_item_id, succ_item_id)<br>· CHECK(pred_item_id &lt;&gt; succ_item_id)<br>· 삽입 트리거 : succ 에서 pred 로 도달 가능하면 거부(순환 금지)<br>· INDEX(tenant_id, succ_item_id) WHERE satisfied_at IS NULL — 「무엇이 막고 있나」</p>
+<h4><span class="new">신설</span> <code>mbrun.work_item_step</code> · 수행 단계 진행</h4>
+<p>단계를 인스턴스 1행에 통짜 JSON 으로 쌓지 않고 독립 행으로 둔다. 재개 지점이 곧 행이다.</p>
+<table class="dd">
+<colgroup><col style="width:22%"><col style="width:13%"><col style="width:4%"><col style="width:61%"></colgroup>
+<thead><tr><th>컬럼</th><th>형</th><th>널</th><th>설명</th></tr></thead><tbody>
+<tr><td><code>tenant_id</code></td><td>uuid</td><td>N</td><td>테넌트</td></tr>
+<tr><td><code>work_item_id</code></td><td>bigint</td><td>N</td><td>수행(FK)</td></tr>
+<tr><td><code>step_no</code></td><td>int</td><td>N</td><td>단계 번호</td></tr>
+<tr><td><code>exec_step_version_id</code></td><td>bigint</td><td>N</td><td>실행 단계 버전(FK)</td></tr>
+<tr><td><code>state</code></td><td>varchar(12)</td><td>N</td><td>PENDING · RUNNING · DONE · SKIPPED · FAILED</td></tr>
+<tr><td><code>attempt</code></td><td>int</td><td>N</td><td>시도 횟수</td></tr>
+<tr><td><code>parent_step_no</code></td><td>int</td><td>Y</td><td>재개 · 분기의 부모 단계(self) — 되돌아가 다시 푼 경로가 트리로 남는다</td></tr>
+<tr><td><code>branch_ns</code></td><td>varchar(40)</td><td>Y</td><td>분기 이름칸 — 같은 단계 번호의 여러 갈래를 구분</td></tr>
+<tr><td><code>effect_class</code></td><td>varchar(16)</td><td>N</td><td>버전에서 복사한 부작용 등급(재시도 가능 여부 판단)</td></tr>
+<tr><td><code>idempotency_record_id</code></td><td>bigint</td><td>Y</td><td>non-idempotent 단계(117)의 idempotency record(FK · mbexec.idempotency_record)</td></tr>
+<tr><td><code>checkpoint_id</code></td><td>bigint</td><td>Y</td><td>checkpoint(FK · mbexec.run_checkpoint)</td></tr>
+<tr><td><code>payload_ref</code></td><td>varchar(200)</td><td>Y</td><td>단계 산출물 참조(본문은 표 밖)</td></tr>
+<tr><td><code>payload_bytes</code></td><td>int</td><td>Y</td><td>산출물 크기</td></tr>
+<tr><td><code>started_at</code></td><td>timestamptz</td><td>Y</td><td>시작</td></tr>
+<tr><td><code>finished_at</code></td><td>timestamptz</td><td>Y</td><td>종료</td></tr>
+</tbody></table>
+<p class="small"><b>키 · 제약 · 규칙</b><br>· PK(tenant_id, work_item_id, step_no)<br>· CHECK(effect_class&lt;&gt;&#x27;NON_IDEMPOTENT&#x27; OR idempotency_record_id IS NOT NULL OR state IN (&#x27;PENDING&#x27;,&#x27;SKIPPED&#x27;))<br>· CHECK(payload_bytes IS NULL OR payload_bytes &lt;= 262144) — 큰 자료는 참조만</p>
+<h4><span class="new">신설</span> <code>mbrun.work_item_state_log</code> · 수행 상태 전이 원장</h4>
+<p>추가만 하는 원장. 현재 상태는 work_item 이 정본이고 이 표는 재현 · 감사 전용이다.</p>
+<table class="dd">
+<colgroup><col style="width:22%"><col style="width:13%"><col style="width:4%"><col style="width:61%"></colgroup>
+<thead><tr><th>컬럼</th><th>형</th><th>널</th><th>설명</th></tr></thead><tbody>
+<tr><td><code>log_id</code></td><td>bigint</td><td>N</td><td>PK</td></tr>
+<tr><td><code>tenant_id</code></td><td>uuid</td><td>N</td><td>테넌트</td></tr>
+<tr><td><code>work_item_id</code></td><td>bigint</td><td>N</td><td>수행(FK)</td></tr>
+<tr><td><code>seq</code></td><td>int</td><td>N</td><td>수행 안에서의 순번</td></tr>
+<tr><td><code>from_state</code></td><td>varchar(16)</td><td>Y</td><td>이전 상태</td></tr>
+<tr><td><code>to_state</code></td><td>varchar(16)</td><td>N</td><td>다음 상태</td></tr>
+<tr><td><code>reason</code></td><td>varchar(120)</td><td>N</td><td>전이 사유</td></tr>
+<tr><td><code>actor_kind</code></td><td>varchar(8)</td><td>N</td><td>전이를 일으킨 주체</td></tr>
+<tr><td><code>actor_id</code></td><td>uuid</td><td>Y</td><td>주체 식별자</td></tr>
+<tr><td><code>basis_version_id</code></td><td>bigint</td><td>Y</td><td>판정에 쓰인 기준 버전(FK)</td></tr>
+<tr><td><code>occurred_at</code></td><td>timestamptz</td><td>N</td><td>시각</td></tr>
+</tbody></table>
+<p class="small"><b>키 · 제약 · 규칙</b><br>· PK(tenant_id, log_id)<br>· UNIQUE(tenant_id, work_item_id, seq)<br>· REVOKE UPDATE · REVOKE DELETE<br>· 월 단위 파티션(occurred_at)</p>
+<h4><span class="new">신설</span> <code>mbrun.ready_queue</code> · 실행 대기열</h4>
+<p>준비된 수행만 들어온다. 집어가기는 lease(소유자 + 만료)로 하고 행 잠금을 길게 쥐지 않는다(G-03 해소).</p>
+<table class="dd">
+<colgroup><col style="width:22%"><col style="width:13%"><col style="width:4%"><col style="width:61%"></colgroup>
+<thead><tr><th>컬럼</th><th>형</th><th>널</th><th>설명</th></tr></thead><tbody>
+<tr><td><code>tenant_id</code></td><td>uuid</td><td>N</td><td>테넌트</td></tr>
+<tr><td><code>work_item_id</code></td><td>bigint</td><td>N</td><td>수행(FK · PK)</td></tr>
+<tr><td><code>queue_key</code></td><td>varchar(32)</td><td>N</td><td>큐 갈래(영역 · 수단 · 주체 종류로 나눔)</td></tr>
+<tr><td><code>priority_score</code></td><td>int</td><td>N</td><td>work_item 에서 복사한 점수(정렬 전용 사본 — 갱신 책임은 우선순위 재계산 작업)</td></tr>
+<tr><td><code>fairness_key</code></td><td>varchar(64)</td><td>N</td><td>공정성 키(테넌트 · 프로젝트 · 영역) — 가중 라운드로빈의 단위</td></tr>
+<tr><td><code>visible_at</code></td><td>timestamptz</td><td>N</td><td>이 시각 이후에만 집어갈 수 있다(재시도 지연 · 예약 착수)</td></tr>
+<tr><td><code>lease_owner</code></td><td>varchar(64)</td><td>Y</td><td>집어간 일꾼</td></tr>
+<tr><td><code>lease_until</code></td><td>timestamptz</td><td>Y</td><td>lease 만료 — 지나면 다른 일꾼이 가져간다</td></tr>
+<tr><td><code>lease_count</code></td><td>int</td><td>N</td><td>lease 를 몇 번 받았나(반복 실패 탐지)</td></tr>
+<tr><td><code>heartbeat_at</code></td><td>timestamptz</td><td>Y</td><td>마지막 생존 신호</td></tr>
+<tr><td><code>attempt</code></td><td>int</td><td>N</td><td>시도 횟수</td></tr>
+<tr><td><code>last_error</code></td><td>varchar(200)</td><td>Y</td><td>마지막 실패 사유</td></tr>
+<tr><td><code>enqueued_at</code></td><td>timestamptz</td><td>N</td><td>들어온 시각</td></tr>
+</tbody></table>
+<p class="small"><b>키 · 제약 · 규칙</b><br>· PK(tenant_id, work_item_id)<br>· INDEX(tenant_id, queue_key, visible_at, priority_score DESC, enqueued_at) WHERE lease_owner IS NULL<br>· 집어가기 : SELECT … FOR UPDATE SKIP LOCKED LIMIT n 후 lease 기록<br>· 세션형 advisory lock 금지 — pg_advisory_xact_lock 만(커넥션 풀 반납 시 DISCARD ALL)</p>
+<h4><span class="new">신설</span> <code>mbrun.precondition_check</code> · 준비 조건 판정</h4>
+<p>「왜 아직 못 하나」를 데이터로 답한다. 자료 흐름에서 오는 조건은 선행 코드가 아니라 원장 사실로 본다.</p>
+<table class="dd">
+<colgroup><col style="width:22%"><col style="width:13%"><col style="width:4%"><col style="width:61%"></colgroup>
+<thead><tr><th>컬럼</th><th>형</th><th>널</th><th>설명</th></tr></thead><tbody>
+<tr><td><code>check_id</code></td><td>bigint</td><td>N</td><td>PK</td></tr>
+<tr><td><code>tenant_id</code></td><td>uuid</td><td>N</td><td>테넌트</td></tr>
+<tr><td><code>work_item_id</code></td><td>bigint</td><td>N</td><td>수행(FK)</td></tr>
+<tr><td><code>cond_kind</code></td><td>varchar(16)</td><td>N</td><td>PRED_DONE · DATA_EXISTS · DATA_STATE · PERIOD_CLOSED · APPROVAL_VALID</td></tr>
+<tr><td><code>target_table</code></td><td>varchar(80)</td><td>Y</td><td>조건이 보는 표(스키마.표)</td></tr>
+<tr><td><code>predicate</code></td><td>jsonb</td><td>N</td><td>조건 술어(열 · 비교 · 값)</td></tr>
+<tr><td><code>required</code></td><td>boolean</td><td>N</td><td>필수 조건인가</td></tr>
+<tr><td><code>satisfied</code></td><td>boolean</td><td>N</td><td>충족 여부</td></tr>
+<tr><td><code>evaluated_at</code></td><td>timestamptz</td><td>N</td><td>판정 시각</td></tr>
+<tr><td><code>detail</code></td><td>varchar(200)</td><td>Y</td><td>미충족 사유(사람이 읽는 문장)</td></tr>
+</tbody></table>
+<p class="small"><b>키 · 제약 · 규칙</b><br>· PK(tenant_id, check_id)<br>· UNIQUE(tenant_id, work_item_id, cond_kind, target_table, md5(predicate::text))<br>· INDEX(tenant_id, work_item_id) WHERE required AND NOT satisfied</p>
+<h4><span class="new">신설</span> <code>mbrun.launch_gate_check</code> · 착수 판정(게이트) 한 행</h4>
+<p>선행 · 승인 · 자율 · 정지 · 토큰 · 예산 여섯 축의 판단을 한 번의 호출로 한 행에 적는다(G-09 해소).</p>
+<table class="dd">
+<colgroup><col style="width:22%"><col style="width:13%"><col style="width:4%"><col style="width:61%"></colgroup>
+<thead><tr><th>컬럼</th><th>형</th><th>널</th><th>설명</th></tr></thead><tbody>
+<tr><td><code>gate_check_id</code></td><td>bigint</td><td>N</td><td>PK</td></tr>
+<tr><td><code>tenant_id</code></td><td>uuid</td><td>N</td><td>테넌트</td></tr>
+<tr><td><code>work_item_id</code></td><td>bigint</td><td>N</td><td>수행(FK)</td></tr>
+<tr><td><code>requested_at</code></td><td>timestamptz</td><td>N</td><td>요청 시각</td></tr>
+<tr><td><code>bundle_id</code></td><td>bigint</td><td>N</td><td>판단에 쓴 정의 묶음(FK)</td></tr>
+<tr><td><code>basis_version_id</code></td><td>bigint</td><td>N</td><td>판단에 쓴 판정 기준 버전(FK)</td></tr>
+<tr><td><code>ax_precondition</code></td><td>varchar(16)</td><td>N</td><td>① 선행 충족</td></tr>
+<tr><td><code>ax_approval</code></td><td>varchar(16)</td><td>N</td><td>② 승인 유효</td></tr>
+<tr><td><code>ax_autonomy</code></td><td>varchar(16)</td><td>N</td><td>③ 자율 수준 상한</td></tr>
+<tr><td><code>ax_stop</code></td><td>varchar(16)</td><td>N</td><td>④ 비상 정지 · 영향 반경</td></tr>
+<tr><td><code>ax_capability</code></td><td>varchar(16)</td><td>N</td><td>⑤ 능력 토큰 유효</td></tr>
+<tr><td><code>ax_budget</code></td><td>varchar(16)</td><td>N</td><td>⑥ 추론 · 비용 예산</td></tr>
+<tr><td><code>verdict</code></td><td>varchar(16)</td><td>N</td><td>종합 PERMIT · DENY · INDETERMINATE · NOT_APPLICABLE — 네 값. 「해당 없음」을 「거부」로 접으면 정책 누락을 영원히 못 찾는다</td></tr>
+<tr><td><code>attr_snapshot</code></td><td>jsonb</td><td>N</td><td>판정에 쓴 속성값 원본(요청자 · 대상 · 환경). 속성이 뒤에 바뀌어도 이 값으로 재현한다</td></tr>
+<tr><td><code>obligations</code></td><td>jsonb</td><td>Y</td><td>허용에 붙은 의무(예 「승인 기록을 남겨라」) — 이행 여부는 mbrun.obligation_fulfillment</td></tr>
+<tr><td><code>consistency_token</code></td><td>varchar(64)</td><td>Y</td><td>관계 기반 권한의 일관성 표식 — 어느 시점의 관계로 판정했나</td></tr>
+<tr><td><code>pdp_version</code></td><td>varchar(24)</td><td>N</td><td>판정기(PDP) 버전</td></tr>
+<tr><td><code>trust_verdict_id</code></td><td>bigint</td><td>Y</td><td>Trust Agent 판정(FK · mbtrust.access_request)</td></tr>
+<tr><td><code>va_verdict_id</code></td><td>bigint</td><td>Y</td><td>VA 판정(FK · mbagent.va_verdict)</td></tr>
+<tr><td><code>reason</code></td><td>varchar(200)</td><td>Y</td><td>차단 · 판단 불가 사유</td></tr>
+<tr><td><code>decided_at</code></td><td>timestamptz</td><td>N</td><td>판정 시각</td></tr>
+</tbody></table>
+<p class="small"><b>키 · 제약 · 규칙</b><br>· PK(tenant_id, gate_check_id)<br>· CHECK((verdict=&#x27;PERMIT&#x27;) = (ax_precondition=&#x27;PERMIT&#x27; AND ax_approval=&#x27;PERMIT&#x27; AND ax_autonomy=&#x27;PERMIT&#x27; AND ax_stop=&#x27;PERMIT&#x27; AND ax_capability=&#x27;PERMIT&#x27; AND ax_budget=&#x27;PERMIT&#x27;))<br>· 규칙 : verdict=&#x27;PERMIT&#x27; 인 행이 없으면 ready_queue 에 넣지 않는다<br>· REVOKE UPDATE — 재판정은 새 행</p>
+<h4><span class="new">신설</span> <code>mbrun.obligation_fulfillment</code> · 판정 의무 이행</h4>
+<p>「허용하되 이것을 하라」를 붙였으면 했는지도 남겨야 한다. 안 남기면 허용만 남고 조건은 사라진다.</p>
+<table class="dd">
+<colgroup><col style="width:22%"><col style="width:13%"><col style="width:4%"><col style="width:61%"></colgroup>
+<thead><tr><th>컬럼</th><th>형</th><th>널</th><th>설명</th></tr></thead><tbody>
+<tr><td><code>fulfillment_id</code></td><td>bigint</td><td>N</td><td>PK</td></tr>
+<tr><td><code>tenant_id</code></td><td>uuid</td><td>N</td><td>테넌트</td></tr>
+<tr><td><code>gate_check_id</code></td><td>bigint</td><td>N</td><td>의무를 붙인 판정(FK)</td></tr>
+<tr><td><code>work_item_id</code></td><td>bigint</td><td>N</td><td>수행(FK)</td></tr>
+<tr><td><code>obligation_code</code></td><td>varchar(24)</td><td>N</td><td>의무 코드</td></tr>
+<tr><td><code>obligation_body</code></td><td>jsonb</td><td>N</td><td>의무 내용</td></tr>
+<tr><td><code>due_at</code></td><td>timestamptz</td><td>Y</td><td>이행 기한</td></tr>
+<tr><td><code>state</code></td><td>varchar(12)</td><td>N</td><td>PENDING · FULFILLED · VIOLATED</td></tr>
+<tr><td><code>fulfilled_at</code></td><td>timestamptz</td><td>Y</td><td>이행 시각</td></tr>
+<tr><td><code>evidence_ref</code></td><td>varchar(120)</td><td>Y</td><td>이행 증거(원장 행 · 기록 식별자)</td></tr>
+</tbody></table>
+<p class="small"><b>키 · 제약 · 규칙</b><br>· PK(tenant_id, fulfillment_id)<br>· UNIQUE(tenant_id, gate_check_id, obligation_code)<br>· CHECK((state=&#x27;FULFILLED&#x27;) = (fulfilled_at IS NOT NULL))<br>· 규칙 : state=&#x27;VIOLATED&#x27; 가 하나라도 있으면 같은 맥락의 다음 착수를 게이트가 막는다</p>
+<h4><span class="new">신설</span> <code>mbrun.role_activation</code> · 역할 활성화 기록</h4>
+<p>보유한 역할과 이번 수행에서 실제로 쓴 역할은 다르다. 기안과 승인을 같은 주체가 못 하게 하려면 쓴 역할이 남아야 한다.</p>
+<table class="dd">
+<colgroup><col style="width:22%"><col style="width:13%"><col style="width:4%"><col style="width:61%"></colgroup>
+<thead><tr><th>컬럼</th><th>형</th><th>널</th><th>설명</th></tr></thead><tbody>
+<tr><td><code>activation_id</code></td><td>bigint</td><td>N</td><td>PK</td></tr>
+<tr><td><code>tenant_id</code></td><td>uuid</td><td>N</td><td>테넌트</td></tr>
+<tr><td><code>work_item_id</code></td><td>bigint</td><td>N</td><td>수행(FK)</td></tr>
+<tr><td><code>actor_kind</code></td><td>varchar(8)</td><td>N</td><td>HUMAN · IA · PA · EA · TA</td></tr>
+<tr><td><code>actor_id</code></td><td>uuid</td><td>N</td><td>주체</td></tr>
+<tr><td><code>role_code</code></td><td>varchar(24)</td><td>N</td><td>이번 수행에서 활성화한 역할</td></tr>
+<tr><td><code>act_kind</code></td><td>varchar(12)</td><td>N</td><td>DRAFT(기안) · REVIEW(검토) · APPROVE(승인) · EXECUTE(실행)</td></tr>
+<tr><td><code>capability_token_id</code></td><td>bigint</td><td>Y</td><td>쓰인 능력 토큰(FK · mbauth.capability_token)</td></tr>
+<tr><td><code>activated_at</code></td><td>timestamptz</td><td>N</td><td>활성화 시각</td></tr>
+<tr><td><code>released_at</code></td><td>timestamptz</td><td>Y</td><td>해제 시각</td></tr>
+</tbody></table>
+<p class="small"><b>키 · 제약 · 규칙</b><br>· PK(tenant_id, activation_id)<br>· UNIQUE(tenant_id, work_item_id, actor_id, role_code, act_kind)<br>· 직무 분리 : 같은 work_item 에서 act_kind=&#x27;DRAFT&#x27; 와 &#x27;APPROVE&#x27; 의 actor_id 가 같으면 거부</p>
+<h4><span class="new">신설</span> <code>mbrun.work_item_rank</code> · 선후 파생값(closure table · 위상 순위 · 임계 경로)</h4>
+<p>간선이 정본이고 이 표는 전부 파생이다. 조회를 위해 두되 「정본에서 다시 만들 수 있다」를 못 박는다.</p>
+<table class="dd">
+<colgroup><col style="width:22%"><col style="width:13%"><col style="width:4%"><col style="width:61%"></colgroup>
+<thead><tr><th>컬럼</th><th>형</th><th>널</th><th>설명</th></tr></thead><tbody>
+<tr><td><code>tenant_id</code></td><td>uuid</td><td>N</td><td>테넌트</td></tr>
+<tr><td><code>work_item_id</code></td><td>bigint</td><td>N</td><td>수행(FK · PK)</td></tr>
+<tr><td><code>topo_rank</code></td><td>int</td><td>N</td><td>위상 순위(선행이 없으면 0)</td></tr>
+<tr><td><code>remaining_depth</code></td><td>int</td><td>N</td><td>이 수행 뒤로 남은 최대 사슬 길이(현행 정의 기준 최대 14)</td></tr>
+<tr><td><code>descendant_count</code></td><td>int</td><td>N</td><td>이 수행이 막고 있는 후속 수의 합</td></tr>
+<tr><td><code>critical_path_hours</code></td><td>numeric(8,2)</td><td>N</td><td>남은 임계 경로의 표준시간 합</td></tr>
+<tr><td><code>computed_from_edge_seq</code></td><td>bigint</td><td>N</td><td>어느 간선 변경까지 반영했나(재계산 기준점)</td></tr>
+<tr><td><code>computed_at</code></td><td>timestamptz</td><td>N</td><td>계산 시각</td></tr>
+</tbody></table>
+<p class="small"><b>키 · 제약 · 규칙</b><br>· PK(tenant_id, work_item_id)<br>· 간선이 바뀌면 영향 부분만 다시 센다. 전면 재계산 작업을 따로 두고 결과가 다르면 경보<br>· 이 표만 보고 판단하지 않는다 — 착수 판정은 언제나 간선 정본을 본다</p>
+<h4><span class="new">신설</span> <code>mbrun.priority_rule</code> · 우선순위 도출 규칙(버전)</h4>
+<p>우선순위를 값이 아니라 규칙으로 둔다. 이미 있는 속성(위험 · 승인 · 자율 · 표준시간 · 마감 · 대기 · 잔여 깊이)에서 계산한다(G-02 해소).</p>
+<table class="dd">
+<colgroup><col style="width:22%"><col style="width:13%"><col style="width:4%"><col style="width:61%"></colgroup>
+<thead><tr><th>컬럼</th><th>형</th><th>널</th><th>설명</th></tr></thead><tbody>
+<tr><td><code>priority_rule_version_id</code></td><td>bigint</td><td>N</td><td>PK</td></tr>
+<tr><td><code>tenant_id</code></td><td>uuid</td><td>N</td><td>테넌트</td></tr>
+<tr><td><code>rule_code</code></td><td>varchar(24)</td><td>N</td><td>규칙 코드</td></tr>
+<tr><td><code>version_no</code></td><td>int</td><td>N</td><td>version 번호</td></tr>
+<tr><td><code>scope</code></td><td>varchar(12)</td><td>N</td><td>GLOBAL · DOMAIN</td></tr>
+<tr><td><code>domain_code</code></td><td>varchar(4)</td><td>Y</td><td>영역별 규칙일 때</td></tr>
+<tr><td><code>w_risk</code></td><td>jsonb</td><td>N</td><td>위험 등급 가중 {C,H,M,L}</td></tr>
+<tr><td><code>w_approval</code></td><td>jsonb</td><td>N</td><td>승인 유형 가중 {Y,H,A}</td></tr>
+<tr><td><code>w_autonomy</code></td><td>jsonb</td><td>N</td><td>자율 수준 가중 {L1,L2,L3}</td></tr>
+<tr><td><code>w_deadline</code></td><td>numeric(8,3)</td><td>N</td><td>마감 여유 가중(여유가 음수면 급등). 저장하지 않고 정렬할 때 곱한다</td></tr>
+<tr><td><code>w_due_kind</code></td><td>jsonb</td><td>N</td><td>마감 출처별 배수 {STATUTORY, CONTRACT, INTERNAL} — 법정 기한은 작업 크기 추정의 불확실성으로 깎지 아니한다</td></tr>
+<tr><td><code>w_slack_depth</code></td><td>numeric(8,3)</td><td>N</td><td>잔여 선후 깊이 가중(임계 경로 우선)</td></tr>
+<tr><td><code>w_aging</code></td><td>numeric(8,3)</td><td>N</td><td>대기 시간 가중 — 0 보다 크게 두어 기아를 막는다</td></tr>
+<tr><td><code>aging_cap</code></td><td>int</td><td>Y</td><td>aging 상한(없으면 무한 증가)</td></tr>
+<tr><td><code>min_samples</code></td><td>int</td><td>N</td><td>표준 처리 시간을 실측으로 갈아 끼우는 기준 건수(기본 30)</td></tr>
+<tr><td><code>cv_threshold</code></td><td>numeric(5,2)</td><td>N</td><td>변동계수 상한. 넘으면 크기를 모르는 것으로 보아 크기 항을 빼고 경보</td></tr>
+<tr><td><code>low_confidence_factor</code></td><td>numeric(4,2)</td><td>N</td><td>실측이 기준 건수에 못 미칠 때 크기 항에 곱하는 값(기본 0.5)</td></tr>
+<tr><td><code>published_at</code></td><td>timestamptz</td><td>N</td><td>게시 시각</td></tr>
+<tr><td><code>content_hash</code></td><td>char(64)</td><td>N</td><td>버전 내용 해시</td></tr>
+</tbody></table>
+<p class="small"><b>키 · 제약 · 규칙</b><br>· PK(tenant_id, priority_rule_version_id)<br>· UNIQUE(tenant_id, rule_code, version_no)<br>· CHECK(w_aging &gt; 0) — aging 항을 0 으로 두는 버전은 게시할 수 없다<br>· REVOKE UPDATE</p>
+<h4><span class="new">신설</span> <code>mbrun.concurrency_limit</code> · 동시 실행 상한과 몫</h4>
+<p>테넌트 · 영역 · 에이전트 · 도구별 상한과 몫을 데이터로 둔다. 한 테넌트의 대량 작업이 남의 급한 일을 굶기지 못하게 한다(G-08 해소).</p>
+<table class="dd">
+<colgroup><col style="width:22%"><col style="width:13%"><col style="width:4%"><col style="width:61%"></colgroup>
+<thead><tr><th>컬럼</th><th>형</th><th>널</th><th>설명</th></tr></thead><tbody>
+<tr><td><code>limit_id</code></td><td>bigint</td><td>N</td><td>PK</td></tr>
+<tr><td><code>tenant_id</code></td><td>uuid</td><td>N</td><td>테넌트</td></tr>
+<tr><td><code>scope_kind</code></td><td>varchar(12)</td><td>N</td><td>TENANT · DOMAIN · AGENT · TOOL · CONNECTOR</td></tr>
+<tr><td><code>scope_key</code></td><td>varchar(64)</td><td>N</td><td>상한을 거는 대상</td></tr>
+<tr><td><code>max_running</code></td><td>int</td><td>N</td><td>동시 실행 상한</td></tr>
+<tr><td><code>max_new_per_min</code></td><td>int</td><td>Y</td><td>신규 착수 유입 상한(진행 중 업무와 다른 풀로 둔다)</td></tr>
+<tr><td><code>share_weight</code></td><td>int</td><td>N</td><td>공정 배분 가중치</td></tr>
+<tr><td><code>reserve_for_risk</code></td><td>char(1)</td><td>Y</td><td>이 등급 이상은 상한과 별도 몫을 둔다(예 C)</td></tr>
+<tr><td><code>effective_from</code></td><td>timestamptz</td><td>N</td><td>적용 시작</td></tr>
+<tr><td><code>effective_to</code></td><td>timestamptz</td><td>Y</td><td>적용 종료</td></tr>
+</tbody></table>
+<p class="small"><b>키 · 제약 · 규칙</b><br>· PK(tenant_id, limit_id)<br>· UNIQUE(tenant_id, scope_kind, scope_key, effective_from)<br>· CHECK(max_running &gt; 0 AND share_weight &gt; 0)</p>
+<h4><span class="new">신설</span> <code>mbrun.fairness_state</code> · 공정 배분 상태</h4>
+<p>가중 라운드로빈이 실제로 누구에게 얼마를 줬는지 기록한다. 몫을 못 받은 키가 다음 차례에 앞선다.</p>
+<table class="dd">
+<colgroup><col style="width:22%"><col style="width:13%"><col style="width:4%"><col style="width:61%"></colgroup>
+<thead><tr><th>컬럼</th><th>형</th><th>널</th><th>설명</th></tr></thead><tbody>
+<tr><td><code>tenant_id</code></td><td>uuid</td><td>N</td><td>테넌트</td></tr>
+<tr><td><code>fairness_key</code></td><td>varchar(64)</td><td>N</td><td>공정성 키(PK)</td></tr>
+<tr><td><code>window_start</code></td><td>timestamptz</td><td>N</td><td>집계 창 시작(PK)</td></tr>
+<tr><td><code>granted</code></td><td>int</td><td>N</td><td>이 창에서 집어간 수</td></tr>
+<tr><td><code>entitled</code></td><td>numeric(10,2)</td><td>N</td><td>가중치로 계산한 몫</td></tr>
+<tr><td><code>debt</code></td><td>numeric(10,2)</td><td>N</td><td>못 받은 몫의 누적(다음 창에서 먼저 갚는다)</td></tr>
+<tr><td><code>running_now</code></td><td>int</td><td>N</td><td>현재 실행 중 수</td></tr>
+<tr><td><code>updated_at</code></td><td>timestamptz</td><td>N</td><td>갱신 시각</td></tr>
+</tbody></table>
+<p class="small"><b>키 · 제약 · 규칙</b><br>· PK(tenant_id, fairness_key, window_start)<br>· INDEX(tenant_id, window_start)</p>
+<h4><span class="new">신설</span> <code>mbrun.work_item_archive</code> · 종료 수행 보관</h4>
+<p>뜨거운 표는 크기가 곧 성능이다. 종료된 수행은 즉시 옮기고 활성 표에는 남기지 않는다.</p>
+<table class="dd">
+<colgroup><col style="width:22%"><col style="width:13%"><col style="width:4%"><col style="width:61%"></colgroup>
+<thead><tr><th>컬럼</th><th>형</th><th>널</th><th>설명</th></tr></thead><tbody>
+<tr><td><code>work_item_id</code></td><td>bigint</td><td>N</td><td>PK — work_item 과 같은 식별자</td></tr>
+<tr><td><code>tenant_id</code></td><td>uuid</td><td>N</td><td>테넌트</td></tr>
+<tr><td><code>work_code</code></td><td>varchar(9)</td><td>N</td><td>업무코드</td></tr>
+<tr><td><code>work_code_version_id</code></td><td>bigint</td><td>N</td><td>업무코드 버전</td></tr>
+<tr><td><code>bundle_id</code></td><td>bigint</td><td>N</td><td>정의 묶음</td></tr>
+<tr><td><code>project_id</code></td><td>uuid</td><td>Y</td><td>프로젝트</td></tr>
+<tr><td><code>final_state</code></td><td>varchar(16)</td><td>N</td><td>DONE · FAILED · CANCELLED</td></tr>
+<tr><td><code>priority_score</code></td><td>int</td><td>N</td><td>종료 시점 점수</td></tr>
+<tr><td><code>created_at</code></td><td>timestamptz</td><td>N</td><td>생성</td></tr>
+<tr><td><code>ready_at</code></td><td>timestamptz</td><td>Y</td><td>준비</td></tr>
+<tr><td><code>started_at</code></td><td>timestamptz</td><td>Y</td><td>착수</td></tr>
+<tr><td><code>finished_at</code></td><td>timestamptz</td><td>N</td><td>종료</td></tr>
+<tr><td><code>wait_seconds</code></td><td>int</td><td>N</td><td>대기 시간</td></tr>
+<tr><td><code>run_seconds</code></td><td>int</td><td>N</td><td>수행 시간</td></tr>
+<tr><td><code>step_count</code></td><td>int</td><td>N</td><td>단계 수</td></tr>
+<tr><td><code>retry_count</code></td><td>int</td><td>N</td><td>재시도 수</td></tr>
+</tbody></table>
+<p class="small"><b>키 · 제약 · 규칙</b><br>· PK(tenant_id, work_item_id)<br>· 분기 단위 파티션(finished_at)<br>· REVOKE UPDATE</p>
+<h3>5.4 기존 표 개정</h3>
+<table class="dd">
+<colgroup><col style="width:20%"><col style="width:13%"><col style="width:34%"><col style="width:33%"></colgroup>
+<thead><tr><th>표</th><th>한글 이름</th><th>고치는 것</th><th>고치는 이유</th></tr></thead><tbody>
+<tr><td><code>mbcode.work_code</code></td><td>업무코드</td><td>exec_sequence jsonb · mechanism_set jsonb 삭제 → 뷰로 대체. current_version_id bigint 추가</td><td>G-06 — 파생 사본이 정의 표 안에 있다. 사본을 지우고 버전 표를 가리킨다</td></tr>
+<tr><td><code>mbcode.work_code_dependency</code></td><td>업무코드 의존</td><td>dep_kind varchar(16) 추가(HARD_SEQ · DATA_READY · APPROVAL · RESOURCE), cond_predicate jsonb 추가, &lt;b&gt;origin varchar(16) 추가&lt;/b&gt;(DECLARED · DATA_PATH · MANUAL), &lt;b&gt;정의 층에도 순환 금지 트리거&lt;/b&gt;</td><td>G-04 · 자료 흐름 2,580 쌍을 전부 HARD_SEQ 로 올리면 과직렬화되고, 가상 프로젝트 검증에서는 실제로 &lt;b&gt;30개 업무코드 · 8개 영역이 하나의 순환 덩어리&lt;/b&gt;가 되었다. 갈래를 나누고, 어디서 온 간선인지 남긴다</td></tr>
+<tr><td><code>mbcode.work_code_exec_step</code></td><td>업무코드 실행 순서</td><td>skill_version varchar 삭제 → exec_step_version_id bigint FK. 배타적 아크 CHECK 추가</td><td>G-05 · G-07 — 문자열 버전 참조와 무제약 다형성</td></tr>
+<tr><td><code>mbcode.skill_unit</code></td><td>스킬 단위</td><td>unit_version varchar 삭제 → mbdef.skill_unit_version 로 이관, current_version_id 추가</td><td>G-05</td></tr>
+<tr><td><code>mbproj.project_work_assignment</code></td><td>프로젝트 업무 배정</td><td>work_item_id bigint FK 추가. state 는 배정 상태만 남기고 수행 상태는 삭제</td><td>G-01 — 배정 ↔ 수행을 잇는 키가 없었다</td></tr>
+<tr><td><code>mba2a.task</code></td><td>과업</td><td>work_item_id bigint FK 추가. priority · due_at 삭제(우선순위 단일 출처)</td><td>G-01 · G-02</td></tr>
+<tr><td><code>mbagent.agent_run</code></td><td>에이전트 실행</td><td>work_item_id bigint FK · work_item_step_no int 추가</td><td>G-01 — 실행 결과가 어느 수행의 몇째 단계인지 데이터로 잇는다</td></tr>
+<tr><td><code>mbagent.agent_plan_step</code></td><td>계획 단계 실행</td><td>target_ref varchar(200) 삭제 → 배타적 아크 4칸 + CHECK</td><td>G-07</td></tr>
+<tr><td><code>mbexec.idempotency_record</code></td><td>idempotency record</td><td>work_item_id · step_no 추가. lease_until 은 유지하되 대기열 lease 와 구분</td><td>G-01 · G-03</td></tr>
+<tr><td><code>mbtxn.project_transaction</code></td><td>프로젝트 트랜잭션</td><td>work_item_id bigint FK 추가(기존 task_id · run_id 는 유지)</td><td>G-01 — 원장이 수행을 직접 가리킨다</td></tr>
+<tr><td><code>mbmq.outbox</code></td><td>outbox</td><td>부분 인덱스 WHERE published_at IS NULL 추가</td><td>발행 대기분만 훑도록 — 표가 커져도 발행 지연이 늘지 않는다</td></tr>
+<tr><td><code>mbtool.tool</code></td><td>도구</td><td>annotation_source varchar(16) 추가(SELF_DECLARED · PLATFORM_VERIFIED) · side_effect_class 추가</td><td>도구가 스스로 「읽기 전용」이라 밝힌 것과 플랫폼이 확인한 것을 나눈다. 안 나누면 자칭 읽기 전용이 승인을 비껴간다</td></tr>
+<tr><td><code>mbagent.agent_card</code></td><td>에이전트 카드</td><td>card_version_id · published_at 추가 — 선언(카드)과 실행(run)의 표를 합치지 않는다</td><td>능력 선언과 실행 원장을 섞으면 「그때 무엇을 할 수 있다고 했나」를 재현할 수 없다</td></tr>
+<tr><td><code>mbmq.routing_rule</code></td><td>라우팅 규칙</td><td>priority int 삭제 — 우선순위는 mbrun.priority_rule 한 곳에서만 정한다</td><td>G-02 — 우선순위가 두 곳에 있으면 어느 쪽이 이겼는지 설명할 수 없다</td></tr>
+</tbody></table>
+<div class="note"><b>삭제하는 칸이 일곱 있다.</b>
+<code>work_code.exec_sequence</code> · <code>work_code.mechanism_set</code>(파생 사본),
+<code>work_code_exec_step.skill_version</code> · <code>skill_unit.unit_version</code>(문자열 버전 참조),
+그리고 <code>task.priority</code> · <code>task.due_at</code> · <code>routing_rule.priority</code>(우선순위 이중 출처).
+모두 <b>같은 사실을 두 곳에 적어</b> 생기는 꼬임이고, 지우지 않으면 새 구조를 넣어도 갈림이 남는다.</div>
+<h3>5.5 18영역 · 546코드 · 727스킬 · 715도구가 어떻게 이어지나</h3>
+<table>
+<colgroup><col style="width:24%"><col style="width:52%"><col style="width:24%"></colgroup>
+<thead><tr><th>잇는 관계</th><th>어디에 담기나</th><th>건수</th></tr></thead><tbody>
+<tr><td>업무영역 → 업무코드</td><td><code>mbcode.work_code.domain_code</code> (기존)</td><td>18 → 546</td></tr>
+<tr><td>업무코드 → 업무코드 버전</td><td><code>mbdef.work_code_version.work_code</code> <span class="new">신설</span></td><td>버전마다 1행</td></tr>
+<tr><td>업무코드 버전 → 실행 단계 버전</td><td><code>mbdef.exec_step_version.work_code_version_id</code> <span class="new">신설</span></td><td>3,837칸 (코드당 4~8)</td></tr>
+<tr><td>실행 단계 버전 → 스킬 단위 · 도구 · 플랫폼 · 커넥터</td><td><code>exec_step_version</code> 의 배타적 아크 4칸 <span class="new">신설</span></td><td>스킬 단위 756 · 도구 744</td></tr>
+<tr><td>정의 한 벌 → 수행</td><td><code>mbdef.definition_bundle</code> ← <code>mbrun.work_item.bundle_id</code> <span class="new">신설</span></td><td>수행 1행 : 묶음 1개</td></tr>
+<tr><td>업무코드 ↔ 업무코드(정의 선후)</td><td><code>mbcode.work_code_dependency</code> + <code>dep_kind</code> <span class="mod">개정</span></td><td>423 간선</td></tr>
+<tr><td>수행 ↔ 수행(실제 선후)</td><td><code>mbrun.work_item_edge</code> <span class="new">신설</span></td><td>수행할 때 펼침</td></tr>
+<tr><td>업무코드 ↔ 표(자료 흐름)</td><td><code>mbmeta</code> 매핑 (기존 2,631 대응)</td><td>코드 쌍 2,580 · 영역 간 1,610</td></tr>
+<tr><td>에이전트 → 스킬 보유</td><td><code>mbagent.agent_skill_binding</code> (기존)</td><td>선언</td></tr>
+<tr><td>에이전트 → 수행</td><td><code>mbrun.role_activation</code> <span class="new">신설</span></td><td>이번에 실제로 쓴 역할</td></tr>
+<tr><td>수행 → 원장 · 부작용</td><td><code>mbtxn.project_transaction.work_item_id</code> <span class="mod">개정</span></td><td>사실 기록</td></tr>
+</tbody></table>
+<div class="ok"><b>이 표 하나로 답이 되는 질문.</b>
+「D07 의 FL0007012 를 지금 실행할 수 있는가」는 <code>mbrun.work_item</code> 한 행의
+<code>state</code> · <code>blocked_count</code> · <code>gate_check_id</code> 세 칸으로 끝난다.
+막혀 있다면 <code>mbrun.precondition_check</code> 에서 미충족 조건이 사람이 읽는 문장으로 나온다.
+지금은 이 질문에 답하려면 다섯 스키마를 조인해야 한다.</div>
+<h2 id="s6">제6부 · 우선순위와 대기열</h2>
+<p>우선순위는 지금 <code>mba2a.task.priority</code> 한 칸에 사람이 넣는 값이다.
+바꾸려는 것은 값이 아니라 <b>도출 과정을 데이터로 남기는 일</b>이다.</p>
+<h3>6.1 이미 갖고 있는 입력</h3>
+<p>새로 받아야 하는 것은 없다. 업무코드 574건이 이미 다음을 갖고 있다.</p>
+<table>
+<colgroup><col style="width:15%"><col style="width:27%"><col style="width:25%"><col style="width:33%"></colgroup>
+<thead><tr><th>입력</th><th>지금 있는 곳</th><th>분포</th><th>우선순위에서의 뜻</th></tr></thead><tbody>
+<tr><td>위험 등급</td><td><code>work_code.risk_grade</code></td><td>C 79 · H 231 · M 190 · L 46</td><td>틀렸을 때의 지연 비용</td></tr>
+<tr><td>승인 유형</td><td><code>work_code.approval_kind</code></td><td>Y 245 · H 199 · A 102</td><td>사람을 기다리게 하는가</td></tr>
+<tr><td>자율 수준</td><td><code>work_code.autonomy_level</code></td><td>L1 51 · L2 270 · L3 225</td><td>사람 손이 얼마나 필요한가</td></tr>
+<tr><td>표준 처리 시간</td><td><code>work_code.std_hours</code></td><td>0.3 ~ 60시간</td><td>작업 크기(WSJF 의 분모)</td></tr>
+<tr><td>마감</td><td><code>work_item.due_at</code></td><td>수행마다</td><td>남은 시간</td></tr>
+<tr><td>마감의 출처</td><td><code>work_item.due_kind</code></td><td>법정 · 계약 · 내부</td><td>법으로 정해진 기한은 놓치면 가산세가 붙는다. 내부 목표와 같은 무게를 줄 수 없다</td></tr>
+<tr><td>잔여 선후 깊이</td><td><code>work_item_rank.remaining_depth</code></td><td>최대 14</td><td>이것이 막고 있는 뒷일의 길이</td></tr>
+<tr><td>대기 시간</td><td><code>now() − work_item.ready_at</code></td><td>수행마다</td><td>기아 방지(aging)</td></tr>
+</tbody></table>
+<h3>6.2 점수를 매기는 식</h3>
+<pre>-- ① 저장하는 것 : 시간이 지나도 변하지 않는 네 항
+base_score = pf_risk + pf_approval + pf_autonomy + pf_critical            -- GENERATED ALWAYS ... STORED
+
+  pf_risk     = w_risk[risk_grade]                       -- 규칙 버전의 가중표
+  pf_approval = w_approval[approval_kind]
+  pf_autonomy = w_autonomy[autonomy_level]
+  pf_critical = w_slack_depth × remaining_depth          -- 임계 경로 우선(CPM · HEFT)
+
+-- ② 저장하지 않는 것 : 시간이 지나면 저절로 변하므로 정렬할 때 계산한다
+정렬값 = base_score
+       + w_deadline × w_due_kind[due_kind] × conf × GREATEST(0, 200 - 남은시간_h / GREATEST(std_hours, 0.3))
+       + w_aging    × LEAST(EXTRACT(EPOCH FROM now() - ready_at)/3600, aging_cap)
+
+  conf = 1.0  (실측이 min_samples 이상)  |  low_confidence_factor  (미만 — 작업 크기를 덜 믿는다)
+  w_due_kind[STATUTORY] 는 conf 를 적용하지 아니한다 — 법정 기한은 크기 추정의 문제가 아니다</pre>
+<div class="note"><b>왜 합계를 한 칸에 미리 적지 않는가.</b>
+기여분을 각각 남기면 「이게 왜 먼저인가」에 <b>항목별로</b> 답할 수 있고, 가중치를 바꿔도 컬럼을 늘리지 않는다.</div>
+<div class="warn"><b>저장하는 것과 계산하는 것을 가른다 <span class="qual">v1.2</span></b>
+v1.1 은 마감 항도 기여분 칸의 하나로 적었다. 가상 프로젝트에서 실제로 점수를 매겨 보니
+<b>마감이 하루 지날 때마다 60건의 그 칸이 모두 달라져야 했다</b>. 갱신 작업을 두면 그 작업이 늦을 때 순위가 틀리고,
+두지 않으면 값이 굳어 마감이 다가와도 순위가 오르지 않는다. 제4부 원리 4 가 금지한 <b>파생 사본</b>이다.
+그래서 마감 항과 aging 항은 <b>저장하지 않고 정렬할 때 <code>now()</code> 로 계산한다</b> —
+갱신 책임 자체가 생기지 않는다. 저장하는 것은 마감 시각과 그 출처, 그리고 규칙 version 뿐이다
+(설계지시문 12.8.8 개정 · 12.8.17).</div>
+<div class="warn"><b>aging 항은 0 이 될 수 없다.</b> <code>CHECK(w_aging &gt; 0)</code> 로 막는다.
+이 한 줄이 「급하지 않은 낮은 등급 업무가 영원히 밀리는」 기아를 구조적으로 막는다.
+<code>aging_cap</code> 을 두면 상한은 생기되, 상한까지는 반드시 오른다.</div>
+<h3>6.3 집어가기 — 2단 선택</h3>
+<p>공정성과 우선순위를 한 <code>ORDER BY</code> 로 합치면 둘 다 잃는다(제3부 ①).
+그래서 두 번에 나눈다.</p>
+<pre>-- ① 이번 차례에 어느 공정성 키가 가져갈지 정한다(가중 라운드로빈 + 밀린 몫 우선)
+WITH pick AS (
+  SELECT f.fairness_key
+    FROM mbrun.fairness_state f
+    JOIN mbrun.concurrency_limit c
+      ON c.tenant_id = f.tenant_id AND c.scope_key = f.fairness_key
+   WHERE f.tenant_id = current_tenant()
+     AND f.running_now &lt; c.max_running
+   ORDER BY f.debt DESC, (f.granted::numeric / NULLIF(c.share_weight,0)) ASC
+   LIMIT 1)
+
+-- ② 고른 키 안에서만 우선순위로 집어간다
+SELECT q.work_item_id
+  FROM mbrun.ready_queue q
+  JOIN mbrun.work_item  w USING (tenant_id, work_item_id)
+  JOIN pick p ON p.fairness_key = q.fairness_key
+ WHERE q.tenant_id   = current_tenant()
+   AND q.queue_key   = $1
+   AND q.visible_at &lt;= now()
+   AND q.lease_owner IS NULL
+ ORDER BY w.base_score
+        + (SELECT w_aging FROM mbrun.priority_rule
+            WHERE priority_rule_version_id = w.priority_rule_version_id)
+        * LEAST(EXTRACT(EPOCH FROM now() - w.ready_at)/3600, 72) DESC,
+          q.enqueued_at
+ LIMIT $2
+   FOR UPDATE OF q SKIP LOCKED;          -- 잠근 즉시 lease 를 적고 트랜잭션을 끝낸다</pre>
+<table>
+<colgroup><col style="width:14%"><col style="width:52%"><col style="width:34%"></colgroup>
+<thead><tr><th>규칙</th><th>어떻게</th><th>막는 것</th></tr></thead><tbody>
+<tr><td>집어간 표시</td><td><code>lease_owner</code> · <code>lease_until</code> 를 적고 트랜잭션 종료. 행 잠금을 쥐고 있지 않는다</td><td>긴 잠금이 큐 전체를 막는 일</td></tr>
+<tr><td>죽은 일꾼</td><td><code>heartbeat_at</code> 이 끊기고 <code>lease_until</code> 이 지나면 다른 일꾼이 가져간다</td><td>집어가고 사라진 일이 영원히 멈추는 것</td></tr>
+<tr><td>재시도</td><td>실패 시 <code>attempt</code> +1, <code>visible_at = now() + 지수 후퇴</code></td><td>실패한 일이 큐 앞을 계속 차지하는 것</td></tr>
+<tr><td>반복 실패</td><td><code>lease_count</code> 가 상한을 넘으면 <code>mbmq.dead_letter</code> 로 보내고 사람에게 올린다</td><td>조용한 무한 재시도</td></tr>
+<tr><td>non-idempotent 단계</td><td><code>effect_class='NON_IDEMPOTENT'</code> 인 단계는 idempotency record 없이 실행 상태로 못 간다(117칸)</td><td>재시도가 부작용을 두 번 내는 것</td></tr>
+<tr><td>잠금</td><td><code>pg_advisory_xact_lock</code> 만 쓴다. 세션형 권고 잠금 금지, 반납 시 <code>DISCARD ALL</code></td><td>커넥션 풀에서 테넌트 · 잠금이 다음 사용자에게 새는 것</td></tr>
+<tr><td>물리 배치</td><td>실행 큐를 원장 · 리포팅과 같은 인스턴스에 두지 않는다</td><td>긴 읽기 트랜잭션이 MVCC 지평을 고정해 큐가 죽는 것</td></tr>
+</tbody></table>
+<h3>6.4 준비 판정 — 무엇이 막고 있는가</h3>
+<p>수행이 <code>BLOCKED</code> 에서 <code>READY</code> 로 가는 조건은 둘이다.
+<b>①</b> <code>work_item_edge</code> 의 필수 간선이 모두 <code>satisfied_at IS NOT NULL</code>,
+<b>②</b> <code>precondition_check</code> 의 필수 조건이 모두 충족.
+①은 차단형 선후(정의에서 온 423간선의 전개)이고, ②는 자료 흐름에서 온 조건이다.</p>
+<table>
+<colgroup><col style="width:16%"><col style="width:18%"><col style="width:22%"><col style="width:44%"></colgroup>
+<thead><tr><th>조건 갈래</th><th>보는 것</th><th>예</th><th>왜 선후가 아니라 조건인가</th></tr></thead><tbody>
+<tr><td><code>PRED_DONE</code></td><td>선행 수행의 종료</td><td>같은 영역의 앞 단계</td><td>정의에 선언된 차단형 선후. 그대로 간선으로 편다</td></tr>
+<tr><td><code>DATA_EXISTS</code></td><td>원장에 행이 있는가</td><td>마감 전표가 생성되었는가</td><td>누가 만들었든 상관없다. 만든 <b>코드</b>가 아니라 만들어진 <b>사실</b>이 조건이다</td></tr>
+<tr><td><code>DATA_STATE</code></td><td>행이 어떤 상태인가</td><td>승인 완료 · 확정 여부</td><td>영역을 건너는 1,610 쌍이 대부분 여기 해당한다</td></tr>
+<tr><td><code>PERIOD_CLOSED</code></td><td>기간이 닫혔는가</td><td>급여 기간 마감</td><td>한 코드가 아니라 기간 전체가 조건</td></tr>
+<tr><td><code>APPROVAL_VALID</code></td><td>승인이 아직 유효한가</td><td>승인 유효 시간 경과 여부</td><td>시간이 지나면 저절로 깨지는 조건이라 간선으로는 표현이 안 된다</td></tr>
+</tbody></table>
+<div class="ok"><b>이것이 과직렬화를 막는 방식.</b>
+자료 흐름 2,580쌍을 차단형 선후로 올렸다면 어떤 코드는 105건이 끝나야 시작할 수 있다.
+조건으로 표현하면 <b>필요한 행이 이미 있으면 그만</b>이다 — 그 행을 누가 언제 만들었는지는 묻지 않는다.
+영역을 건너는 1,610쌍이 이렇게 풀린다.</div>
+<h2 id="s7">제7부 · 꼬이지 않는다는 것을 어떻게 보장하나</h2>
+<p>「꼬인다」를 16가지 구체적 사건으로 적고, 각각을 <b>애플리케이션 규칙이 아니라 스키마</b>가
+어떻게 막는지 적었다. 규칙 문장으로만 막은 것은 언젠가 우회된다.</p>
+<div class="warn"><b>먼저 못 하는 것을 밝힌다.</b> 공유 자원이 여럿인 프로세스에서
+「정의만 보고 교착이 없음」을 자동으로 증명하는 것은 <b>판정 불가능</b>하다(자원 제약 워크플로 넷의 건전성 결과).
+그래서 이 설계는 사전 증명을 시도하지 않는다. 대신 런타임 방어 — lease 만료 · <code>lock_timeout</code> ·
+대기 그래프 순환 탐지 · saga 보상 — 를 스키마 안에 둔다. 아래 16가지는 「증명」이 아니라 <b>막는 장치의 목록</b>이다.</div>
+<table>
+<colgroup><col style="width:22%"><col style="width:24%"><col style="width:54%"></colgroup>
+<thead><tr><th>꼬임</th><th>언제 생기나</th><th>무엇이 막나</th></tr></thead><tbody>
+<tr><td><b>꼬임 1</b><br>같은 업무가 두 번 만들어진다</td><td>사람이 두 번 요청했거나 이벤트가 중복 도착</td><td><code>UNIQUE(tenant_id, work_code, idem_key)</code>. 546 업무코드가 모두 중복 실행 방지 키 식을 이미 갖고 있으므로 값을 채워 넣기만 하면 된다. 두 번째 삽입은 DB 가 거부한다.</td></tr>
+<tr><td><b>꼬임 2</b><br>같은 수행의 상태가 표마다 다르다</td><td>배정은 「진행」, 과업은 「완료」, 실행은 「실패」</td><td>상태 칸을 <code>work_item</code> 에만 둔다. 나머지 셋은 <code>work_item_id</code> 로 참조만 하고 자기 상태 칸을 지운다(개정 3건).</td></tr>
+<tr><td><b>꼬임 3</b><br>2회차가 1회차보다 먼저 끝난다</td><td>같은 업무코드를 한 프로젝트에서 여러 번 수행</td><td><code>work_item_edge</code> 는 코드가 아니라 <b>수행</b> 사이에 걸린다. 반복 수행도 간선을 갖는다.</td></tr>
+<tr><td><b>꼬임 4</b><br>선후가 고리를 이룬다</td><td>A→B→C→A 로 아무도 시작하지 못함</td><td>삽입 트리거가 <code>WITH RECURSIVE … CYCLE</code> 로 도달 가능성을 보고 거부한다. 대량 적재는 트리거를 끄고 끝에 한 번 전체 검증(두 갈래 경로).</td></tr>
+<tr><td><b>꼬임 5</b><br>실행 중에 정의가 바뀐다</td><td>급여 규칙 버전이 계산 도중 교체됨</td><td><code>work_item.bundle_id</code> 가 착수 때 굳는다. 게시된 버전은 <code>REVOKE UPDATE</code>. 진행 중 수행의 버전이관은 기본 금지이며 사람 승인 원장을 통해서만 가능하다.</td></tr>
+<tr><td><b>꼬임 6</b><br>두 일꾼이 같은 일을 집어간다</td><td>중복 집행 · 부작용 이중 발생</td><td><code>SKIP LOCKED</code> 로 고르고 즉시 lease 를 적는다. lease 가 살아 있으면 다른 일꾼은 못 본다. 부작용 단계는 idempotency record이 한 번 더 막는다.</td></tr>
+<tr><td><b>꼬임 7</b><br>집어가고 사라진다</td><td>일꾼이 죽어 일이 영원히 「실행 중」</td><td><code>lease_until</code> 만료 + <code>heartbeat_at</code> 끊김 → 자동 회수. <code>attempt</code> 가 늘어나므로 반복 실패는 드러난다.</td></tr>
+<tr><td><b>꼬임 8</b><br>급한 일이 영원히 밀린다</td><td>낮은 등급 업무의 기아</td><td><code>CHECK(w_aging &gt; 0)</code>. 대기 시간이 길어질수록 점수가 단조 증가한다.</td></tr>
+<tr><td><b>꼬임 9</b><br>한 테넌트가 전부 가져간다</td><td>대량 배치가 남의 급한 일을 굶김</td><td>2단 선택 + <code>concurrency_limit</code> 의 <code>max_running</code> · <code>share_weight</code>, 그리고 위험 등급 C 는 별도 몫(<code>reserve_for_risk</code>).</td></tr>
+<tr><td><b>꼬임 10</b><br>신규 착수가 진행 중 업무를 밀어낸다</td><td>새 일이 계속 들어와 시작한 일이 못 끝남</td><td><code>max_new_per_min</code> 을 <code>max_running</code> 과 <b>다른 풀</b>로 둔다. 착수 유입과 진행 처리를 같은 한도에 넣지 않는다.</td></tr>
+<tr><td><b>꼬임 11</b><br>막아야 할 실행이 나간다</td><td>판단 축 하나를 빠뜨림</td><td>여섯 축을 한 행에 적고 <code>CHECK</code> 로 「여섯이 모두 PERMIT 일 때만 종합 PERMIT」을 강제한다. 판정 행 없이는 대기열에 못 들어간다.</td></tr>
+<tr><td><b>꼬임 12</b><br>허용에 붙인 조건이 사라진다</td><td>「승인 기록을 남겨라」 하고 안 남김</td><td><code>obligation_fulfillment</code> 로 이행까지 확인하고, <code>VIOLATED</code> 가 있으면 같은 맥락의 다음 착수를 게이트가 막는다.</td></tr>
+<tr><td><b>꼬임 13</b><br>기안자가 자기 일을 승인한다</td><td>직무 분리 위반</td><td><code>role_activation</code> 에서 같은 <code>work_item</code> 의 <code>DRAFT</code> 와 <code>APPROVE</code> 주체가 같으면 거부.</td></tr>
+<tr><td><b>꼬임 14</b><br>자칭 「읽기 전용」 도구가 승인을 비껴간다</td><td>도구가 스스로 밝힌 부작용 메타를 그대로 믿음</td><td><code>tool.annotation_source</code> 로 자칭과 플랫폼 확인을 나눈다. 자칭만으로는 승인 면제가 되지 않는다.</td></tr>
+<tr><td><b>꼬임 15</b><br>조회용 사본과 실제 실행이 갈린다</td><td>&lt;code&gt;exec_sequence&lt;/code&gt; jsonb 가 낡음</td><td>사본을 지우고 뷰로 바꾼다. 파생값은 <code>work_item_rank</code> 한 표에 모으고 「정본에서 다시 만들 수 있다」를 재계산 작업으로 검증한다.</td></tr>
+<tr><td><b>꼬임 16</b><br>인스턴스 표가 무거워져 전체가 느려진다</td><td>끝난 일이 활성 표에 쌓임</td><td>종료 즉시 <code>work_item_archive</code> 로 이관. 단계는 독립 행, 전달 자료는 상한 뒤 참조만. 이력이 상한을 넘으면 새 수행으로 승계.</td></tr>
+</tbody></table>
+<h2 id="s8">제8부 · 어떻게 옮겨 가나</h2>
+<p>485표를 한 번에 갈아엎지 않는다. 다섯 단계이고, <b>4단계까지는 언제든 되돌릴 수 있다</b>.
+핵심은 3단계의 그림자 운전 — 새 구조가 계산한 결과와 기존 경로의 결과가 갈리는 건수를 세고,
+0 에 수렴한 뒤에 전환한다.</p>
+<table>
+<colgroup><col style="width:12%"><col style="width:58%"><col style="width:30%"></colgroup>
+<thead><tr><th>단계 · 기간</th><th>하는 일</th><th>되돌릴 수 있나</th></tr></thead><tbody>
+<tr><td><b>1단계</b><br><span class="small">2주</span></td><td><b>버전을 담을 자리를 만든다</b><br><code>mbdef</code> 스키마와 버전 표 6개를 만들고, 현행 업무코드 574 · 단계 3,837 · 스킬 단위 756 · 도구 744 를 버전 1(<code>version_no=1</code>)로 적재한다. 묶음 1개를 게시한다.</td><td>읽는 쪽은 아무도 없다. 기존 동작에 영향 없음.</td></tr>
+<tr><td><b>2단계</b><br><span class="small">3주</span></td><td><b>수행 정본을 만들고 옛 표를 잇는다</b><br><code>mbrun.work_item</code> · <code>work_item_step</code> · <code>work_item_state_log</code> 를 만들고, <code>project_work_assignment</code> · <code>task</code> · <code>agent_run</code> · <code>project_transaction</code> 에 <code>work_item_id</code> 를 <b>널 허용</b>으로 추가한다. 새로 만들어지는 수행만 양쪽에 함께 적는다(이중 기록).</td><td>옛 칸은 그대로 살아 있다. 언제든 되돌릴 수 있는 구간.</td></tr>
+<tr><td><b>3단계</b><br><span class="small">4주</span></td><td><b>게이트와 대기열을 넣는다</b><br><code>launch_gate_check</code> · <code>ready_queue</code> · <code>precondition_check</code> · <code>priority_rule</code> · <code>concurrency_limit</code> · <code>fairness_state</code> 를 만든다. 먼저 <b>그림자 운전</b> — 판정과 순위를 계산만 하고 실제 집행은 기존 경로로 둔 뒤, 둘의 결과가 갈리는 건수를 센다.</td><td>갈림이 0 에 수렴하기 전에는 전환하지 않는다. 이 비교 자체가 검증이다.</td></tr>
+<tr><td><b>4단계</b><br><span class="small">3주</span></td><td><b>읽는 쪽을 새 표로 돌린다</b><br>대기열 · 착수 판정 · 우선순위 조회를 <code>mbrun</code> 로 옮긴다. <code>work_item_id</code> 를 <code>NOT NULL</code> 로 조인다. <code>obligation_fulfillment</code> · <code>role_activation</code> · <code>work_item_rank</code> 를 켠다.</td><td>되돌리려면 읽기 경로만 되돌리면 된다. 자료는 양쪽에 다 있다.</td></tr>
+<tr><td><b>5단계</b><br><span class="small">2주</span></td><td><b>갈림을 낳던 칸을 지운다</b><br><code>work_code.exec_sequence</code> · <code>mechanism_set</code> · <code>work_code_exec_step.skill_version</code> · <code>skill_unit.unit_version</code> · <code>task.priority</code> · <code>task.due_at</code> · <code>routing_rule.priority</code> 를 삭제하고 배타적 아크 <code>CHECK</code> 와 순환 금지 트리거를 켠다. 보관 표 이관 작업을 돌린다.</td><td>여기서부터 되돌릴 수 없다. 앞 네 단계의 갈림 건수가 0 이어야 넘어온다.</td></tr>
+</tbody></table>
+<div class="note"><b>운영 중 무변경(Zero-DDL) 전제와의 관계.</b>
+이 제안은 표를 <b>새로 만들 뿐</b> 기존 표에 칸을 더하는 일은 2단계의 <code>work_item_id</code> 하나뿐이다.
+그 칸은 널 허용으로 붙이므로 기존 행을 다시 쓰지 않는다. 5단계의 칸 삭제만 배포 창을 필요로 한다.</div>
+<h3>8.1 함께 고쳐야 할 설계 문서</h3>
+<table>
+<colgroup><col style="width:26%"><col style="width:74%"></colgroup>
+<thead><tr><th>문서 · 조항</th><th>고칠 내용</th></tr></thead><tbody>
+<tr><td><b>6.10.4 I-1 (판정 기준 원장의 버전 하나)</b></td><td>착수 판정이 가리키는 「버전 하나」를 <code>mbdef.judgment_basis_version_id</code> 로 못 박고, 판정 기록에 속성 snapshot · 일관성 표식 · 판정기 버전을 함께 남긴다는 문장을 더한다.</td></tr>
+<tr><td><b>6.11 (판정 게이트 — 한 번의 호출, 두 판정, 한 기록 행)</b></td><td>기록 행의 실체를 <code>mbrun.launch_gate_check</code> 로 지정하고, 판정 값을 <b>허용 · 거부 · 판단 불가 · 해당 없음 네 값</b>으로 규정한다.</td></tr>
+<tr><td><b>7.5.8 (UNKNOWN 처리)</b></td><td>「판단 불가」와 「해당 없음」을 나누는 규정을 더한다. 지금은 둘 다 UNKNOWN 으로 접힌다.</td></tr>
+<tr><td><b>8.3.1 (위험 지점)</b></td><td>우선순위 · 대기열 · 공정성을 위험 지점 목록에 넣고, aging 항 0 금지와 2단 선택을 규정한다.</td></tr>
+<tr><td><b>신설 조항 (실행 순서와 선후)</b></td><td>선후를 네 갈래(<code>HARD_SEQ · DATA_READY · APPROVAL · RESOURCE</code>)로 나누고, 자료 흐름은 선행 코드가 아니라 원장 사실 조건으로 표현한다는 원칙을 조항으로 세운다. 제4.9.13조의 <b>데이터 경로</b> 간선(변경이 전파되는 길)과 실행 층의 <b>차단형 선후</b>(끝나야 시작하는 관계)가 다른 것임을 함께 명시한다.</td></tr>
+<tr><td><b>4.9.17 (실행 그래프 대조)</b></td><td>실행 그래프의 도출 원천을 <code>mbrun.work_item_step</code> · <code>work_item_edge</code> · <code>precondition_check</code> 로 지정한다. 지금은 「트랜잭션 원장의 기록에서 도출」이라고만 되어 있어 무엇을 읽어 만드는지가 구현에 맡겨져 있다.</td></tr>
+<tr><td><b>4.9.15 와 정의 묶음의 구분</b></td><td>변경 전파 범위(계약 · 동작 · 값 · 내부, 3홉 상한)와 <b>재현을 위한 정의 묶음</b>은 다른 개념임을 명시한다. 전자는 「무엇을 다시 시험할까」, 후자는 「나중에 무엇으로 재현할까」다. 같은 값으로 쓰면 둘 다 망가진다.</td></tr>
+<tr><td><b>12.5.4 (커넥션 재사용 시 테넌트 컨텍스트)</b></td><td>이미 규정된 ① 반납 시 초기화 ② 요청 시작 시 재설정에 더해, <b>세션형 권고 잠금 금지</b>(트랜잭션형만 허용)를 같은 조에 넣는다. 세션 잠금은 반납 초기화로 지워지지 않는 경우가 있어 같은 종류의 누수를 만든다.</td></tr>
+<tr><td><b>신설 조항 (정의 묶음과 버전 고정)</b></td><td>수행은 착수 시점의 정의 묶음 하나로 끝낸다. 진행 중 수행의 버전이관은 기본 금지이며 사람 승인 원장을 통해서만 허용한다.</td></tr>
+</tbody></table>
+<p class="small">위 표는 개정 <b>대상</b>이었고, <b>설계지시문 v5.0 에서 모두 반영되었다</b> — 제12.8조(16개 조) 신설과 4.9.18 · 6.11.8 ~ 6.11.10 · 7.5.12 · 8.3.5 · 12.5.6 · 12.5.7 · 17.3.8 · 19.1.4 신설, 부속서 AA. DB 테이블설계서 v3.3 이 표를, 코드체계 설계서 v3.4 가 우선순위 도출 입력을 받았다.</p>
+<h2 id="s9">제9부 · 정하지 못했던 6건을 정한다</h2>
+<p>v1.0 은 실측 없이는 정할 수 없다며 여섯 가지를 남겨 두었다.
+그대로 두면 「정했던 것」으로 둔갑하므로 이 버전에서 <b>모두 결정한다</b>.
+각 결정은 ① 무엇으로 정했나 ② 왜 그렇게 정했나 ③ 데이터에 무엇이 바뀌나 ④ 되돌릴 수 있나 를 함께 적는다.
+여섯 중 <b>D-1(신원)과 D-6(식별자)은 나중에 고치기 어렵다</b> — 그래서 먼저 정했다.</p>
+<table>
+<colgroup><col style="width:6%"><col style="width:72%"><col style="width:22%"></colgroup>
+<thead><tr><th>번호</th><th>결정</th><th>되돌리기</th></tr></thead><tbody>
+<tr><td><b>D-1</b></td><td><b>에이전트의 신원</b> — delegation(위임)으로 본다</td><td>어렵다. 먼저 정해야 하는 둘 중 하나였다.</td></tr>
+<tr><td><b>D-2</b></td><td><b>진행 중 수행에 대한 정책 변경</b> — 조이는 변경은 즉시, 푸는 변경은 다음 수행부터</td><td>쉽다. 표시 칸 하나와 판정 규칙이다.</td></tr>
+<tr><td><b>D-3</b></td><td><b>선후 조회</b> — recursive CTE 를 쓰고 closure table 은 두지 않는다(조건부)</td><td>쉽다. 파생표만 바꾸면 되고 정본(edge)은 흔들리지 않는다.</td></tr>
+<tr><td><b>D-4</b></td><td><b>표준 처리 시간</b> — 실측이 코드당 30건 쌓이면 분기마다 규칙 version 을 갈아 끼운다</td><td>쉽다. 규칙 version 을 새로 게시하면 된다.</td></tr>
+<tr><td><b>D-5</b></td><td><b>Row Level Security</b> — 큐 경로만 빼고 전부 적용, 뺀 경로는 SECURITY DEFINER 함수로 잠근다</td><td>쉽다. 권한과 함수만 바꾸면 된다.</td></tr>
+<tr><td><b>D-6</b></td><td><b>식별자에 시각을 담는다</b> — time-ordered bigint 로 파티션 키와 단일 조회를 함께 푼다</td><td>어렵다. 먼저 정해야 하는 둘 중 하나였다.</td></tr>
+</tbody></table>
+<div class="sol"><span class="id">D-1</span><b>에이전트의 신원 — delegation(위임)으로 본다</b>
+<p style="margin:8px 0 6px"><b>결정.</b> 사람이 착수를 요청한 업무에서 PA · EA · TA 는 <b>그 사람의 권한을 위임받아</b> 실행한다. capability token 에 delegation chain(위임 사슬)을 담고, 실행 기록에는 <code>on_behalf_of</code>(누구를 대신했나)와 <code>acting_as</code>(어느 역할로 했나)를 함께 남긴다. 다만 <b>플랫폼이 원천인 업무</b> — 업무감사 PA, 플랫폼 이벤트 평가기, 정기 집계 — 는 service account(서비스 계정)로 두고, 그 계정은 사람의 권한을 빌리지 않으며 지시 자격을 스스로 만들지 못한다.</p>
+<p style="margin:0 0 6px" class="small"><b>왜.</b> 책임이 사람에게 귀속되어야 한다(제18장). 서비스 계정만으로 가면 「누가 시켰나」가 계정 이름에서 끊기고, 직무 분리(기안 · 승인)와 금액 노출 제한(12.7.11)을 걸 대상이 사라진다. 반대로 전부 위임으로 하면 감사 PA 가 피감 조직의 권한을 빌리는 모순이 생긴다.</p>
+<p style="margin:0" class="small"><b>데이터.</b> <code>mbauth.capability_token</code> 에 <code>delegation_chain jsonb</code> · <code>on_behalf_of uuid</code> · <code>subject_kind(DELEGATED · SERVICE)</code> 를 더한다. <code>mbrun.role_activation</code> 에 <code>delegated_from uuid</code> 를 더한다. &nbsp;·&nbsp; <b>되돌리기.</b> 어렵다. 먼저 정해야 하는 둘 중 하나였다.</p></div>
+<div class="sol"><span class="id">D-2</span><b>진행 중 수행에 대한 정책 변경 — 조이는 변경은 즉시, 푸는 변경은 다음 수행부터</b>
+<p style="margin:8px 0 6px"><b>결정.</b> <b>비대칭</b>으로 둔다. ① emergency stop(비상 정지) · 권한 회수 · autonomy level 하향 · 금액 한도 축소처럼 <b>제한을 늘리는 변경</b>은 진행 중 수행에 즉시 적용한다. ② 권한 확대 · 한도 상향 · 자율 수준 상향처럼 <b>제한을 푸는 변경</b>은 snapshot(스냅샷)으로 격리해 다음 수행부터 적용한다. 판정 기준 버전 마다 <code>enforcement_mode</code> 를 IMMEDIATE · SNAPSHOT 으로 표시하고, 둘 중 무엇인지는 <b>사람이 고르지 않고</b> 변경의 방향으로 판정한다.</p>
+<p style="margin:0 0 6px" class="small"><b>왜.</b> 정의를 굳히는 이유는 재현이고, 정책을 즉시 반영하는 이유는 안전이다. 둘 다 옳아서 한쪽으로 통일하면 다른 쪽이 깨진다. 「방금 권한을 뺏었는데 진행 중 업무가 계속 도는」 것과 「승인받은 한도가 실행 중에 늘어나는」 것은 위험의 크기가 다르다.</p>
+<p style="margin:0" class="small"><b>데이터.</b> <code>mbdef.judgment_basis_version</code> 에 <code>enforcement_mode varchar(12)</code> 와 <code>tightening boolean</code>(조이는 방향인가)을 더한다. <code>mbrun.work_item</code> 은 게이트를 다시 통과해야 하는 사건을 <code>work_item_state_log</code> 에 <code>POLICY_TIGHTENED</code> 로 남긴다. &nbsp;·&nbsp; <b>되돌리기.</b> 쉽다. 표시 칸 하나와 판정 규칙이다.</p></div>
+<div class="sol"><span class="id">D-3</span><b>선후 조회 — recursive CTE 를 쓰고 closure table 은 두지 않는다(조건부)</b>
+<p style="margin:8px 0 6px"><b>결정.</b> <b>재귀 질의(recursive CTE)로 간다.</b> 현행 정의 선후는 423 edge · 최대 depth 14 · 평균 선행 0.77 로 재귀가 충분히 싸다. <code>mbrun.work_item_rank</code> 는 두되 topological rank · remaining depth · critical path 를 담는 <b>파생값 캐시</b>로만 쓴다. 다음 <b>둘 중 하나가 깨지면</b> closure table 을 넣는다 — ① 한 tenant 의 활성 work_item edge 가 50,000 을 넘는다 ② 준비 판정 질의의 p95 가 50ms 를 넘는다.</p>
+<p style="margin:0 0 6px" class="small"><b>왜.</b> 지금 자료로 재 보면 재귀가 이긴다. 폐쇄표는 간선 하나를 고칠 때 조상 × 자손만큼 행이 흔들려 쓰기가 비싸고, 이 설계는 <b>쓰기가 잦은</b> 실행 층이다. 다만 자료 흐름 조건을 edge 로 얼마나 펼치느냐에 따라 밀도가 달라지므로 전환 조건을 숫자로 못 박는다.</p>
+<p style="margin:0" class="small"><b>데이터.</b> 표 변경 없음. <code>work_item_rank</code> 를 파생으로 격리해 둔 것이 곧 전환 여지다. 전환 조건 둘을 지표로 등재한다. &nbsp;·&nbsp; <b>되돌리기.</b> 쉽다. 파생표만 바꾸면 되고 정본(edge)은 흔들리지 않는다.</p></div>
+<div class="sol"><span class="id">D-4</span><b>표준 처리 시간 — 실측이 코드당 30건 쌓이면 분기마다 규칙 version 을 갈아 끼운다</b>
+<p style="margin:8px 0 6px"><b>결정.</b> 546건의 표준 처리 시간(0.3 ~ 60시간)은 <b>사람 기준 추정치</b>이므로 그대로 두되, 우선순위에서의 쓰임을 단계로 나눈다. ① 실측 30건 미만인 업무코드는 마감 항 가중치를 절반으로 적용한다(추정을 덜 믿는다). ② 30건 이상이면 중앙값을 쓰고, 변동계수(coefficient of variation)가 1.0 을 넘으면 그 코드는 <b>크기를 모르는 것으로 보아</b> 마감 항만 쓰고 크기 항은 빼며 경보를 올린다. ③ 분기마다 priority rule version 을 새로 게시해 갈아 끼운다.</p>
+<p style="margin:0 0 6px" class="small"><b>왜.</b> 스케줄링 이론(WSJF · HEFT)이 전제하는 「작업 크기를 안다」가 추론 업무에서는 성립하지 않는다. 모르는 것을 아는 척 쓰면 순위가 뒤집히고, 아예 안 쓰면 임계 경로를 못 본다. <b>믿는 만큼만 쓰는</b> 것이 답이다.</p>
+<p style="margin:0" class="small"><b>데이터.</b> <code>mbrun.priority_rule</code> 에 <code>min_samples int</code> · <code>cv_threshold numeric</code> · <code>low_confidence_factor numeric</code> 을 더한다. <code>mbrun.work_item_archive</code> 의 <code>run_seconds</code> 가 원천이다. &nbsp;·&nbsp; <b>되돌리기.</b> 쉽다. 규칙 version 을 새로 게시하면 된다.</p></div>
+<div class="sol"><span class="id">D-5</span><b>Row Level Security — 큐 경로만 빼고 전부 적용, 뺀 경로는 SECURITY DEFINER 함수로 잠근다</b>
+<p style="margin:8px 0 6px"><b>결정.</b> <code>mbrun.ready_queue</code> · <code>mbrun.work_item</code> 의 <b>집어가기 경로</b>는 RLS 를 걸지 않고 SECURITY DEFINER 함수 <code>mbrun.claim_next(queue_key, n)</code> 하나로만 접근하게 한다. 그 함수가 tenant 필터를 강제하고, 미설정이면 0건을 돌려준다(12.5.3 의 안전한 실패). 나머지 모든 표는 RLS 를 건다. 표에 대한 직접 <code>SELECT</code> 권한은 응용 역할에서 회수한다.</p>
+<p style="margin:0 0 6px" class="small"><b>왜.</b> RLS 술어가 붙으면 준비된 계획(generic plan)이 tenant 편차를 못 견디고 무너진다. 그런데 큐는 초당 수백 번 도는 가장 뜨거운 경로다. 여기만 함수로 감싸면 격리는 유지하면서 계획이 안정된다. <b>표를 못 읽게 막는 것</b>이 RLS 를 푸는 조건이다.</p>
+<p style="margin:0" class="small"><b>데이터.</b> 표 변경 없음. <code>mbrun.claim_next</code> · <code>mbrun.release(work_item_id, outcome)</code> 두 함수를 인수 조건으로 등재하고, 두 표에 대한 직접 권한 회수를 확인 항목으로 둔다. &nbsp;·&nbsp; <b>되돌리기.</b> 쉽다. 권한과 함수만 바꾸면 된다.</p></div>
+<div class="sol"><span class="id">D-6</span><b>식별자에 시각을 담는다 — time-ordered bigint 로 파티션 키와 단일 조회를 함께 푼다</b>
+<p style="margin:8px 0 6px"><b>결정.</b> <code>work_item_id</code> 를 <b>시각이 앞에 오는 64비트 정수</b>로 발급한다 (상위 42비트 = 밀리초, 다음 10비트 = 발급기, 나머지 12비트 = 순번). 그러면 식별자 하나에서 생성 시각이 나오므로 <b>파티션을 식별자 범위로 자를 수 있고</b>, 단일 식별자 조회가 파티션 가지치기(partition pruning)를 그대로 받는다. <code>work_item_archive</code> · <code>work_item_state_log</code> 는 <code>RANGE (work_item_id)</code> 로 분기 파티션한다. UUIDv4 는 쓰지 않는다.</p>
+<p style="margin:0 0 6px" class="small"><b>왜.</b> 시각으로 파티션하면 파티션 키가 기본키에 들어가야 하고, 그러면 「식별자 하나로 바로 찾기」가 막힌다. 식별자에 시각을 넣으면 그 충돌 자체가 없어진다. 나중에는 못 고치는 결정이라 지금 정한다.</p>
+<p style="margin:0" class="small"><b>데이터.</b> <code>mbrun.work_item</code> · <code>work_item_archive</code> · <code>work_item_state_log</code> 의 식별자 발급 규칙을 정하고, 파티션을 식별자 범위로 자른다. 발급기는 <code>mbcore</code> 의 순번 발급 기능으로 둔다. &nbsp;·&nbsp; <b>되돌리기.</b> 어렵다. 먼저 정해야 하는 둘 중 하나였다.</p></div>
+<h3>9.1 결정이 표에 더한 칸</h3>
+<table>
+<colgroup><col style="width:26%"><col style="width:56%"><col style="width:18%"></colgroup>
+<thead><tr><th>표</th><th>더하는 칸</th><th>어느 결정</th></tr></thead><tbody>
+<tr><td><code>mbauth.capability_token</code></td><td><code>delegation_chain jsonb</code> · <code>on_behalf_of uuid</code> · <code>subject_kind</code></td><td>D-1</td></tr>
+<tr><td><code>mbrun.role_activation</code></td><td><code>delegated_from uuid</code></td><td>D-1</td></tr>
+<tr><td><code>mbdef.judgment_basis_version</code></td><td><code>enforcement_mode varchar(12)</code> · <code>tightening boolean</code></td><td>D-2</td></tr>
+<tr><td><code>mbrun.priority_rule</code></td><td><code>min_samples int</code> · <code>cv_threshold numeric</code> · <code>low_confidence_factor numeric</code></td><td>D-4</td></tr>
+<tr><td>— (함수)</td><td><code>mbrun.claim_next(queue_key, n)</code> · <code>mbrun.release(work_item_id, outcome)</code></td><td>D-5</td></tr>
+<tr><td>— (식별자 규칙)</td><td><code>work_item_id</code> 를 시각 내장 64비트 정수로. 파티션은 식별자 범위로</td><td>D-6</td></tr>
+</tbody></table>
+<p class="small">칸이 느는 표는 넷이고 새로 생기는 표는 없다. 위 칸들은 각 표의 명세에 반영되어 있으며,
+정본은 DB 테이블설계서 v3.4 제4부 4.35 · 4.36 이다. 신설 20 DB Table의 칸은 이 버전에서 <b>271</b> 이다
+(v1.1 의 267 에서 검증 정정으로 −1 · +5).</p>
+<h3>9.2 고전 용어의 영문 표기</h3>
+<p>설계지시문 제19.1.4조가 이 버전과 함께 세운 규칙이다. 우리말로 옮긴 표기가
+문헌 · 표준 · 제품 문서와 이어지지 않아 같은 것을 다른 이름으로 부르게 되기 때문이다.</p>
+<table>
+<colgroup><col style="width:26%"><col style="width:20%"><col style="width:54%"></colgroup>
+<thead><tr><th>영문 표기</th><th>이제까지의 우리말</th><th>뜻</th></tr></thead><tbody>
+<tr><td><b>idempotency · idempotent · 중복 실행 방지 키</b></td><td>중복 실행 방지 · 중복 실행 방지한 · 중복 실행 방지 키</td><td>같은 호출을 두 번 해도 결과가 한 번 한 것과 같은 성질. 키는 그 같음을 판정하는 값</td></tr>
+<tr><td><b>non-idempotent</b></td><td>비중복 실행 방지</td><td>두 번 부르면 안 되는 것. 현행 스킬 단계 3,837칸 중 119칸</td></tr>
+<tr><td><b>version · version ledger · baseline version</b></td><td>버전 · 버전 원장 · 기준 버전</td><td>정의가 바뀔 때마다 새로 매기는 번호와 그 원장. 게시 후에는 고치지 않는다</td></tr>
+<tr><td><b>snapshot</b></td><td>스냅샷</td><td>그 시점의 값을 그대로 떠서 굳힌 것</td></tr>
+<tr><td><b>checkpoint</b></td><td>체크포인트</td><td>중단 후 다시 이을 수 있는 지점</td></tr>
+<tr><td><b>outbox · inbox</b></td><td>아웃박스 · 인박스</td><td>보낼 메시지를 같은 트랜잭션에 적어 두는 표와, 받은 메시지를 한 번만 처리하려고 적어 두는 표</td></tr>
+<tr><td><b>saga · compensation</b></td><td>사가 · 보상</td><td>길게 끄는 일을 여러 조각으로 나누고, 실패하면 앞 조각을 되돌리는 방식과 그 되돌림</td></tr>
+<tr><td><b>lease</b></td><td>리스</td><td>집어간 일을 「언제까지 내 것」으로 표시하는 방식. 만료되면 남이 가져간다</td></tr>
+<tr><td><b>closure table · recursive CTE</b></td><td>폐쇄표 · 재귀 질의</td><td>선후 관계의 모든 경로를 미리 적어 두는 표와, 질의할 때마다 따라가는 방식</td></tr>
+<tr><td><b>topological rank · critical path</b></td><td>위상 순위 · 임계 경로</td><td>선후를 어기지 않는 줄 세우기와, 가장 오래 걸리는 경로</td></tr>
+<tr><td><b>aging</b></td><td>에이징</td><td>오래 기다린 일의 우선순위를 시간에 따라 올리는 것</td></tr>
+<tr><td><b>fair queueing · weighted round robin</b></td><td>공정 큐잉 · 가중 라운드로빈</td><td>여럿이 한 줄을 나눠 쓸 때 몫대로 돌아가게 하는 방식</td></tr>
+<tr><td><b>exclusive arc</b></td><td>배타적 아크</td><td>여러 칸 중 정확히 하나만 채우게 막는 제약</td></tr>
+<tr><td><b>delegation · delegation chain</b></td><td>위임 · 위임 사슬</td><td>남의 권한을 빌려 행하는 것과, 누가 누구에게 빌려줬는지의 사슬</td></tr>
+<tr><td><b>obligation</b></td><td>의무</td><td>허용하되 붙이는 조건. 「허용한다, 다만 이것을 하라」의 그 이것</td></tr>
+<tr><td><b>Row Level Security (RLS)</b></td><td>행 수준 보안</td><td>행마다 볼 수 있는 사람을 데이터베이스가 가리는 장치</td></tr>
+<tr><td><b>SKIP LOCKED</b></td><td>—</td><td>이미 잠긴 행은 건너뛰고 다음 것을 가져오는 잠금 절</td></tr>
+<tr><td><b>tenant</b></td><td>테넌트</td><td>한 플랫폼을 나눠 쓰는 고객사 하나</td></tr>
+</tbody></table>
+<h2 id="s10">제10부 · 검증이 바꾼 것</h2>
+<p>이 제안이 채택되어 설계지시문 v5.0 · DB 테이블설계서 v3.3 · 코드체계 v3.4 가 나온 뒤,
+<b>조항을 실제 업무 한 벌에 대입해</b> 확인했다. 당시 18개 업무영역 가운데 다른 영역과 가장 많이 얽힌
+D04 회계업무를 몸통으로 「2026년 3분기 결산 · 공시 · 세무신고」를 조립했다 —
+업무코드 60 · 업무영역 13 · 스킬 단계 390 ·
+스킬 단위 64 · 도구와 규칙 세트 92 · 커넥터 7.
+업무코드 · 단계 · 선후 · 자료 흐름은 지어내지 않고 현행 등록표에서 그대로 가져왔다.
+기록은 MyBee_실행구조_가상프로젝트_검증_v1.0.html 이다.</p>
+<div class="warn"><b>문서 검토로는 나오지 않던 것이 나왔다.</b>
+정정 5건 가운데 <b>둘(C-1 · C-3)은 이 제안 자체의 설계 결함</b>이었다.
+조항과 표를 눈으로 읽을 때는 맞아 보였는데, 실제 업무 60건으로 점수를 매기고 그래프를 돌리자 드러났다.</div>
+<table>
+<colgroup><col style="width:6%"><col style="width:8%"><col style="width:20%"><col style="width:36%"><col style="width:30%"></colgroup>
+<thead><tr><th>번호</th><th>갈래</th><th>무엇이 틀렸나</th><th>어떻게 드러났나</th><th>고친 것</th></tr></thead><tbody>
+<tr><td><b>C-1</b></td><td><b style="color:#c0392b">설계 결함</b></td><td>시간이 지나면 저절로 변하는 값을 저장하고 있었다</td><td>v1.1 은 마감 여유를 기여분 칸(<code>pf_deadline</code>)의 하나로 두었다. 점수를 실제로 매겨 보니 <b>마감이 하루 지날 때마다 60건의 그 칸이 모두 달라져야 했다</b>. 갱신 작업을 두면 늦을 때 순위가 틀리고, 두지 않으면 마감이 다가와도 순위가 오르지 않는다 — <b>제4부 원리 4 가 금지한 파생 사본</b>이다.</td><td><code>work_item.pf_deadline</code> 칸을 <b>없앴다</b>. <code>base_score</code> 를 시간 불변 네 항의 생성식으로 줄이고, 마감 항과 aging 항은 정렬할 때 계산한다(제6.2). 설계지시문 12.8.8 개정.</td></tr>
+<tr><td><b>C-2</b></td><td>누락</td><td>법정 기한과 내부 목표가 같은 무게로 들어가 있었다</td><td>검증 프로젝트에는 공시 45일 · 부가세 신고 25일 · 원천세 10일처럼 법으로 정해진 기한과 내부 목표가 섞여 있었다. 놓쳤을 때 가산세가 붙는 일과 보고가 하루 늦는 일을 같은 것으로 셈할 수 없다.</td><td><code>work_item.due_kind</code>(STATUTORY · CONTRACT · INTERNAL)와 <code>priority_rule.w_due_kind</code> 를 더했다. 법정 기한은 작업 크기 추정의 불확실성으로 깎지 않는다. 설계지시문 12.8.17 신설.</td></tr>
+<tr><td><b>D-4</b></td><td>누락</td><td>결정 D-4 가 더하기로 한 칸이 명세에 빠져 있었다</td><td>표준 처리 시간을 실측 30건에서 갈아 끼우기로 정해 놓고, 그 기준을 담을 칸을 <code>priority_rule</code> 에 넣지 않았다.</td><td><code>min_samples</code> · <code>cv_threshold</code> · <code>low_confidence_factor</code> 를 더했다.</td></tr>
+<tr><td><b>C-3</b></td><td><b style="color:#c0392b">설계 결함</b></td><td>순환 금지를 수행 층에만 걸어 두었다</td><td><b>순환은 수행이 만들어지기 전에 정의에서 생긴다.</b> 자료 흐름 134쌍을 차단형 선후로 올려 보았더니 맞물린 쌍 6개가 나왔고 — 원가 배부(D04) ↔ 제조원가 집계(D06), 계정 대사 ↔ 기간 마감 등 — 이어 붙이니 <b>60건 중 30건 · 8개 영역이 하나의 고리</b>가 되었다. 분개 생성부터 금융감독원 제출까지가 그 안에 있었고 <b>아무것도 시작하지 못했다</b>.</td><td><code>mbcode.work_code_dependency</code> 에 <code>origin</code>(DECLARED · DATA_PATH · MANUAL)을 더하고 <b>정의 층에도 순환 금지 트리거</b>를 건다. 자료 경로 간선이 차단형으로 올라갔는지 정기 대조. 설계지시문 12.8.18 신설.</td></tr>
+<tr><td><b>C-4</b></td><td>누락</td><td>사람을 기다리는 수행이 대기열을 물고 있는지가 정해져 있지 않았다</td><td>검증 프로젝트는 사람이 개입하는 지점이 승인 31 · 자율 L1 4 · EA 의견 38 로 절반을 넘는다. 이들이 자리를 물고 있으면 대기열이 굳는다.</td><td>표 변경 없음. 기다리는 수행은 lease 를 놓고 대기열에서 빠진다 — 설계지시문 12.8.19 신설.</td></tr>
+<tr><td><b>C-5</b></td><td>오해 방지</td><td>선후가 성긴 것을 결손으로 오해할 여지를 남겼다</td><td>60건 중 <b>31건</b>이 선행 없이 시작할 수 있었다. 이것을 결손으로 보고 채워 넣으면 C-3 의 순환이 생긴다. 또 금융감독원 제출(위험 C · L1 · 158점)이 연결 재무제표 생성(179점)보다 낮게 나오는데, 제출이 사슬의 끝이라 아무것도 막지 않기 때문이지 덜 중요해서가 아니다.</td><td>표 변경 없음. 선행 보유율을 품질 지표로 삼지 않으며, 우선순위를 사람에게 보일 때 마감까지 남은 시간과 기여분 내역을 함께 보인다 — 설계지시문 12.8.20 신설.</td></tr>
+</tbody></table>
+<h3>10.1 검증이 확인하고 문제가 없던 것</h3>
+<table>
+<colgroup><col style="width:22%"><col style="width:78%"></colgroup>
+<thead><tr><th>확인한 것</th><th>결과</th></tr></thead><tbody>
+<tr><td>수행 정본 한 행</td><td>배정 · 과업 · 실행 · 원장이 <code>work_item_id</code> 로 이어져 상태가 갈릴 자리가 없다</td></tr>
+<tr><td>중복 실행 방지 키</td><td>프로젝트의 60건 전부가 식을 갖고 있어 값만 채우면 유일성이 걸린다</td></tr>
+<tr><td>차단형 선후</td><td>29간선 · 준비 파동 7겹 · 순환 0 · 선행 없는 코드 31건이 즉시 준비</td></tr>
+<tr><td>임계 경로</td><td>직렬 175.5시간 → 38시간. 구조가 허용하는 압축 4.6배</td></tr>
+<tr><td>게이트</td><td>여섯 축 한 행 · 판정 네 값. 자율 L1 4건이 사람 없이 지나가지 못한다</td></tr>
+<tr><td>non-idempotent 단계</td><td>8칸. idempotency record 없이 실행 상태로 못 간다</td></tr>
+<tr><td>선후 조회 방식</td><td>간선 29 · 깊이 7 로 결정 D-3 의 전환 조건(활성 간선 5만)에 닿지 않는다. recursive CTE 를 그대로 쓴다</td></tr>
+<tr><td>꼬임 16가지</td><td>제7부의 16가지를 실제 업무코드에 대입해 무엇이 막는지 확인했다. V-04(순환)만 실제로 걸렸고 나머지 15가지는 스키마가 막았다</td></tr>
+</tbody></table>
+<div class="note"><b>이 버전이 제안 문서로서 남기는 것.</b>
+v1.0 이 근거 116건으로 세운 구조, v1.1 이 정한 결정 6건, v1.2 가 실측으로 고친 5건.
+<b>DB Table · 컬럼 명세의 정본은 DB 테이블설계서 v3.4</b> 이고 이 문서는 그것이 왜 그렇게 생겼는지를 적은 근거 문서다.</div>
+<h2 id="sa">부록 A · 검토한 근거</h2>
+<p>네 갈래 116건. 각 항목은 「무엇을 말하는가」와 「이 설계에 어떻게 반영했는가」를 함께 조사한 것이며,
+본문 제3부는 이 가운데 설계를 실제로 바꾼 것만 추린 것이다. 확신 정도(높음 · 중간 · 낮음)는 조사 시점의 판단이다.</p>
+<h3>A.1 프로세스 정의 · 의존 표현 · 스케줄링 — 38건</h3>
+<table class="dd">
+<colgroup><col style="width:5%"><col style="width:14%"><col style="width:28%"><col style="width:46%"><col style="width:7%"></colgroup>
+<thead><tr><th>번호</th><th>갈래</th><th>출처</th><th>무엇을 말하는가</th><th>확신</th></tr></thead><tbody>
+<tr><td><b>P-01</b></td><td>1. 프로세스 정의 모델</td><td>W.M.P. van der Aalst, A.H.M. ter Hofstede, B. Kiepuszewski, A.P. Barros · <b>Workflow Patterns</b> (2003)</td><td>워크플로 제어흐름을 20개 패턴(순차, AND/XOR/OR 분기·병합, 다중 인스턴스, 이정표, 취소 등)으로 목록화해, 엔진이 무엇을 표현할 수 있어야 하는지를 도구 중립적으로 규정했다.</td><td>high</td></tr>
+<tr><td><b>P-02</b></td><td>1. 프로세스 정의 모델</td><td>N. Russell, A.H.M. ter Hofstede, W.M.P. van der Aalst, N. Mulyar · <b>Workflow Control-Flow Patterns: A Revised View (BPM Center Report BPM-06-22)</b> (2006)</td><td>원래 20개 패턴을 CPN(Coloured Petri Net)으로 형식화하며 23개를 추가해 총 43개로 개정했다. 특히 OR-join 등 &#x27;비지역적(non-local) 의미론&#x27;을 가진 패턴의 모호성을 드러냈다.</td><td>high</td></tr>
+<tr><td><b>P-03</b></td><td>1. 프로세스 정의 모델</td><td>W.M.P. van der Aalst, K.M. van Hee, A.H.M. ter Hofstede, N. Sidorova, H.M.W. Verbeek, M. Voorhoeve, M.T. Wynn · <b>Soundness of Workflow Nets: Classification, Decidability, and Analysis</b> (2011)</td><td>워크플로 넷(WF-net)의 soundness(옵션 완료, 적정 종료, 죽은 전이 없음)를 분류하고 각 변형의 판정 가능성을 정리했다. 즉 &#x27;정의가 데드락 없이 항상 끝날 수 있는가&#x27;는 모델 수준에서 기계적으로 검사 가능하다.</td><td>high</td></tr>
+<tr><td><b>P-04</b></td><td>1. 프로세스 정의 모델</td><td>Object Management Group · <b>Business Process Model and Notation (BPMN) 2.0</b> (2011 (v2.0), 2013 (ISO 19510), v2.0.2)</td><td>BPMN 2.0 에서 처음으로 실행 의미론(execution semantics)과 XML 직렬화(교환 포맷)가 표기법과 함께 규정됐다. 프로세스는 정의(Process element, ID로 식별)로 존재하고 실행은 그 정의의 인스턴스다.</td><td>high</td></tr>
+<tr><td><b>P-05</b></td><td>1. 프로세스 정의 모델</td><td>Object Management Group · <b>Decision Model and Notation (DMN)</b> (2019 (v1.3))</td><td>결정을 프로세스에서 분리해 결정표(decision table)와 FEEL 표현식으로 모델링한다. 결정표는 행=규칙, 열=입력/출력이며 hit policy(U, A, F, P, C, C+, R, O 등)가 다중 매칭 처리 방식을 규정한다.</td><td>high</td></tr>
+<tr><td><b>P-06</b></td><td>1. 프로세스 정의 모델</td><td>Object Management Group · <b>Case Management Model and Notation (CMMN)</b> (2016 (v1.1))</td><td>예측 불가능한 순서로 수행되는 업무를 위해 Case Plan Model(Stage, Task, Milestone, EventListener)과 Sentry(진입/종료 기준; on-part 이벤트 + if-part 조건)로 모델링한다. 순서를 미리 고정하지 않고 &#x27;조건이 충족되면 가용해진다&#x27;로 표현한다.</td><td>high</td></tr>
+<tr><td><b>P-07</b></td><td>1. 프로세스 정의 모델</td><td>W.M.P. van der Aalst, T. Basten · <b>Inheritance of Workflows: An Approach to Tackling Problems Related to Change</b> (2002)</td><td>실행 중인 케이스를 구 정의에서 신 정의로 옮기는 것(dynamic change)은 작업 중복, 작업 누락, 데드락, 라이브락을 낳는다(&#x27;dynamic change bug&#x27;). 상속 보존 변환 규칙으로 변경을 제한하면 안전한 이관이 보장된다.</td><td>high</td></tr>
+<tr><td><b>P-08</b></td><td>1. 프로세스 정의 모델</td><td>W.M.P. van der Aalst · <b>Exterminating the Dynamic Change Bug: A Concrete Approach to Support Workflow Change</b> (2001)</td><td>구 정의와 신 정의를 동시에 운영해야 하는 상황을 전제하고, 안전한 전이 상태 사상(mapping)을 구체화한다. 즉 &#x27;하나의 정의만 존재한다&#x27;는 가정 자체가 실무에서 성립하지 않는다.</td><td>medium</td></tr>
+<tr><td><b>P-09</b></td><td>1. 프로세스 정의 모델</td><td>Temporal Technologies (제품 문서) · <b>Temporal Workflow Versioning / Determinism (Patching·GetVersion·Worker Versioning)</b> (2024-2026 (지속 갱신))</td><td>워크플로 코드는 결정적(deterministic)이어야 하며, 리플레이 시 비결정성을 유발하는 변경은 반드시 버저닝(patch/GetVersion 마커를 이력에 기록, 또는 Worker Versioning)으로 감싸야 한다. 실행 중 인스턴스는 자기가 시작한 코드 경로를 계속 본다.</td><td>high</td></tr>
+<tr><td><b>P-10</b></td><td>1. 프로세스 정의 모델</td><td>M. Pesic, H. Schonenberg, W.M.P. van der Aalst · <b>DECLARE: Full Support for Loosely-Structured Processes</b> (2007)</td><td>절차를 그리는 대신 LTL 기반 제약(예: response, precedence, not co-existence)만 선언하고, 제약을 어기지 않는 모든 실행을 허용한다. 필수 제약과 선택 제약을 구분한다.</td><td>medium</td></tr>
+<tr><td><b>P-11</b></td><td>1. 프로세스 정의 모델</td><td>N. Russell, W.M.P. van der Aalst, A.H.M. ter Hofstede, D. Edmond · <b>Workflow Resource Patterns: Identification, Representation and Tool Support</b> (2005)</td><td>작업항목(work item) 라이프사이클(offered → allocated → started → completed)을 축으로 43개 자원 패턴을 creation/push/pull/detour/auto-start/visibility/multiple-resource 로 분류했다. 역할 기반 할당은 라우팅과 자원 관리를 분리한다.</td><td>high</td></tr>
+<tr><td><b>P-12</b></td><td>2. 의존·선후 관계의 관계형 표현</td><td>Joe Celko · <b>Joe Celko&#x27;s Trees and Hierarchies in SQL for Smarties</b> (2004 / 2012 (2nd ed.))</td><td>인접 목록(adjacency list), 중첩 집합(nested set), 경로 열거(path enumeration)를 SQL 에서 트리를 표현하는 표준 대안으로 정리했다. 인접 목록은 쓰기가 싸고 읽기(재귀)가 비싸며, 중첩 집합은 읽기가 싸고 쓰기(left/right 재계산)가 비싸다.</td><td>high</td></tr>
+<tr><td><b>P-13</b></td><td>2. 의존·선후 관계의 관계형 표현</td><td>Bill Karwin, SQL Antipatterns (&#x27;Naive Trees&#x27;) / Red Gate Simple Talk 정리 · <b>Closure Table 패턴 (ancestor, descendant, path_length 3열로 모든 경로 저장)</b> (2010 / 2023)</td><td>이행 폐쇄를 별도 테이블(ancestor, descendant, path_length)로 물질화하면 조상/자손 질의가 재귀 없이 단일 인덱스 조회가 되고 질의 성능이 예측 가능해진다. 대신 노드 삽입/이동 시 O(조상수 × 자손수) 행을 갱신한다.</td><td>high</td></tr>
+<tr><td><b>P-14</b></td><td>2. 의존·선후 관계의 관계형 표현</td><td>PostgreSQL Global Development Group · <b>WITH RECURSIVE + SEARCH DEPTH/BREADTH FIRST + CYCLE 절</b> (2021~ (PostgreSQL 14 이상))</td><td>SQL 표준의 SEARCH 절은 깊이/너비 우선 정렬용 컬럼을 생성하고, CYCLE 절은 지정 컬럼으로 경로를 누적해 순환을 자동 감지·중단시킨다(PostgreSQL 14부터 지원).</td><td>high</td></tr>
+<tr><td><b>P-15</b></td><td>2. 의존·선후 관계의 관계형 표현</td><td>A.V. Aho, M.R. Garey, J.D. Ullman · <b>The Transitive Reduction of a Directed Graph</b> (1972)</td><td>DAG 의 이행 축소(같은 도달관계를 유지하는 최소 엣지 집합)는 유일하게 존재하며, 그 계산 복잡도는 이행 폐쇄(또는 불리언 행렬 곱) 계산과 동일하다.</td><td>high</td></tr>
+<tr><td><b>P-16</b></td><td>2. 의존·선후 관계의 관계형 표현</td><td>A.B. Kahn · <b>Topological sorting of large networks (Communications of the ACM 5(11):558-562)</b> (1962)</td><td>진입 차수 0 인 노드를 반복 제거하는 방식으로 DAG 의 위상 순서를 O(V+E) 에 구하며, 제거가 끝나기 전 후보가 고갈되면 순환이 존재한다.</td><td>low</td></tr>
+<tr><td><b>P-17</b></td><td>2. 의존·선후 관계의 관계형 표현</td><td>PostgreSQL ltree 확장 / 실무 비교 글 · <b>ltree vs adjacency list vs closure table (인덱스 지원형 경로 열거)</b> (2024-2025)</td><td>ltree 는 경로 열거를 1급 타입으로 만들고 GiST 인덱스로 조상/자손 패턴 질의를 지원한다. 문자열 경로의 파싱 문제를 없애지만 노드 이동 시 서브트리 전체 경로를 다시 써야 한다.</td><td>medium</td></tr>
+<tr><td><b>P-18</b></td><td>3. 실행 우선순위</td><td>J.E. Kelley Jr. &amp; M.R. Walker (CPM); D.G. Malcolm et al. (PERT) · <b>Critical Path Method / Program Evaluation and Review Technique</b> (1959)</td><td>선후 제약만 있고 자원 제약이 없으면, 총 공기 최소화는 선후 그래프의 최장 경로(= 최소 포텐셜 쌍대) 계산으로 다항 시간에 정확히 풀린다.</td><td>high</td></tr>
+<tr><td><b>P-19</b></td><td>3. 실행 우선순위</td><td>H. Topcuoglu, S. Hariri, M.-Y. Wu · <b>Performance-Effective and Low-Complexity Task Scheduling for Heterogeneous Computing (HEFT)</b> (2002)</td><td>목록 스케줄링은 (1) 작업 우선순위 산정, (2) 자원 배정의 2단계다. HEFT 는 upward rank(해당 노드에서 종료 노드까지의 최장 거리, 계산+통신 비용 포함) 내림차순으로 고르고, 삽입 기반으로 최단 종료시각(EFT) 자원에 배정한다.</td><td>medium</td></tr>
+<tr><td><b>P-20</b></td><td>3. 실행 우선순위</td><td>C.L. Liu, J.W. Layland · <b>Scheduling Algorithms for Multiprogramming in a Hard-Real-Time Environment</b> (1973)</td><td>고정 우선순위(Rate Monotonic)와 동적 우선순위(EDF, 마감이 가까운 것 먼저)의 최적성과 이용률 상한(RM 은 n(2^(1/n)-1), EDF 는 1)을 증명했다. 이용률이 상한 이하면 마감을 항상 지킨다.</td><td>high</td></tr>
+<tr><td><b>P-21</b></td><td>3. 실행 우선순위</td><td>L. Sha, R. Rajkumar, J.P. Lehoczky · <b>Priority Inheritance Protocols: An Approach to Real-Time Synchronization</b> (1990)</td><td>낮은 우선순위 작업이 공유 자원을 쥐면 높은 우선순위 작업이 무한정 지연되는 우선순위 역전이 발생한다. 우선순위 상속 프로토콜과 우선순위 천장(ceiling) 프로토콜이 이를 해소하며, 천장 프로토콜은 블로킹을 임계구역 1개 길이로 제한하고 데드락도 막는다.</td><td>high</td></tr>
+<tr><td><b>P-22</b></td><td>3. 실행 우선순위</td><td>Scaled Agile, Inc. (SAFe) / Donald Reinertsen (Cost of Delay 이론 기반) · <b>Weighted Shortest Job First (WSJF) = Cost of Delay ÷ Job Size</b> (2011~ (SAFe), 2009 (Reinertsen))</td><td>지연비용(사업가치 + 시간 임계성 + 리스크경감/기회창출)을 작업 크기로 나눈 값이 큰 순서로 처리하면 경제적 이익이 최대화된다. 각 항은 수정 피보나치(1,2,3,5,8,13,20)로 상대 평가한다.</td><td>medium</td></tr>
+<tr><td><b>P-23</b></td><td>3. 실행 우선순위</td><td>생산관리/OR 교과서의 표준 디스패칭 규칙 · <b>Critical Ratio (CR) 디스패칭 규칙 = 남은 시간 ÷ 남은 작업시간</b> (미확인)</td><td>CR &lt; 1 이면 이미 지연 중, CR &gt; 1 이면 여유 있음을 뜻하며, CR 이 작은 순서로 처리해 납기 준수율을 높인다.</td><td>low</td></tr>
+<tr><td><b>P-24</b></td><td>3. 실행 우선순위</td><td>S. Hartmann (1999); RCPSP 50년 리뷰 (EJOR 2025) · <b>Heuristic Algorithms for Solving the Resource-Constrained Project Scheduling Problem / Fifty years of research on RCPSP</b> (1999 / 2025)</td><td>선후 제약 + 자원 제약이 함께 있는 RCPSP 는 NP-hard 이며, 실무에서는 우선순위 규칙 기반 스케줄 생성 스킴(직렬/병렬 SGS)과 메타휴리스틱이 쓰인다. 최적해를 구하는 것이 목적이 아니다.</td><td>medium</td></tr>
+<tr><td><b>P-25</b></td><td>3. 실행 우선순위</td><td>A. Ghodsi, M. Zaharia, B. Hindman, A. Konwinski, S. Shenker, I. Stoica · <b>Dominant Resource Fairness: Fair Allocation of Multiple Resource Types</b> (2011)</td><td>여러 자원 종류(CPU/메모리 등)를 쓰는 사용자들 사이의 공정 배분은, 각 사용자의 &#x27;지배 자원&#x27;(요구 비중이 가장 큰 자원) 점유율을 max-min 공정하게 맞추는 DRF 로 일반화된다. 단일 슬롯 기반 공정 배분보다 처리량과 공정성이 모두 개선된다.</td><td>high</td></tr>
+<tr><td><b>P-26</b></td><td>3. 실행 우선순위</td><td>A. Demers, S. Keshav, S. Shenker · <b>Analysis and Simulation of a Fair Queueing Algorithm</b> (1989)</td><td>FCFS 대신 흐름별 가상 종료시각을 계산해 서비스하면 (a) 대역 공정 배분, (b) 적게 쓰는 흐름의 낮은 지연, (c) 비정상 흐름으로부터의 보호를 동시에 얻는다. 가중치를 주면 WFQ 가 된다.</td><td>high</td></tr>
+<tr><td><b>P-27</b></td><td>3. 실행 우선순위</td><td>Microsoft (Azure Architecture Center) · <b>Noisy Neighbor Antipattern / 멀티테넌트 격리·쿼터·테넌트 인지 부하 차단</b> (지속 갱신)</td><td>한 테넌트의 과도한 사용이 공유 자원을 점유해 다른 테넌트의 성능을 떨어뜨린다. 대응은 테넌트 식별·태깅, 게이트웨이/서비스/데이터 계층 다층 제한, 쿼터와 가중치, 테넌트별 워커 풀·연결 분리다.</td><td>medium</td></tr>
+<tr><td><b>P-28</b></td><td>4. 정합성·꼬임 방지</td><td>E.G. Coffman, M.J. Elphick, A. Shoshani · <b>System Deadlocks</b> (1971)</td><td>데드락은 상호 배제, 점유와 대기, 비선점, 순환 대기의 4조건이 동시에 성립할 때만 발생한다. 하나를 깨면 예방된다 — 실무에서는 자원 획득 순서를 전역 정렬해 순환 대기를 없애는 방법이 가장 흔하다.</td><td>high</td></tr>
+<tr><td><b>P-29</b></td><td>4. 정합성·꼬임 방지</td><td>H.T. Kung, J.T. Robinson · <b>On Optimistic Methods for Concurrency Control</b> (1981)</td><td>충돌이 드물다는 가정 하에 락 없이 진행하고 커밋 시점에 검증(validation)해 충돌 시 롤백하는 낙관적 동시성 제어를 제시했다. 락 오버헤드와 교착을 피하는 대신 충돌 시 재시도 비용을 진다.</td><td>high</td></tr>
+<tr><td><b>P-30</b></td><td>4. 정합성·꼬임 방지</td><td>K. van Hee, A. Serebrenik, N. Sidorova, M. Voorhoeve (및 후속 연구: Juhás, Lomazova 등) · <b>Soundness of Resource-Constrained Workflow Nets / Decidability Results for Soundness Criteria of RCWF-nets</b> (2005~2014)</td><td>공유 자원(정적 place)을 가진 워크플로 넷에서는, 정적 place 가 여럿이고 인스턴스가 자원을 생성/소비한 채 종료할 수 있으면 soundness 가 판정 불가능(undecidable)하다. 자원 place 가 하나인 제한된 경우에만 판정 가능성이 증명됐다.</td><td>high</td></tr>
+<tr><td><b>P-31</b></td><td>4. 정합성·꼬임 방지</td><td>H. Garcia-Molina, K. Salem · <b>Sagas</b> (1987)</td><td>장기 실행 트랜잭션(LLT)은 자원을 오래 점유해 짧은 트랜잭션을 막는다. saga는 LLT 를 국소 원자 트랜잭션의 나열로 쪼개고 각 단계에 보상 트랜잭션을 짝지어, 전부 성공하거나 보상으로 되돌리는 것을 보장한다.</td><td>high</td></tr>
+<tr><td><b>P-32</b></td><td>4. 정합성·꼬임 방지</td><td>PostgreSQL Global Development Group · <b>SELECT ... FOR UPDATE SKIP LOCKED (DB 를 작업 큐로 쓰는 표준 패턴)</b> (2016~ (PostgreSQL 9.5 이상))</td><td>SKIP LOCKED 는 이미 잠긴 행을 없는 것처럼 건너뛴다. 문서가 명시하듯 일관되지 않은 뷰를 주지만, 큐에서는 각 워커가 서로 다른 행을 잡는 것이 정확히 원하는 동작이라 의도된 사용이다. 일반 FOR UPDATE 는 워커를 한 줄로 세운다(convoy).</td><td>high</td></tr>
+<tr><td><b>P-33</b></td><td>4. 정합성·꼬임 방지</td><td>W. Kent (1983); E.F. Codd (1970) · <b>A Simple Guide to Five Normal Forms in Relational Database Theory / A Relational Model of Data for Large Shared Data Banks</b> (1970 / 1983)</td><td>정규화의 목표는 &#x27;하나의 사실을 한 곳에만 적는 것&#x27;이며, 그렇지 않으면 갱신 이상(update anomaly)으로 같은 사실의 두 사본이 서로 다른 값을 갖게 된다.</td><td>high</td></tr>
+<tr><td><b>P-34</b></td><td>4. 정합성·꼬임 방지</td><td>K. Kulkarni, J.-E. Michels · <b>Temporal Features in SQL:2011 (system-versioned / application-time period tables)</b> (2012)</td><td>SQL:2011 은 PERIOD FOR SYSTEM_TIME + WITH SYSTEM VERSIONING 으로 시스템 시간(언제 기록됐나)과 응용 시간(언제 유효한가)을 표준화했고, 둘을 함께 쓰면 bitemporal 테이블이 된다.</td><td>high</td></tr>
+<tr><td><b>P-35</b></td><td>5. 실증 연구(프로세스 마이닝)</td><td>W.M.P. van der Aalst · <b>Process Mining: Data Science in Action (초판명: Discovery, Conformance and Enhancement of Business Processes)</b> (2011 / 2016 (2nd ed.))</td><td>이벤트 로그로 실제 프로세스를 발견(discovery)하고, 모델과 대조해 이탈을 찾고(conformance), 성능 정보를 덧입힌다(enhancement). 설계된 de jure 모델과 실제 de facto 실행은 거의 항상 다르다.</td><td>high</td></tr>
+<tr><td><b>P-36</b></td><td>5. 실증 연구(프로세스 마이닝)</td><td>W.M.P. van der Aalst · <b>Process Mining in the Large: A Tutorial</b> (2013)</td><td>프로세스 마이닝은 적합성 검사, 병목 탐지, 실행 문제 예측에 쓰인다. 사후(post mortem) 데이터를 de jure 모델과 교차 검증해 이탈 지점과 준수 수준을 정량화한다.</td><td>high</td></tr>
+<tr><td><b>P-37</b></td><td>5. 실증 연구(프로세스 마이닝)</td><td>BPI Challenge 참가 보고서 (Rabobank ITSM 2014, 조달/여비 정산 2019-2020 등) · <b>Rabobank: A Process Mining Case Study, BPI Challenge 2014 Report 외</b> (2014~2020)</td><td>실제 로그 분석에서 반복적으로 드러나는 실패 패턴은 (a) 자기 루프·재작업 루프, (b) 특정 활동 앞의 긴 유휴(대기) 시간, (c) 소수 변종이 아닌 수백~수천 개 변종의 존재다. 예: Rabobank 사례에서 특정 활동의 평균 유휴 시간이 약 9시간인 반면 전체 프로세스 중앙값은 3일 — 시간의 대부분이 &#x27;작업&#x27;이 아니라 &#x27;대기&#x27;에 있다. 조달 사례에서는 송장 접수→정산 구간이 평균 28.51일로 최대 병목이었다.</td><td>medium</td></tr>
+<tr><td><b>P-38</b></td><td>5. 실증 연구(프로세스 마이닝)</td><td>J. Carmona, B. van Dongen, M. Weidlich 등 (적합성 검사 문헌 리뷰) · <b>Conformance Checking: A State-of-the-Art Literature Review</b> (2020)</td><td>로그의 트레이스를 모델 위에서 재생(replay)하거나 정렬(alignment)해 모델과 로그의 차이를 찾는다. 정렬 기반 기법은 정확하지만 긴 트레이스에서 계산 비용이 크다.</td><td>medium</td></tr>
+</tbody></table>
+<h3>A.2 지속 실행 엔진의 실물 스키마 — 23건</h3>
+<table class="dd">
+<colgroup><col style="width:5%"><col style="width:14%"><col style="width:28%"><col style="width:46%"><col style="width:7%"></colgroup>
+<thead><tr><th>번호</th><th>갈래</th><th>출처</th><th>무엇을 말하는가</th><th>확신</th></tr></thead><tbody>
+<tr><td><b>E-01</b></td><td></td><td><b>Temporal (Server, MySQL v8 스키마)</b> — <b>temporalio/temporal — schema/mysql/v8/temporal/schema.sql</b></td><td>RDB 백엔드의 실제 표 구성(PK 기준): namespaces(partition_id,id) / shards(shard_id) / executions(shard_id,namespace_id,workflow_id,run_id) = 워크플로 뮤터블 스테이트 / current_executions(shard_id,namespace_id,workflow_id) = workflow_id 당 현재 run 을 가리키는 유일성 표 / buffered_events(...,id) / history_node(shard_id,tree_id,branch_id,node_id,txn_id) = append-only 이벤트 히스토…</td><td>high</td></tr>
+<tr><td><b>E-02</b></td><td></td><td><b>Temporal — 이벤트 히스토리와 한계</b> — <b>Events and Event History / Workflow Execution limits — Temporal Documentation</b></td><td>이벤트 히스토리는 「append-only log of Events」. 수정·삭제 없음. 워커는 캐시 미스·재기동 시 이 히스토리를 재생(replay)해 상태를 복원한다.</td><td>high</td></tr>
+<tr><td><b>E-03</b></td><td></td><td><b>Temporal — 샤딩과 서비스 분리</b> — <b>Temporal Server — Temporal Platform Documentation</b></td><td>Frontend(무상태 게이트웨이, 레이트리밋·인가·검증) / History(실행 상태와 내부 태스크 큐 소유) / Matching(사용자 태스크 큐 호스팅, 워커 매칭) / Worker(복제·시스템 워크플로). 워크플로는 namespace + workflow_id 해시로 History Shard 에 배정된다.</td><td>high</td></tr>
+<tr><td><b>E-04</b></td><td></td><td><b>Temporal — 결정적 재실행과 코드 버전 변경(Patching API)</b> — <b>Workflow definition / Go SDK versioning — Temporal Documentation</b></td><td>워크플로 코드는 결정적이어야 한다 — 「같은 입력이면 같은 순서로 같은 API 호출」. 재생 시 생성된 Command 가 히스토리의 기존 이벤트와 순서·종류가 어긋나면 non-determinism error. 비결정적 연산은 Activity 로 밀어내며, Activity 는 재생 경로 밖에서 실행되고 자동 재시도된다.</td><td>high</td></tr>
+<tr><td><b>E-05</b></td><td></td><td><b>Temporal Cloud — 멀티테넌트 시스템 한계</b> — <b>System limits — Temporal Cloud</b></td><td>네임스페이스가 테넌트 격리 단위. 기본 10개에서 사용량에 따라 자동 증가.</td><td>high</td></tr>
+<tr><td><b>E-06</b></td><td></td><td><b>Temporal — 공정성(Fairness) 설계 패턴</b> — <b>Fairness — Temporal Documentation</b></td><td>하나의 태스크 큐 안에서 Fairness key(예: tenant_id)별로 「가상 큐」를 개념적으로 만들고, Matching 서비스가 가중 라운드로빈으로 디스패치한다. 워크플로·액티비티·자식 워크플로에 key 와 weight 를 붙인다. 가중치 5.0/3.0/2.0 이면 대략 50%/30%/20% 배분.</td><td>high</td></tr>
+<tr><td><b>E-07</b></td><td></td><td><b>Uber Cadence</b> — <b>Cadence deployment topology / design principles — cadenceworkflow.io · Uber Engineering Blog</b></td><td>Temporal 의 전신. 동일한 4서비스 구조(Frontend / History / Matching / Internal Worker)와 History Shard 개념. 영속 저장소는 Cassandra, MySQL, PostgreSQL, CockroachDB, TiDB 를 지원하고 복잡한 검색은 ElasticSearch/OpenSearch 로 분리. 태스크 디스패치용 내부 큐를 task_lists 라 부른다. 서버 컴포넌트는 프로세스 수준에서 무상태이며 상태는 전부 영속 계층에 있어 수평 확장이 가능하다.</td><td>medium</td></tr>
+<tr><td><b>E-08</b></td><td></td><td><b>Netflix Conductor — 정의 분리와 태스크 제어</b> — <b>Conductor OSS — Task Definition / Workflow Definition 문서</b></td><td>핵심 설계가 「태스크 정의(taskdef)」와 「워크플로 정의(workflowdef)」의 분리다. 워크플로 정의는 name/description/version/tasks[]/inputParameters/outputParameters/inputTemplate/failureWorkflow/timeoutSeconds/timeoutPolicy/restartable 등 오케스트레이션 속성만 갖는다. 태스크 정의는 워크플로와 무관하게 별도 등록되며 실행 정책을 소유한다: retryCount(최대 10), retryLogic(FIXED / EXPONENTIAL_BACKOFF / LINEAR_BACKOFF), ret…</td><td>high</td></tr>
+<tr><td><b>E-09</b></td><td></td><td><b>Netflix Conductor 4.0 — 대규모 운영에서 무너진 것과 재설계</b> — <b>Netflix Reworks Conductor for 420 Million Monthly Workflow Executions and 10X Larger Workflows (InfoQ, 2026-09) / Netflix Conductor: The Next Chapter (Netflix TechBlog, 2026-08)</b></td><td>구조: 월 4억 2천만 워크플로 실행, 150개 애플리케이션에 걸친 20만 개 워크플로 정의. 1세대는 Dynomite(Redis 위 샤딩·복제 계층) + DynoQueues(그 위의 큐 레시피) + Elasticsearch 색인. 이후 저장소는 Cassandra 로, 큐는 Timestone 으로 이동. 4.0 재설계의 데이터 모델 변경: (1) 워크플로 메타데이터와 태스크·사용자 데이터를 분리, (2) 태스크를 독립 저장하고 워크플로는 경량 「블루프린트」만 보유, (3) 대형 태스크 입출력은 S3 로, (4) 색인은 Kafka 로 실행 경로에서 분리, (5) 진행 중(pending) 태스크와 종료(t…</td><td>high</td></tr>
+<tr><td><b>E-10</b></td><td></td><td><b>Netflix Timestone (Conductor 의 큐 계층)</b> — <b>Timestone: Netflix&#x27;s High-Throughput, Low-Latency Priority Queueing System (Netflix TechBlog, 2022-10) / InfoQ 보도</b></td><td>메시지 상태 머신: Pending → Invisible → Running → Completed / Canceled / Errored. 메시지는 사용자 지정 deadline 을 갖고 EDF(earliest-deadline-first)로 꺼내진다. 저장은 Redis 가 system of record — 우선순위 정렬은 sorted set, 메시지 메타데이터는 hash, 여러 자료구조 원자 갱신은 Lua 스크립트. Kafka 가 상태 전이 이벤트 스트림, Flink 가 그 이벤트로 보조 색인 갱신, Elasticsearch 가 관측용 보조 색인 2종.</td><td>medium</td></tr>
+<tr><td><b>E-11</b></td><td></td><td><b>Camunda 7 — RDB 기반 엔진 스키마</b> — <b>Database Schema — Camunda 7 User Guide</b></td><td>접두사로 목적을 가른 표 설계. ACT_RE_*(repository, 프로세스 정의 등 정적 데이터) / ACT_RU_*(runtime) / ACT_ID_*(identity, 사용자·그룹) / ACT_HI_*(history, 감사·과거) / ACT_GE_*(general). 런타임: ACT_RU_EXECUTION(현재 모든 실행 — 프로세스 정의, 부모 실행, business key, 상태), ACT_RU_TASK(진행 중 모든 사용자 태스크 — 생성시각, assignee, 마감일), ACT_RU_VARIABLE(현재 프로세스·태스크 변수), ACT_RU_JOB(비동기 잡), ACT_RU_EVENT_S…</td><td>high</td></tr>
+<tr><td><b>E-12</b></td><td></td><td><b>Camunda 7 — 잡 실행기(DB 폴링 큐)의 실제 동작</b> — <b>The Job Executor — Camunda 7 User Guide</b></td><td>잡 획득 스레드가 ACT_RU_JOB 표를 폴링한다. 2단계 — 먼저 획득 가능한 잡을 조회, 그 다음 선택된 잡을 잠근다. 잠금은 컬럼으로 표현: LOCK_EXP_TIME_(미래 시각 = 락 만료 시각), LOCK_OWNER_(획득한 실행기 인스턴스 식별자). 낙관적 잠금은 REV_ 컬럼으로 처리. 문서 표현: 「Locking is necessary in order to ensure that jobs are executed exactly once.」</td><td>high</td></tr>
+<tr><td><b>E-13</b></td><td></td><td><b>Camunda 8 / Zeebe — RDB 를 버린 이유</b> — <b>Workflows Are Everywhere (Or, Why We&#x27;re Building Zeebe) — Camunda Blog / Zeebe 아키텍처·내부처리·파티션 문서</b></td><td>이유가 명시적이다 — 전통적 트랜잭션 워크플로 엔진은 실행 중 인스턴스 상태를 관계형 DB 에 저장하는데, 관계형 DB 는 일정 지점을 넘으면 필연적으로 확장 병목이 된다. Camunda BPM 운영 경험에서 중앙 DB 가 병목이었고, 그래서 엔진을 스트림 처리 위에 다시 지었다. Zeebe 구조: Client / Gateway(무상태) / Broker(분산 엔진, 활성 인스턴스 상태 추적) / Exporter(상태 변화 이벤트 스트림을 밖으로 — Elasticsearch 등). 파티션은 「프로세스 관련 이벤트의 영속 스트림」이며 append-only, 각 항목은 파티션 내 유일한 position 을 …</td><td>high</td></tr>
+<tr><td><b>E-14</b></td><td></td><td><b>Apache Airflow — 스케줄러와 DB 임계구역</b> — <b>Scheduler — Airflow Documentation (stable)</b></td><td>HA 스케줄러는 DB 행 수준 락으로 「임계구역」을 만든다. SELECT ... FOR UPDATE 로 한 번에 하나의 스케줄러만 임계구역에 들어가게 해 동시성·풀 한도를 정확히 강제한다. 임계구역이 하는 일: TaskInstance 를 scheduled 상태에서 executor 로 큐잉하면서 각종 동시성·풀 한도를 지키는 것.</td><td>high</td></tr>
+<tr><td><b>E-15</b></td><td></td><td><b>Apache Airflow — 우선순위 가중치와 XCom</b> — <b>Priority Weights / XComs — Airflow Documentation (stable)</b></td><td>priority_weight(기본 1, 클수록 우선)와 weight_rule 세 가지 — downstream(기본: 실효 가중치 = 모든 하위 후손의 합, 상류 태스크가 여러 DagRun 에 걸쳐 공격적으로 실행됨), upstream(모든 상류 조상의 합, 하류를 우선해 개별 DagRun 을 빨리 닫음), absolute(계산 없이 지정값 그대로). XCom 은 태스크 간 통신 수단이며 기본 백엔드 BaseXCom 은 Airflow 메타데이터 DB 에 저장한다.</td><td>high</td></tr>
+<tr><td><b>E-16</b></td><td></td><td><b>AWS Step Functions</b> — <b>Step Functions service quotas — AWS Documentation</b></td><td>실행 이력(execution history)을 서비스가 보관하는 관리형 모델. Standard 와 Express 두 종류로 아예 갈랐다.</td><td>high</td></tr>
+<tr><td><b>E-17</b></td><td></td><td><b>Argo Workflows</b> — <b>Offloading Large Workflows / Workflow Controller ConfigMap — Argo Workflows 문서</b></td><td>상태를 Kubernetes CRD(= etcd)에 저장한다. 각 리소스가 노드별 상태를 /status/nodes 필드에 담는다. etcd 리소스는 1MB 미만이어야 하므로 3단 강등 구조를 쓴다: (1) 원본, (2) 초과 시 압축해 /status/compressedNodes 에 저장(기본 gzip, WORKFLOW_COMPRESSION_ALGORITHM 으로 zstd·brotli 선택, WORKFLOW_COMPRESSION_LEVEL 로 조정), (3) 그래도 크면 SQL DB(PostgreSQL/MySQL/MariaDB)에 오프로드(persistence 설정 + nodeStatusOffLoad: t…</td><td>high</td></tr>
+<tr><td><b>E-18</b></td><td></td><td><b>Prefect 3</b> — <b>States / Global concurrency and rate limits — Prefect 3 Documentation</b></td><td>「오직 run 만 상태를 갖는다」 — flow/task 는 템플릿이고 상태는 실행 시에만 생긴다. 상태 타입 8종: SCHEDULED(하위 이름 Scheduled/Late/AwaitingRetry/AwaitingConcurrencySlot), PENDING(Pending/Submitting/InfrastructurePending), RUNNING(Running/Retrying), PAUSED(Paused/Suspended), CANCELLING, COMPLETED(Completed/Cached/RolledBack), FAILED, CRASHED. 결정적 설계: 상태 「타입」이 오케스트레이션 로직을 구동…</td><td>high</td></tr>
+<tr><td><b>E-19</b></td><td></td><td><b>Dagster</b> — <b>Managing concurrency / Instance configuration — Dagster Docs</b></td><td>저장소가 용도별로 쪼개져 있다 — run storage(실행 메타데이터), event log storage(이벤트 로그), schedule storage(스케줄·센서 틱). 백엔드는 SQLite/PostgreSQL/MySQL 플러거블. 로컬 기본 SqliteEventLogStorage 는 실행마다 별도 DB 파일({run_id}.db)로 샤딩하고 교차 조회용 중앙 index.db 를 따로 둔다(운영용 Postgres/MySQL 구현은 통합 표 사용).</td><td>medium</td></tr>
+<tr><td><b>E-20</b></td><td></td><td><b>DB 를 큐로 쓰기 — SELECT ... FOR UPDATE SKIP LOCKED 의 MVCC 실패</b> — <b>Postgres Job Queues &amp; Failure By MVCC — brandur.org</b></td><td>Que 류 잡 큐: 잡 표에 INSERT, 워커가 인덱스로 잠글 수 있는 잡을 찾아 잠그고 완료 후 DELETE.</td><td>high</td></tr>
+<tr><td><b>E-21</b></td><td></td><td><b>DB 를 큐로 쓰기 — 대규모 재현 실험(PlanetScale, 2026)</b> — <b>Keeping a Postgres queue healthy — PlanetScale Blog</b></td><td>SKIP LOCKED 기반 잡 큐(생산자 INSERT, 워커 8개가 UPDATE/DELETE).</td><td>medium</td></tr>
+<tr><td><b>E-22</b></td><td></td><td><b>멀티테넌트 격리 — shuffle sharding</b> — <b>Workload isolation using shuffle sharding — Amazon Builders&#x27; Library</b></td><td>각 테넌트에게 전체 워커 풀 중 「무작위로 고른 부분집합」을 배정한다. 일반 샤딩은 테넌트를 하나의 샤드에 넣어 그 샤드가 죽으면 같은 샤드의 모든 테넌트가 함께 죽지만, 셔플 샤딩은 테넌트마다 조합이 달라 두 테넌트가 완전히 같은 조합을 갖는 경우가 드물다 — 따라서 한 테넌트의 폭주는 소수의 다른 테넌트에만 닿고, 영향받은 테넌트도 겹치지 않는 나머지 큐로 계속 처리된다.</td><td>low</td></tr>
+<tr><td><b>E-23</b></td><td></td><td><b>멀티테넌트 격리 — 계층별 스로틀링과 쿼터</b> — <b>Tenant-aware performance isolation and throttling (AGENTPERF07-BP02) / Multi-tenancy and resource optimization — AWS Well-Architected Agentic AI Lens</b></td><td>격리는 「테넌트 식별과 일관된 태깅」에서 시작한다 — 모든 요청·레코드가 테넌트를 달고 다녀야 한다. 그 위에 게이트웨이 / 서비스 / 데이터 계층 각각에 다층 한도를 건다.</td><td>medium</td></tr>
+</tbody></table>
+<h3>A.3 에이전트 · 도구 · 권한 규약 — 23건</h3>
+<table class="dd">
+<colgroup><col style="width:5%"><col style="width:14%"><col style="width:28%"><col style="width:46%"><col style="width:7%"></colgroup>
+<thead><tr><th>번호</th><th>갈래</th><th>출처</th><th>무엇을 말하는가</th><th>확신</th></tr></thead><tbody>
+<tr><td><b>A-01</b></td><td>에이전트 간 규약 / 능력 발견</td><td><b>Agent2Agent (A2A) Protocol Specification (latest)</b> (2025)</td><td>4개 1급 엔터티로 분리. (1) AgentCard: id, name, version, url, provider, capabilities, skills[], securitySchemes, interfaces, extensions, signature — 공개 JSON 문서로 /.well-known 경로에서 HTTP GET 으로 취득. (2) AgentSkill: id, name, description, tags[], examples[], inputModes[], outputModes[], parameters — 에이전트 안의 개별 능력 단위. (3) Task: id, contextId, status(st…</td><td>높음 (공식 스펙 직접 확인, 단 필드 집합은 버전의존)</td></tr>
+<tr><td><b>A-02</b></td><td>에이전트 간 규약 / 도구 선언</td><td><b>Model Context Protocol Specification 2025-06-18 — Server / Tools</b> (2025)</td><td>서버가 tools capability 를 선언({capabilities:{tools:{listChanged:true}}}). 발견은 tools/list (커서 페이지네이션, nextCursor), 실행은 tools/call (params: name, arguments). Tool 객체: name(고유 식별자), title(표시명), description, inputSchema(JSON Schema), outputSchema(선택, 있으면 서버는 반드시 준수·클라이언트는 검증), annotations. 결과: content[] (text/image/audio/resource_link/resource) 와…</td><td>높음 (공식 스펙 원문 확인)</td></tr>
+<tr><td><b>A-03</b></td><td>도구 카탈로그 / 부작용·idempotency 메타데이터</td><td><b>MCP Schema Reference — ToolAnnotations / Implementation / InitializeRequest</b> (2025)</td><td>ToolAnnotations { title?, readOnlyHint?, destructiveHint?, idempotentHint?, openWorldHint? } — 모두 선택 boolean 이며 미지정 시 false 로 간주. readOnlyHint=부작용 없는 읽기 전용, destructiveHint=파괴적 변경/삭제, idempotentHint=동일 인자 반복 호출이 결과를 바꾸지 않음, openWorldHint=외부 개방형 세계와 상호작용. 스펙은 명시적으로 「신뢰할 수 있는 서버가 아니면 annotations 를 신뢰하지 말라(MUST consider untrusted)」 고 경고. 버전 …</td><td>중상 (필드명·기본값은 확인, openWorldHint 의미 서술은 부분 미확인)</td></tr>
+<tr><td><b>A-04</b></td><td>에이전트 간 규약 / 두 규약의 역할 분담</td><td><b>From Glue-Code to Protocols: A Critical Analysis of A2A and MCP Integration for Scalable Agent Systems (arXiv:2505.03864)</b> (2025)</td><td>MCP 는 수직(vertical) 계층 = 에이전트↔도구 표준 접근, A2A 는 수평(horizontal) 계층 = 에이전트↔에이전트 통신. 두 규약이 맞물리는 지점에서 새로 생기는 문제로 (1) 의미적 상호운용성 — 에이전트 과업과 도구 능력의 매칭, (2) 발견과 실행이 결합되며 증폭되는 보안·프라이버시 위험, (3) 두 규약을 가로지르는 장애의 디버깅 난이도, (4) 「Agent Economy」 를 위한 의미 협상·거버넌스 체계 부재를 지적.</td><td>중 (논문 존재·주장 확인, 실증 근거는 약함)</td></tr>
+<tr><td><b>A-05</b></td><td>오케스트레이션 상태 저장 / checkpoint·재개·분기</td><td><b>LangGraph Persistence / Checkpointers (공식 문서)</b> (2025)</td><td>checkpoint는 super-step 단위 snapshot. checkpoint 본체: id, channel_values(상태 채널 값), channel_versions(채널별 버전), versions_seen(어느 노드가 어느 버전까지 봤는지). 조회 시 StateSnapshot { values, next(다음 실행 예정 노드 튜플 — 빈 튜플이면 완료), config{thread_id, checkpoint_ns, checkpoint_id}, metadata{source: input|loop|update, writes: 노드별 출력, step: 단계 카운터}, created_at(ISO8601), parent_config(…</td><td>높음 (공식 문서 필드 직접 확인)</td></tr>
+<tr><td><b>A-06</b></td><td>오케스트레이션 상태 저장 / 트레이스·스팬</td><td><b>OpenAI Agents SDK — Tracing</b> (2025)</td><td>2계층. Trace{workflow_name, trace_id(형식 trace_&lt;32 alphanumeric&gt;), group_id(같은 대화의 여러 trace 를 묶는 선택 키), disabled, metadata}. Span{started_at, ended_at, trace_id, parent_id(부모 스팬, 없을 수 있음), span_data}. span_data 는 타입별 페이로드(AgentSpanData, GenerationSpanData 등). 자동 생성 스팬 타입: agent_span(에이전트 실행), generation_span(LLM 생성), function_span(함수 도구 호출),…</td><td>높음 (공식 문서 확인)</td></tr>
+<tr><td><b>A-07</b></td><td>오케스트레이션 상태 저장 / 프레임워크 비교</td><td><b>AutoGen AgentChat — Managing State (save_state / load_state)</b> (2025)</td><td>상태는 직렬화 가능한 dict. AssistantAgent.save_state() / load_state(), Team.save_state() / load_state(), 런타임 수준에서는 SingleThreadedAgentRuntime.save_state() / load_state(). 메시지는 1급 데이터 구조로 직렬화·재생(replay) 가능. 목적은 무상태 웹 엔드포인트가 요청마다 영속 저장소에서 상태를 로드하는 패턴.</td><td>중 (AutoGen API 존재는 확인, 내부 레코드 구조는 문서화가 얕음 / CrewAI 미확인)</td></tr>
+<tr><td><b>A-08</b></td><td>오케스트레이션 상태 저장 / OpenAI Assistants (미확인)</td><td><b>OpenAI API Reference — Run Steps</b> (2024-2025)</td><td>미확인 — 해당 문서 URL 이 HTTP 403 으로 차단되어 1차 확인에 실패했다. 일반적으로 알려진 계층은 Thread &gt; Run &gt; RunStep 이고 RunStep 의 type 이 message_creation | tool_calls 로 갈린다고 알려져 있으나, 필드명(step_details, last_error, usage, expired_at/cancelled_at/failed_at/completed_at 등)을 이번 조사에서 원문 대조하지 못했다. Assistants API 자체가 Responses API 로 이관·폐기 예정이라는 점도 재확인 필요.</td><td>낮음 / 미확인</td></tr>
+<tr><td><b>A-09</b></td><td>도구 카탈로그 / 관측 표준</td><td><b>OpenTelemetry Semantic Conventions for GenAI — Spans</b> (2025)</td><td>도구 호출·에이전트 실행을 스팬 속성으로 표준화: gen_ai.operation.name (chat, execute_tool, invoke_agent 등), gen_ai.tool.name, gen_ai.tool.call.id, gen_ai.tool.type, gen_ai.agent.id, gen_ai.agent.name, gen_ai.conversation.id, gen_ai.request.model, gen_ai.usage.input_tokens, gen_ai.usage.output_tokens, gen_ai.response.finish_reasons, error.type. 즉 「도구 호출」 과 「에…</td><td>중상 (속성명 확인, 안정성 등급은 유동)</td></tr>
+<tr><td><b>A-10</b></td><td>도구 카탈로그 / idempotency·재시도</td><td><b>Idempotent requests (Stripe API Reference) / Designing robust and predictable APIs with idempotency</b> (2017 (블로그) / 상시 갱신 (레퍼런스))</td><td>클라이언트가 Idempotency-Key 를 보내면 서버가 최초 요청의 상태코드+본문을 키에 묶어 저장하고, 같은 키의 후속 요청에 저장된 결과를 그대로 반환(500 오류도 동일하게 재현). GET/DELETE 는 정의상 중복 실행 방지이라 키 불필요, POST 는 모두 수용. 입력 검증 실패나 동시 실행 충돌은 결과를 저장하지 않아 재시도 가능. 핵심 원리: 서버 엔드포인트를 중복 실행 방지하게 구현해 몇 번 호출되든 부작용이 정확히 한 번만 일어나게 한다.</td><td>높음 (널리 검증된 산업 표준 패턴)</td></tr>
+<tr><td><b>A-11</b></td><td>도구 카탈로그 / 도구 호출 신뢰성 평가</td><td><b>The Berkeley Function Calling Leaderboard (BFCL): From Tool Use to Agentic Evaluation of Large Language Models (ICML 2025)</b> (2025)</td><td>함수 호출 능력을 다차원으로 평가. AST(추상 구문 트리) 기반 평가법으로 수천 개 함수까지 확장하며 직렬/병렬 호출과 다수 언어를 다룸. 평가 축: 올바른 도구 선택, 호출 형식 정확성, 인자 채움 정확성, 적절한 도구가 없을 때의 기권(abstain). v3 에서 멀티턴·멀티스텝과 상태 기반 추적(state-based tracking), 「함수 누락(missing functions)」·장문 맥락 범주 추가.</td><td>중상 (논문·평가 축은 확인, MyBee 코드값은 본 조사의 제안)</td></tr>
+<tr><td><b>A-12</b></td><td>권한 / 역할 기반</td><td><b>American National Standard for Information Technology — Role Based Access Control (ANSI/INCITS 359-2004)</b> (2004)</td><td>4개 구성요소. Core RBAC: USERS, ROLES, OPS(연산), OBS(객체), PRMS(권한=연산×객체), SESSIONS, 관계 UA(user-role assignment)·PA(permission-role assignment). 세션은 사용자가 활성화한 역할의 부분집합을 갖는 런타임 개념. Hierarchical RBAC: 역할 상속(일반/제한 계층). SSD(정적 직무분리): 역할 「배정」 시점 제약(상충 역할 집합과 카디널리티 n). DSD(동적 직무분리): 한 세션 안에서 동시 「활성화」 할 수 없는 역할 제약.</td><td>높음 (표준 문서, 확립된 모델)</td></tr>
+<tr><td><b>A-13</b></td><td>권한 / 속성 기반</td><td><b>NIST SP 800-162 — Guide to Attribute Based Access Control (ABAC) Definition and Considerations</b> (2014 (upd2 2019))</td><td>주체(subject)·객체(object)·요청 연산(operation)·환경조건(environment conditions)의 속성을 정책·규칙·관계에 대조해 인가를 결정. 접근통제 메커니즘(ACM)의 4대 기능점은 PEP, PDP, PIP, PAP. 핵심 성질: 속성값만 바꾸면 주체/객체 관계나 규칙 집합을 고치지 않고도 요청마다 결정이 달라진다.</td><td>높음 (NIST 공식 간행물)</td></tr>
+<tr><td><b>A-14</b></td><td>판정 / 정책 정의와 판정 기록의 분리</td><td><b>eXtensible Access Control Markup Language (XACML) Version 3.0, OASIS Standard</b> (2013 (3.0 OS), 2017 errata)</td><td>4점 분리. PEP 가 결정 요청을 만들고 결정을 집행, PDP 가 적용 정책을 평가해 인가 결정을 산출, PAP 가 정책을 작성·저장, PIP 가 주체·자원·환경 속성을 공급. 흐름: PEP→요청 컨텍스트→PDP→(PIP 에 속성 질의)→(PAP 에서 target 에 맞는 정책 취득)→응답 컨텍스트→PEP. 응답에는 결정(Permit / Deny / Indeterminate / NotApplicable) 외에 Obligations(반드시 수행해야 하는 부수 조치, 예: 로깅)와 Advice(무시 가능한 권고)가 포함된다.</td><td>높음 (OASIS 표준 원문)</td></tr>
+<tr><td><b>A-15</b></td><td>권한 / 능력(capability) 기반 위임</td><td><b>Macaroons: Cookies with Contextual Caveats for Decentralized Authorization in the Cloud (NDSS 2014)</b> (2014)</td><td>중첩 연쇄 HMAC 으로 만든 무기명(bearer) 인가 자격증명. 토큰에 caveat(단서)을 덧붙이는 것만으로 권한을 축소(attenuate)·문맥 한정할 수 있고, 덧붙이기는 누구나 가능하되 되돌릴 수 없다 — 언제/어디서/누가/무엇을 위해 를 한정. 제3자 caveat 로 외부 서비스의 승인(discharge macaroon)을 요구할 수도 있다. 위임이 중앙 서버 왕복 없이 오프라인으로 일어난다. 원류는 Dennis &amp; Van Horn(1966)의 capability 개념 — 권한을 「목록」 이 아니라 「소지한 표」 로 표현.</td><td>높음 (피어리뷰 논문, 산업 구현 다수)</td></tr>
+<tr><td><b>A-16</b></td><td>권한 / 능력 토큰의 정책 언어화</td><td><b>Biscuit Specifications (Eclipse Biscuit)</b> (2021~2025)</td><td>무기명 토큰이면서 (1) 오프라인 감쇠(offline attenuation), (2) 루트 공개키만 알면 누구나 검증, (3) Datalog 변형 논리 언어로 된 인가 규칙을 토큰 안에 내장. 토큰은 서명된 블록의 연쇄이고 각 블록이 fact(사실)·rule(규칙)·check(검사)를 담는다. 공개키 서명 + 소형 논리언어 조합으로 다단계 위임을 표현.</td><td>중상 (공식 스펙 확인, MyBee 적용 판단은 본 조사의 해석)</td></tr>
+<tr><td><b>A-17</b></td><td>권한 / 관계 기반(ReBAC)과 판정 일관성</td><td><b>Zanzibar: Google&#x27;s Consistent, Global Authorization System (USENIX ATC 2019)</b> (2019)</td><td>모든 권한 사실을 (object, relation, user) 관계 튜플로 표현하고(표기 object#relation@user), 스키마가 relation 들이 어떻게 합성되어 실효 권한이 되는지를 정의. ACL 과 그룹을 하나의 구조로 통합. 일관성 문제(「new enemy problem」 — 권한을 회수한 뒤의 쓰기가 옛 권한으로 읽히는 문제)를 zookie 라는 일관성 토큰으로 해결: 쓰기가 타임스탬프를 인코딩한 불투명 토큰을 반환하고, 그 토큰을 포함한 읽기는 최소 그 시점 이후 상태를 반영함이 보장된다. 2조 개 ACL 을 10ms 이내에 처리하는 규모.</td><td>높음 (원 논문 및 충실 구현체 문서)</td></tr>
+<tr><td><b>A-18</b></td><td>권한 / ReBAC 구현체의 실제 스키마</td><td><b>OpenFGA Concepts (Store, Authorization Model, Relationship Tuples)</b> (2024-2025)</td><td>Store = 인가 데이터의 격리 단위로, 하나의 Store 가 「여러 버전의 authorization model」 과 관계 튜플을 보유. Authorization model 은 불변이며 버전마다 고유 model_id(ULID, 예 01HVMMBCMGZNT3SED4Z17ECXCA)를 받아 API 요청에서 특정 모델 버전을 지정할 수 있다. type / type definition / relation 으로 타입 시스템 구성. 관계 튜플 = user + relation + object 3요소 필수, 선택적 4번째로 condition(Google CEL 식)을 붙여 조건부 관계 표현. user 는 user:…</td><td>높음 (공식 문서 확인)</td></tr>
+<tr><td><b>A-19</b></td><td>평가·안전 / 자율 수준 단계</td><td><b>Agentic AI Autonomy Levels and Control Framework (v2) / Measuring AI agent autonomy (arXiv:2502.15212)</b> (2025-2026)</td><td>자율 수준 분류(완전 감독~완전 자율의 6단계로 소개됨)에 더해 4개 축: Capability-Control Matrix(에이전트 능력을 필요한 통제에 사상), Governance Model(자율성 결정을 내리고 검토하는 조직 구조·절차), Implementation Patterns(각 자율 수준을 강제하는 기술 아키텍처), Escalation Framework(맥락·위험에 따른 자율성의 동적 조정). 별도 연구 흐름에서는 인간 감독을 in-the-loop / on-the-loop / off-the-loop 로 구분해 자율 수준을 조작적으로 정의한다.</td><td>중 (프레임워크 존재·구성요소는 확인, 단계 정의는 비표준·유동)</td></tr>
+<tr><td><b>A-20</b></td><td>평가·안전 / 자산 문서화</td><td><b>Model Cards for Model Reporting (FAT* 2019) / Datasheets for Datasets (CACM 2021)</b> (2019 / 2021)</td><td>Model Card: 모델 유형, 의도된 사용처(intended use), 성능이 달라질 수 있는 속성(집단별 분해 평가), 성능 지표, 평가 환경·조건, 윤리적 고려사항을 정형 항목으로 보고. Datasheet: 데이터셋의 동기(motivation), 구성(composition), 수집 과정, 라벨링·전처리, 배포, 유지관리를 질문지 형태로 문서화. 두 문서는 모델/데이터로 상호보완.</td><td>높음 (확립된 문헌) / 강제성은 낮음</td></tr>
+<tr><td><b>A-21</b></td><td>평가·안전 / 멀티에이전트 실패 유형 (논문)</td><td><b>Why Do Multi-Agent LLM Systems Fail? (arXiv:2503.13657, NeurIPS 2025)</b> (2025)</td><td>MAST(Multi-Agent System Failure Taxonomy): 150개 트레이스를 전문 주석자가 분석해 구축, 주석자 간 일치도 kappa=0.88. 3대 범주 — (1) 시스템 설계 문제(system design issues), (2) 에이전트 간 불일치(inter-agent misalignment), (3) 과업 검증(task verification) — 아래 14개 세부 실패 모드. 7개 주요 MAS 프레임워크에서 1,600개 이상 주석 트레이스(MAST-Data). 확장 주석을 위한 LLM-as-judge 파이프라인을 만들어 사람 주석과 높은 일치도를 확인. 핵심 발견: 상위 실패…</td><td>중상 (논문·범주·방법론은 확인, 14개 모드 세부와 비율은 미확인)</td></tr>
+<tr><td><b>A-22</b></td><td>평가·안전 / 에이전트 메모리 구조 (논문)</td><td><b>A-Mem: Agentic Memory for LLM Agents (arXiv:2502.12110) · MemGPT (arXiv:2310.08560) · Zep 시간 지식그래프 (arXiv:2501.13956) · Memp 절차 기억 (arXiv:2508.06433)</b> (2023~2025)</td><td>메모리를 계층·유형으로 구조화하는 흐름. MemGPT 는 OS 메모리 계층에 착안해 main context(RAM 유사)와 external context(디스크 유사)의 이중 계층. 연구 전반에서 메모리를 core / episodic(경험·사건) / semantic(지식) / procedural(절차·스킬) 로 유형화하며, 절차 기억을 별도로 다루는 연구(Memp)와 시간 축을 갖는 지식그래프 기반 메모리(Zep)가 등장. 메모리 오염·거버넌스를 다루는 후속 연구도 있다.</td><td>중 (개별 논문 존재는 확인, 구조 합의는 없음)</td></tr>
+<tr><td><b>A-23</b></td><td>평가·안전 / 골든셋·회귀·드리프트</td><td><b>Golden dataset evaluation: build and maintain LLM test sets (Langfuse) 외 업계 관행 종합 (Braintrust, LangSmith)</b> (2025-2026)</td><td>골든셋 = LLM 버전 회귀 테스트 스위트. 입력 + 기대 출력(또는 채점 루브릭)을 버전 관리되는 큐레이션 집합으로 보유. 실무 규모 제안은 20~50건에서 시작해 100~1,000건으로 성장시키되 운영 분포를 반영하도록 유지. 평가 실행(experiment/run)은 데이터셋 × 프롬프트·모델 버전 × 채점기(scorer) 조합으로 구성되며 정확성·충실성·안전성·스타일·성능 축으로 채점. 온라인 평가는 운영 트래픽을 샘플링해 비동기 채점하고 지연·오류율 같은 운영 지표와 함께 품질 추이를 감시. 드리프트는 2종 — 골든셋이 운영 분포를 더는 닮지 않는 데이터셋 드리프트, 그리고 품질 자체의 점진적 저…</td><td>중 (업계 관행은 광범위하게 일치하나 1차 실증 근거 약함)</td></tr>
+</tbody></table>
+<h3>A.4 관계형 스키마 패턴과 안티패턴 — 32건</h3>
+<table class="dd">
+<colgroup><col style="width:5%"><col style="width:14%"><col style="width:28%"><col style="width:46%"><col style="width:7%"></colgroup>
+<thead><tr><th>번호</th><th>갈래</th><th>출처</th><th>무엇을 말하는가</th><th>확신</th></tr></thead><tbody>
+<tr><td><b>S-01</b></td><td>정의↔인스턴스·버전관리</td><td>Ralph Kimball / Kimball Group · <b>Dimensional Modeling Techniques: Type 2 (Add New Row) — Slowly Changing Dimension</b> (2013)</td><td>정의가 바뀌면 UPDATE 하지 않고 새 행을 추가한다. 최소 3개 컬럼(row_effective_ts, row_expiration_ts, is_current)과 자연키(durable key)와 분리된 대리키(surrogate key)를 둔다. 사실(fact) 행은 &#x27;그 시점에 유효했던&#x27; 정의 행의 대리키를 FK 로 박아 둔다. 이 한 가지가 &#x27;과거 실적은 당시 정의로 정산&#x27;을 만족시키는 최소 구조다.</td><td>높음</td></tr>
+<tr><td><b>S-02</b></td><td>정의↔인스턴스·버전관리</td><td>Richard T. Snodgrass (용어), ISO SQL:2011 (표준) · <b>Developing Time-Oriented Database Applications in SQL; SQL:2011 Part 2 — application-time period tables · system-versioned tables</b> (2000 / 2011)</td><td>유효시간(valid time, 현실에서 참이었던 기간)과 기록시간(transaction time, DB 가 그렇게 알고 있던 기간)을 분리해 두 축으로 관리한다. SQL:2011 은 숨은 컬럼 없이 두 개의 날짜 컬럼을 PERIOD 로 묶는 방식을 채택했고(TSQL2 제안과의 차이), application-time period table(유효시간) · system-versioned table(기록시간) · 둘을 합친 bitemporal table 을 정의한다.</td><td>높음 (PostgreSQL 이 system versioning 미지원이라는 점은 PG18 기준 확인; 향후 버전 계획은 미확인)</td></tr>
+<tr><td><b>S-03</b></td><td>정의↔인스턴스·버전관리</td><td>Martin Fowler · <b>Bitemporal History</b> (2021)</td><td>Fowler 는 bitemporal 을 &#x27;가능하면 피하라&#x27;고 본다. 더 싼 대안 셋을 제시한다. (1) 소급 변경 자체를 금지 — 변경은 접수 시점부터 효력. (2) 행위 시점에 사용한 값을 그 자리에 박제 — 급여 지급 시 사용한 급여액을 지급 레코드에 복사. (3) 정정이 후속 행위보다 항상 먼저 오도록 프로세스를 강제. 그리고 &#x27;데이터에 이력을 더하면 복잡도가 오른다&#x27;고 못 박는다. 이력 구조는 추적 문제만 풀 뿐, 소급 정정의 하류 결과(세금·임계값 통과)는 따로 풀어야 한다.</td><td>높음</td></tr>
+<tr><td><b>S-04</b></td><td>정의↔인스턴스·버전관리</td><td>PostgreSQL 18 (Paul Jungwirth 외) · Hashrocket 해설 · <b>PostgreSQL 18 — Temporal Constraints: PRIMARY KEY/UNIQUE ... WITHOUT OVERLAPS, FOREIGN KEY ... PERIOD</b> (2025)</td><td>PG18 부터 UNIQUE/PRIMARY KEY 에 WITHOUT OVERLAPS 를 붙여 &#x27;같은 키의 기간이 겹치지 않음&#x27;을 DB 가 강제하고, FOREIGN KEY ... PERIOD 로 기간 포함(containment) 기반 참조무결성을 강제한다. 내부적으로 range 타입 + GiST 배타 제약이다.</td><td>중간 (기능 존재·문법은 확인, 파티션/대량 테넌트 조합 성능은 미확인)</td></tr>
+<tr><td><b>S-05</b></td><td>정의↔인스턴스·버전관리</td><td>Dan Linstedt · <b>Data Vault 2.0 — Hub / Link / Satellite</b> (2015)</td><td>구조 정보와 속성을 분리한다. Hub(비즈니스 키), Link(관계), Satellite(시간에 따라 변하는 속성 + load_ts + record_source). 속성 변경은 Satellite 에 행 추가로만 흡수되므로 기존 테이블 DDL 없이 확장된다. 감사 원천(record_source)과 적재 시각이 1급 컬럼이다.</td><td>중간 (개념은 확실, MyBee 규모에서의 성능 비교 실측은 미확인)</td></tr>
+<tr><td><b>S-06</b></td><td>정의↔인스턴스·버전관리</td><td>Lars Rönnbäck, Olle Regardt 외 / Hans Hultgren 비교문서 · <b>Comparing Anchor Modeling with Data Vault Modeling</b> (2013)</td><td>Anchor Modeling 은 Data Vault 를 6NF 까지 더 정규화한다. Anchor(≈Hub), Attribute(속성 하나당 테이블, ≈Satellite 의 극단), Tie(≈Link), Knot(공유 열거값). 확장이 &#x27;수정&#x27;이 아니라 &#x27;추가&#x27;만으로 이뤄지므로 비파괴적 스키마 진화가 가장 강하다.</td><td>중간</td></tr>
+<tr><td><b>S-07</b></td><td>정의↔인스턴스·버전관리</td><td>Greg Young; Oskar Dudycz 보조 해설 · <b>Versioning in an Event Sourced System; How to (not) do the events versioning?</b> (2017 / 2021)</td><td>핵심 명제: &#x27;구 버전에서 신 버전으로 변환 가능해야 새 버전이다. 변환 불가능하면 그것은 새 버전이 아니라 다른 이벤트다.&#x27; 진화 전략은 (a) 비파괴적 필드 추가, (b) 이름/네임스페이스를 바꾼 새 스키마, (c) upcasting(역직렬화와 도메인 로직 사이에 변환 미들웨어).</td><td>중간 (원서 내용은 2차 출처로 확인. 원서 직접 확인은 미확인)</td></tr>
+<tr><td><b>S-08</b></td><td>이벤트소싱·CQRS·투영</td><td>Martin Fowler · <b>Event Sourcing</b> (2005)</td><td>모든 상태 변화를 이벤트 열로 포착한다. 성능을 위해 snapshot을 둔다(snapshot은 무중단으로 병렬 생성 가능). 외부 시스템은 Gateway 로 감싸 재생(replay) 중 중복 송신을 억제해야 한다. Fowler 의 명시적 난점: &#x27;모든 변경을 이벤트로 포장하는 건 자연스러운 선택이 아니다&#x27;, 버그 수정·신기능·시점 규칙이 섞인 재생은 &#x27;매우 지저분해진다&#x27;, 그리고 이벤트 소싱을 전제로 만들지 않은 시스템에 나중에 끼워 넣기는 &#x27;매우 어렵다&#x27;.</td><td>높음</td></tr>
+<tr><td><b>S-09</b></td><td>이벤트소싱·CQRS·투영</td><td>Martin Fowler · <b>CQRS (bliki)</b> (2011)</td><td>CQRS 는 아껴서, 조심해서 쓰라. &#x27;대부분의 시스템에서 CQRS 는 위험한 복잡도를 더한다.&#x27; 적용 대상은 시스템 전체가 아니라 복잡도가 실제로 높은 특정 바운디드 컨텍스트로 한정한다.</td><td>높음</td></tr>
+<tr><td><b>S-10</b></td><td>이벤트소싱·CQRS·투영</td><td>Microsoft Azure Architecture Center · <b>Event Sourcing pattern</b> (2023~)</td><td>이벤트가 단일 진실원천이고 저장된 투영(projection)은 읽기 전용 파생 뷰이므로 언제든 이벤트로부터 재구축할 수 있다. 재구축이 필요한 경우: 투영 생성 로직 변경, 신규 투영 추가, 비동기 데몬 오류 복구. 부적합한 경우: 단순 CRUD, 감사·재생·이력 복원 요구가 없는 경우, 수명이 짧은 MVP, 강한 일관성의 저지연 읽기가 필요한 경우(투영은 결과적 일관성).</td><td>중간</td></tr>
+<tr><td><b>S-11</b></td><td>분산·메시지 신뢰성</td><td>Chris Richardson (microservices.io) · <b>Pattern: Transactional outbox</b> (2019~)</td><td>비즈니스 엔티티를 갱신하는 바로 그 트랜잭션에서 메시지를 DB 의 outbox 테이블에 함께 기록한다. 별도 Message Relay 가 이를 브로커로 내보낸다. 구현은 Polling Publisher(주기 조회) 또는 Transaction Log Tailing(WAL 추적, 예: Debezium). 보장: &#x27;메시지는 DB 트랜잭션이 커밋된 경우에 한해, 그리고 반드시 전송된다.&#x27; 단점: 릴레이가 같은 메시지를 두 번 내보낼 수 있으므로(at-least-once) 소비자는 중복 실행 방지해야 한다.</td><td>높음</td></tr>
+<tr><td><b>S-12</b></td><td>분산·메시지 신뢰성</td><td>Hector Garcia-Molina, Kenneth Salem · <b>Sagas (ACM SIGMOD Record)</b> (1987)</td><td>장기 실행 트랜잭션을 각각 독립 커밋하는 로컬 트랜잭션 T1..Tn 의 열로 쪼개고, 각 Ti 마다 의미적으로 되돌리는 보상 트랜잭션 Ci 를 짝지운다. 실패 시 T1..Tj 를 Cj..C1 역순으로 보상한다. 보상은 DB 롤백과 달리 &#x27;이전 상태 복원&#x27;이 아니라 &#x27;업무적 역연산&#x27;이다.</td><td>높음</td></tr>
+<tr><td><b>S-13</b></td><td>분산·메시지 신뢰성</td><td>Chris Richardson · <b>Pattern: Saga — 격리성 결여에 대한 대응책(countermeasures)</b> (2018~)</td><td>코레오그래피(이벤트 연쇄) vs 오케스트레이션(중앙 조정자). 격리성 부재에 대한 대응책으로 semantic lock, commutative updates, pessimistic view, reread value, version file, by value 를 든다. 단점: 보상 로직을 개발자가 직접 설계해야 함, 동시 saga 간 데이터 이상, 비동기 결과를 동기 클라이언트에 알리는 문제.</td><td>높음</td></tr>
+<tr><td><b>S-14</b></td><td>분산·메시지 신뢰성</td><td>Chris Richardson (microservices.io) · <b>Pattern: Idempotent Consumer / Handling duplicate messages</b> (2020)</td><td>처리한 메시지 ID 를 테이블에 기록하고, 업무 부작용과 그 기록을 같은 트랜잭션에서 커밋한다. (subscriberId, messageId) 가 PROCESSED_MESSAGE 의 기본키이므로 중복 전달 시 INSERT 가 실패하고 그 배달은 커밋된 무연산(no-op)이 된다. 유니크 제약이 동시 중복 배달 중 어느 것이 먼저인지를 결정한다.</td><td>높음</td></tr>
+<tr><td><b>S-15</b></td><td>분산·메시지 신뢰성</td><td>Martin Kleppmann, Alastair R. Beresford, Boerge Svingen · <b>Online Event Processing (ACM Queue 17(1))</b> (2019)</td><td>송신자는 무응답 수신자가 &#x27;처리 실패&#x27;인지 &#x27;응답만 느린 것&#x27;인지 구분할 수 없으므로 진정한 exactly-once 전달은 불가능하다. 현실적 해법은 at-least-once 전달 + 수신 측 중복 실행 방지 처리 = &#x27;효과적으로 한 번(effectively once)&#x27;. 이벤트 로그를 통해 시스템 간 일관성을 비동기로 달성하는 것이 분산 트랜잭션(2PC)의 실용적 대안이라는 것이 OLEP 의 주장.</td><td>중간 (원문 전문 확인 미완료 → 세부 주장은 미확인)</td></tr>
+<tr><td><b>S-16</b></td><td>분산·메시지 신뢰성</td><td>Confluent · <b>Understanding the Dual-Write Problem and Its Solutions</b> (2023)</td><td>DB 쓰기와 브로커 발행을 각각 독립 수행하면 세 가지 파손이 생긴다: DB 성공 + 발행 실패(이벤트 소실), 발행 성공 + DB 실패(유령 이벤트), 둘 사이 크래시(부분 상태). 해법이 outbox / CDC 이고, 어느 쪽이든 at-least-once 이므로 소비자 중복 실행 방지이 전제.</td><td>높음</td></tr>
+<tr><td><b>S-17</b></td><td>다형성 참조</td><td>Bill Karwin · <b>SQL Antipatterns — Polymorphic Associations</b> (2010/2022)</td><td>(parent_type, parent_id) 두 칸으로 여러 부모를 가리키는 설계는 FK 를 걸 수 없다 — DB 가 무결성을 전혀 보장하지 못한다. Karwin 의 진단: 이 안티패턴은 &#x27;공통 상위 타입(supertype)이라는 결정적 엔티티를 빠뜨린&#x27; 것이다. 객체지향 다형성이 성립하는 이유는 서브타입들이 암묵적으로 상위 타입을 공유하기 때문인데, 관계형에서는 그 상위 타입을 명시적 테이블로 만들어야 한다.</td><td>높음</td></tr>
+<tr><td><b>S-18</b></td><td>다형성 참조</td><td>Hashrocket (Jack Rosa 외) · <b>Modeling Polymorphic Associations in a Relational Database</b> (2020~)</td><td>배타적 아크(exclusive arc): 부모마다 nullable FK 칸을 따로 두고 CHECK 로 &#x27;정확히 하나만 NOT NULL&#x27; 을 강제한다. 예: CHECK ((event_id IS NOT NULL)::int + (order_id IS NOT NULL)::int + (seat_id IS NOT NULL)::int = 1). PostgreSQL 은 NULL 저장 비용이 사실상 없고, 표 크기와 무관하게 nullable 칸 추가가 빠르며, CHECK 제약도 동시 사용을 막지 않고 추가할 수 있다.</td><td>높음</td></tr>
+<tr><td><b>S-19</b></td><td>다형성 참조</td><td>Martin Fowler · <b>Class Table Inheritance (PoEAA)</b> (2002)</td><td>상속 계층의 클래스마다 테이블을 하나씩 둔다. 관계형에서 다형성을 정직하게 표현하는 방법은 상위 공통 테이블(supertype table)에 공통 키를 두고, 서브타입 테이블들이 그 키를 PK 겸 FK 로 공유하는 것이다. 자식 레코드는 상위 테이블의 키를 가리키므로 FK 가 성립한다. 대가는 전체 객체 복원에 조인이 필요하다는 것.</td><td>높음 (패턴은 확실. Fowler 원문에는 다른 상속 매핑과의 상세 비교가 없어 트레이드오프 서술은 일반 지식 기반)</td></tr>
+<tr><td><b>S-20</b></td><td>PostgreSQL 실무 — 멀티테넌시</td><td>PostgreSQL Global Development Group · <b>PostgreSQL Documentation — Row Security Policies</b> (2025)</td><td>ENABLE ROW LEVEL SECURITY 후 정책이 없으면 기본 거부. 정책은 permissive 는 OR, restrictive 는 AND 로 결합. 문서가 명시한 함정 셋: (1) 슈퍼유저와 BYPASSRLS 속성 롤은 항상 우회하고 테이블 소유자도 기본적으로 우회 — FORCE ROW LEVEL SECURITY 가 필요하다. (2) 참조무결성 검사(유니크·PK·FK)는 항상 RLS 를 우회하므로 제약 위반 메시지를 통한 &#x27;은닉 채널(covert channel)&#x27; 정보 누출이 가능하다. (3) 정책이 서브 SELECT 로 다른 표를 참조하면 READ COMMITTED 에서 경합 조건이 생긴다.…</td><td>높음</td></tr>
+<tr><td><b>S-21</b></td><td>PostgreSQL 실무 — 멀티테넌시</td><td>Cybertec (Laurenz Albe) · PostgreSQL 문서 PREPARE · <b>Tech preview: How PostgreSQL 12 handles prepared plans; PREPARE — plan_cache_mode</b> (2019 / 2025)</td><td>PostgreSQL 은 준비된 구문을 처음 5회는 실제 파라미터 값으로 계획(custom plan)하고, 이후 generic plan 이 더 나쁘지 않아 보이면 generic plan 으로 전환한다. plan_cache_mode = force_custom_plan / force_generic_plan 으로 강제할 수 있다. current_setting() 은 STABLE 이라 구문당 한 번 평가되어 인덱스 조건으로 접힌다.</td><td>중간</td></tr>
+<tr><td><b>S-22</b></td><td>PostgreSQL 실무 — 멀티테넌시</td><td>Crunchy Data (Craig Kerstiens) · Citus 문서 · <b>Designing Your Postgres Database for Multi-tenancy; Citus Multi-tenant Applications</b> (2023 / 2024)</td><td>세 가지 배치와 규모 기준: 테넌트별 DB = 수십 개 규모(50개 넘으면 피하라), 테넌트별 스키마 = 수백 개 규모(마이그레이션을 모든 스키마에 반복해야 함), 공유 테이블 + tenant_id 판별 컬럼 = 수백만 규모. Citus 문서는 스키마 기반 샤딩을 &#x27;수천 개를 넘지 않는 중간 규모&#x27; 로 권고하고, 수천 이상은 tenant_id 행 기반 샤딩이 밀도·교차테넌트 질의 면에서 유리하다고 본다.</td><td>중간 (규모 기준 수치는 벤더·블로그 권고이며 표준이 아님)</td></tr>
+<tr><td><b>S-23</b></td><td>PostgreSQL 실무 — 파티셔닝</td><td>PostgreSQL Global Development Group · <b>PostgreSQL Documentation — Table Partitioning</b> (2025)</td><td>enable_partition_pruning(기본 on)은 계획 시점과 실행 시점(초기화 단계 &#x27;Subplans Removed&#x27;, 실행 단계) 모두에서 파티션을 잘라낸다. 구식 constraint_exclusion 은 계획 시점 전용이고 CURRENT_TIMESTAMP 같은 비불변 함수에 대해 최적화하지 못한다. 핵심 제약: 유니크·PK 제약은 파티션 키 컬럼을 전부 포함해야 한다. BEFORE ROW INSERT 트리거가 대상 파티션을 바꿀 수 없다. 계획기는 &#x27;수천 개 파티션까지는 그럭저럭&#x27; 다루지만 프루닝 후 남는 파티션이 많으면 계획 시간과 메모리가 함께 증가한다. 보존 정책은 DELETE 가 …</td><td>높음</td></tr>
+<tr><td><b>S-24</b></td><td>PostgreSQL 실무 — jsonb 확장 칸</td><td>PostgreSQL Global Development Group · <b>PostgreSQL Documentation — JSON Types (jsonb Indexing)</b> (2025)</td><td>GIN 연산자 클래스 두 가지. jsonb_ops(기본)는 키·값마다 인덱스 항목을 만들며 ?, ?|, ?&amp;, @&gt;, @?, @@ 를 지원. jsonb_path_ops 는 값에 이르는 키 경로를 값과 함께 해시해 항목을 만들어 인덱스가 훨씬 작고 검색이 특정적이지만 키 존재 연산자(?, ?|, ?&amp;)를 지원하지 않고 {&quot;a&quot;: {}} 같은 빈 구조에 대해 인덱스 항목을 만들지 않아 전 인덱스 스캔이 된다. 컬럼에 직접 연산자를 적용하지 않는 질의는 표현식 인덱스가 필요하다(예: CREATE INDEX ... USING GIN ((jdoc -&gt; &#x27;tags&#x27;))). 표현식 인덱스는 작고 빠르지만 그 키에 …</td><td>높음</td></tr>
+<tr><td><b>S-25</b></td><td>PostgreSQL 실무 — jsonb 확장 칸</td><td>pganalyze (Lukas Fittl) · <b>5mins of Postgres E3: Postgres performance cliffs with large JSONB values and TOAST</b> (2022)</td><td>jsonb 값이 TOAST 임계(약 2KB)를 넘으면 별도 TOAST 테이블에 라인 외 저장되고 질의 성능이 크게 나빠진다. jsonb_set() 으로 키 하나만 고쳐도 표준 PostgreSQL 에는 부분 갱신 기구가 없어 값 전체가 재작성된다 — 킬로바이트급 문서에서는 매 갱신마다 TOAST 압축해제·수정·재압축과 새 행 버전의 WAL 이 발생한다.</td><td>중간</td></tr>
+<tr><td><b>S-26</b></td><td>PostgreSQL 실무 — 큐</td><td>PostgreSQL Global Development Group (SELECT/FOR UPDATE SKIP LOCKED, 9.5+) · <b>PostgreSQL Documentation — SELECT: The Locking Clause (SKIP LOCKED)</b> (2016~2025)</td><td>FOR UPDATE SKIP LOCKED 는 이미 잠긴 행을 기다리지 않고 건너뛰므로 평범한 테이블이 안전한 동시 작업 큐가 된다. 9.5 이전에는 어드바이저리 락으로 애플리케이션이 직접 관리해야 했으나 SKIP LOCKED 는 락 수명을 행과 트랜잭션에 묶어 DB 가 관리한다. 실무 권고: 디큐는 대기 상태 행만 대상으로 하는 부분 인덱스로 뒷받침하고(CREATE INDEX ... ON job_queue (created_at) WHERE status = &#x27;pending&#x27;), 트랜잭션은 최대한 짧게 — 디큐(상태를 running 으로 표시하고 커밋) → 트랜잭션 밖에서 작업 → 두 번째 짧은 트랜잭션에…</td><td>높음</td></tr>
+<tr><td><b>S-27</b></td><td>PostgreSQL 실무 — 큐</td><td>PostgreSQL Global Development Group · <b>PostgreSQL Documentation — Explicit Locking: Advisory Locks</b> (2025)</td><td>어드바이저리 락은 DB 가 의미를 모르는 애플리케이션 정의 락으로, 세션 수명(pg_advisory_lock)과 트랜잭션 수명(pg_advisory_xact_lock)의 두 종류가 있다. 행이 아직 존재하지 않는 대상이나 &#x27;동시 실행 상한&#x27;, &#x27;중복 활성 작업 금지&#x27; 같은 전역 제약처럼 행 잠금으로 표현할 수 없는 상호배제에 쓴다.</td><td>높음</td></tr>
+<tr><td><b>S-28</b></td><td>안티패턴</td><td>Bill Karwin · <b>SQL Antipatterns — Entity-Attribute-Value</b> (2010/2022)</td><td>EAV(entity, attribute, value 3컬럼 일반 테이블)의 문서화된 폐해: 속성명을 문자열로 다뤄야 하고, 필수 속성을 애플리케이션 코드 없이 강제할 수 없고, value 가 보통 문자열이라 SQL 데이터 타입을 못 쓰고, 참조무결성 강제가 제한되며, 한 객체 전체를 조회하려면 속성 수만큼 OUTER JOIN 이 필요하다.</td><td>높음</td></tr>
+<tr><td><b>S-29</b></td><td>안티패턴</td><td>PostgreSQL 문서(부분 인덱스) · php[architect] 정리 · <b>Advanced Unique Index Patterns for Soft Deletes; PostgreSQL Documentation — Partial Indexes</b> (2025/2026)</td><td>soft delete(deleted_at)의 대가: 모든 질의가 필터를 기억해야 하고(한 군데라도 빠뜨리면 삭제된 데이터가 새어 나옴), 유니크 제약이 깨지며(삭제된 행이 이메일을 붙들고 있어 재가입 불가), &#x27;삭제된&#x27; 데이터의 참조무결성은 전적으로 개발자 책임이 된다. PostgreSQL 해법은 부분 유니크 인덱스: CREATE UNIQUE INDEX users_email_unique ON users (email) WHERE deleted_at IS NULL. 단 FK 는 부분 유니크 인덱스를 참조할 수 없고, ON CONFLICT 에서 쓰려면 같은 술어를 명시해야 한다.</td><td>높음</td></tr>
+<tr><td><b>S-30</b></td><td>안티패턴</td><td>RFC 9562 (UUID v7) · PostgreSQL 18 uuidv7() · 벤치마크 정리 · <b>RFC 9562: Universally Unique IDentifiers (UUIDs); Benchmarking Random (v4) and Time-based (v7) UUIDs in PostgreSQL</b> (2024 / 2025)</td><td>UUIDv4 는 완전 무작위라 새 값이 B-tree 임의 위치에 삽입된다 — 매 삽입이 랜덤 쓰기가 되고 페이지 분할이 잦아 인덱스가 팽창하며, 쓰기 증폭이 늘고 캐시 적중률이 떨어진다. UUIDv7 은 상위 비트가 시간순이라 거의 단조 증가하므로 인덱스가 더 작고 조밀하며 단편화가 적다. PostgreSQL 18 은 uuidv7() 을 내장했다. 공개 벤치마크들은 대용량(수천만 행)에서 삽입 시간과 인덱스 크기의 유의한 개선을 보고한다.</td><td>중간 (방향성은 높음, 구체 수치는 미확인)</td></tr>
+<tr><td><b>S-31</b></td><td>안티패턴 — 상태의 단일 소유</td><td>Confluent · Chris Richardson (교차 근거) · <b>Dual-write problem; Transactional outbox</b> (2023 / 2019)</td><td>같은 사실을 두 저장소(또는 두 테이블)에 각각 쓰면 원자성이 없어 반드시 갈라진다. 해법은 &#x27;두 곳에 쓰되 한 트랜잭션&#x27; 이거나 &#x27;한 곳만 쓰고 나머지는 파생&#x27; 둘 중 하나뿐이다. 집계·요약·플래그는 전부 파생이며 원본과 별개로 갱신하는 순간 dual write 가 된다.</td><td>높음</td></tr>
+<tr><td><b>S-32</b></td><td>안티패턴 — 정규화 수준</td><td>Bill Karwin · <b>SQL Antipatterns, Volume 1 (개괄)</b> (2010/2022)</td><td>Karwin 의 전체 논지: 안티패턴은 &#x27;틀려 보이는 것&#x27; 이 아니라 &#x27;맞아 보이는데 숨은 비용이 시간이 갈수록 드러나는 것&#x27; 이다. 과도한 정규화(6NF 화, 모든 값의 코드 테이블화)와 과도한 비정규화(조회 편의를 위한 값 복제) 둘 다 이 범주에 든다.</td><td>중간</td></tr>
+</tbody></table>
+<h2 id="sb">부록 B · 신설 · 개정 표 목록</h2>
+<table class="dd">
+<colgroup><col style="width:7%"><col style="width:22%"><col style="width:16%"><col style="width:5%"><col style="width:50%"></colgroup>
+<thead><tr><th>구분</th><th>표</th><th>한글 이름</th><th>칸</th><th>주요 키 · 고치는 것</th></tr></thead><tbody>
+<tr><td><span class="new">신설</span></td><td><code>mbdef.definition_bundle</code></td><td>정의 배포 묶음</td><td>13</td><td>PK(tenant_id, bundle_id)</td></tr>
+<tr><td><span class="new">신설</span></td><td><code>mbdef.bundle_member</code></td><td>묶음 구성원</td><td>10</td><td>PK(tenant_id, bundle_id, member_seq)</td></tr>
+<tr><td><span class="new">신설</span></td><td><code>mbdef.work_code_version</code></td><td>업무코드 버전</td><td>21</td><td>PK(tenant_id, work_code_version_id)</td></tr>
+<tr><td><span class="new">신설</span></td><td><code>mbdef.exec_step_version</code></td><td>실행 단계 버전</td><td>16</td><td>PK(tenant_id, exec_step_version_id)</td></tr>
+<tr><td><span class="new">신설</span></td><td><code>mbdef.skill_unit_version</code></td><td>스킬 단위 버전</td><td>11</td><td>PK(tenant_id, skill_unit_version_id)</td></tr>
+<tr><td><span class="new">신설</span></td><td><code>mbdef.judgment_basis_version</code></td><td>판정 기준 버전</td><td>9</td><td>PK(tenant_id, judgment_basis_version_id)</td></tr>
+<tr><td><span class="new">신설</span></td><td><code>mbrun.work_item</code></td><td>업무 수행(인스턴스) — 정본</td><td>33</td><td>PK(tenant_id, work_item_id)</td></tr>
+<tr><td><span class="new">신설</span></td><td><code>mbrun.work_item_edge</code></td><td>수행 간 선후</td><td>7</td><td>PK(tenant_id, pred_item_id, succ_item_id)</td></tr>
+<tr><td><span class="new">신설</span></td><td><code>mbrun.work_item_step</code></td><td>수행 단계 진행</td><td>15</td><td>PK(tenant_id, work_item_id, step_no)</td></tr>
+<tr><td><span class="new">신설</span></td><td><code>mbrun.work_item_state_log</code></td><td>수행 상태 전이 원장</td><td>11</td><td>PK(tenant_id, log_id)</td></tr>
+<tr><td><span class="new">신설</span></td><td><code>mbrun.ready_queue</code></td><td>실행 대기열</td><td>13</td><td>PK(tenant_id, work_item_id)</td></tr>
+<tr><td><span class="new">신설</span></td><td><code>mbrun.precondition_check</code></td><td>준비 조건 판정</td><td>10</td><td>PK(tenant_id, check_id)</td></tr>
+<tr><td><span class="new">신설</span></td><td><code>mbrun.launch_gate_check</code></td><td>착수 판정(게이트) 한 행</td><td>21</td><td>PK(tenant_id, gate_check_id)</td></tr>
+<tr><td><span class="new">신설</span></td><td><code>mbrun.obligation_fulfillment</code></td><td>판정 의무 이행</td><td>10</td><td>PK(tenant_id, fulfillment_id)</td></tr>
+<tr><td><span class="new">신설</span></td><td><code>mbrun.role_activation</code></td><td>역할 활성화 기록</td><td>10</td><td>PK(tenant_id, activation_id)</td></tr>
+<tr><td><span class="new">신설</span></td><td><code>mbrun.work_item_rank</code></td><td>선후 파생값(폐쇄표 · 위상 순위 · 임계 경로)</td><td>8</td><td>PK(tenant_id, work_item_id)</td></tr>
+<tr><td><span class="new">신설</span></td><td><code>mbrun.priority_rule</code></td><td>우선순위 도출 규칙(버전)</td><td>19</td><td>PK(tenant_id, priority_rule_version_id)</td></tr>
+<tr><td><span class="new">신설</span></td><td><code>mbrun.concurrency_limit</code></td><td>동시 실행 상한과 몫</td><td>10</td><td>PK(tenant_id, limit_id)</td></tr>
+<tr><td><span class="new">신설</span></td><td><code>mbrun.fairness_state</code></td><td>공정 배분 상태</td><td>8</td><td>PK(tenant_id, fairness_key, window_start)</td></tr>
+<tr><td><span class="new">신설</span></td><td><code>mbrun.work_item_archive</code></td><td>종료 수행 보관</td><td>16</td><td>PK(tenant_id, work_item_id)</td></tr>
+<tr><td><span class="mod">개정</span></td><td><code>mbcode.work_code</code></td><td>업무코드</td><td>—</td><td>exec_sequence jsonb · mechanism_set jsonb 삭제 → 뷰로 대체. current_version_id bigint 추가</td></tr>
+<tr><td><span class="mod">개정</span></td><td><code>mbcode.work_code_dependency</code></td><td>업무코드 의존</td><td>—</td><td>dep_kind varchar(16) 추가(HARD_SEQ · DATA_READY · APPROVAL · RESOURCE), cond_predicate jsonb 추가, &lt;b&gt;origin varchar(16) 추가&lt;/b&gt;(DECLARED · DATA_PATH · MANUAL), &lt;b&gt;정의 층에도 순환 금지 트리거&lt;/b&gt;</td></tr>
+<tr><td><span class="mod">개정</span></td><td><code>mbcode.work_code_exec_step</code></td><td>업무코드 실행 순서</td><td>—</td><td>skill_version varchar 삭제 → exec_step_version_id bigint FK. 배타적 아크 CHECK 추가</td></tr>
+<tr><td><span class="mod">개정</span></td><td><code>mbcode.skill_unit</code></td><td>스킬 단위</td><td>—</td><td>unit_version varchar 삭제 → mbdef.skill_unit_version 로 이관, current_version_id 추가</td></tr>
+<tr><td><span class="mod">개정</span></td><td><code>mbproj.project_work_assignment</code></td><td>프로젝트 업무 배정</td><td>—</td><td>work_item_id bigint FK 추가. state 는 배정 상태만 남기고 수행 상태는 삭제</td></tr>
+<tr><td><span class="mod">개정</span></td><td><code>mba2a.task</code></td><td>과업</td><td>—</td><td>work_item_id bigint FK 추가. priority · due_at 삭제(우선순위 단일 출처)</td></tr>
+<tr><td><span class="mod">개정</span></td><td><code>mbagent.agent_run</code></td><td>에이전트 실행</td><td>—</td><td>work_item_id bigint FK · work_item_step_no int 추가</td></tr>
+<tr><td><span class="mod">개정</span></td><td><code>mbagent.agent_plan_step</code></td><td>계획 단계 실행</td><td>—</td><td>target_ref varchar(200) 삭제 → 배타적 아크 4칸 + CHECK</td></tr>
+<tr><td><span class="mod">개정</span></td><td><code>mbexec.idempotency_record</code></td><td>중복 실행 방지 기록</td><td>—</td><td>work_item_id · step_no 추가. lease_until 은 유지하되 대기열 리스와 구분</td></tr>
+<tr><td><span class="mod">개정</span></td><td><code>mbtxn.project_transaction</code></td><td>프로젝트 트랜잭션</td><td>—</td><td>work_item_id bigint FK 추가(기존 task_id · run_id 는 유지)</td></tr>
+<tr><td><span class="mod">개정</span></td><td><code>mbmq.outbox</code></td><td>아웃박스</td><td>—</td><td>부분 인덱스 WHERE published_at IS NULL 추가</td></tr>
+<tr><td><span class="mod">개정</span></td><td><code>mbtool.tool</code></td><td>도구</td><td>—</td><td>annotation_source varchar(16) 추가(SELF_DECLARED · PLATFORM_VERIFIED) · side_effect_class 추가</td></tr>
+<tr><td><span class="mod">개정</span></td><td><code>mbagent.agent_card</code></td><td>에이전트 카드</td><td>—</td><td>card_version_id · published_at 추가 — 선언(카드)과 실행(run)의 표를 합치지 않는다</td></tr>
+<tr><td><span class="mod">개정</span></td><td><code>mbmq.routing_rule</code></td><td>라우팅 규칙</td><td>—</td><td>priority int 삭제 — 우선순위는 mbrun.priority_rule 한 곳에서만 정한다</td></tr>
+</tbody></table>
+<p class="small">신설 20 DB Table · 271칸,
+개정 14건. 제안 뒤 스키마 35 · 표 505.
+손대지 않는 표 471개.</p>
+<footer>MyBee 에이전트 중심 실행 구조 DB 설계 제안 v1.6 · MB-ADS-2026-001 · 2026-09-29<br>
+현행 모델 진단 : 업무영역 19 · 업무코드 574 · 스킬 단계 3,837 ·
+스킬 단위 756 · 도구 744 · DB Table 547(이 제안이 다룬 표 51).<br>
+제안 : 신설 20 DB Table 271칸 · 개정 14건 · 제안 뒤 표 505.<br>
+근거 : MyBee 설계지시문 v5.14 · DB 테이블설계서 v3.20 · 코드체계 v3.16 ·
+업무코드_스킬·로직도구_실행순서 v2.8 · DB테이블_업무코드매핑 v3.3. 외부 근거 116건은 부록 A.</footer>
+</div></body></html>
